@@ -1,20 +1,20 @@
 use std::{
     fs::File,
-    io::{self, ErrorKind, Read, Result, Write},
+    io::{Read, Result},
     vec::Vec,
 };
 
-mod bytecodemap;
-use bytecodemap::*;
+mod bytecode;
+use bytecode::operator::test;
 
-#[allow(unused)]
+// 用来储存一段python代码，并且写入文件
+// 考虑直接输出可能效果比较直观一点，而且可以重定向流到文件
+// 暂时弃用
+/* #[allow(unused)]
 struct ScriptLine {
     script_line_number: u32,
     script_line: String,
 }
-
-#[allow(dead_code)]
-type Scripts = Vec<ScriptLine>;
 
 #[allow(unused)]
 impl ScriptLine {
@@ -40,8 +40,10 @@ impl ScriptLine {
         }
         Ok(())
     }
-}
+} */
 
+// 读取bytecode文件
+// 按照空行分割，每一段bytecode就是一个Vec<String>
 pub fn read_bytecode_file(file_name: &str) -> Result<Vec<Vec<String>>> {
     let mut bytecode_string = String::new();
     File::open(file_name)?.read_to_string(&mut bytecode_string)?;
