@@ -5,7 +5,7 @@ pub trait ToColorString {
     fn to_color_string(&self, color_mode: &ColorMode) -> String;
 }
 
-// 既可以给String添加方法，也可以给&str添加方法，使用泛型
+// 可以给任何实现了AsRef<str>的类型实现ToColorString trait
 #[allow(unused)]
 impl<T> ToColorString for T
 where
@@ -22,21 +22,28 @@ where
     }
 }
 
-/* 实现From特征可以直接使用Color::Red.into()或者ColorMode::from(Color::Red)的形式 */
-impl From<Color> for ColorMode {
-    fn from(color: Color) -> Self {
-        ColorMode {
-            front_color: color,
-            ..Default::default()
+// 传入一个或者多个FrontColor, BackColor, DisplayMode的值，返回一个ColorMode
+// 可以通过set_colormode_for!宏来快捷创建一个ColorMode
+// 注意！如果传入的值有相同类型，那么后面的值会覆盖前面的值
+#[allow(unused)]
+#[macro_export]
+macro_rules! set_colormode {
+    ($($x:ident => $y:expr),*) => {
+        {
+            let mut color_mode = ColorMode::default();
+            $(
+                color_mode.$x = $y;
+            )*
+            color_mode
         }
-    }
-}
-
-impl From<DisplayMode> for ColorMode {
-    fn from(mode: DisplayMode) -> Self {
-        ColorMode {
-            mode,
-            ..Default::default()
-        }
-    }
+    };
+    /* 使用格式：
+    set_colormode!(FrontColor => FrontColor::White)
+    或者 set_colormode!(
+        FrontColor => FrontColor::White,
+        BackColor => BackColor::Black,
+        DisplayMode => DisplayMode::Highlight
+    )
+    注意这里面FrontColor和BackColor后面的值都是Color类型，可以使用Color::Red等
+    */
 }

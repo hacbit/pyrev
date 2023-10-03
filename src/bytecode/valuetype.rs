@@ -19,7 +19,10 @@ impl ValueType {
         /* 注意！
         这可能会破坏某些数据，比如value是((1, 2), (2, 3))
         去除括号后就会变成 1, 2), (2, 3 */
-        let val = value.trim_start_matches("(").trim_end_matches(")");
+        let val = match value.chars().next().unwrap_or(' ') {
+            '(' | '[' | '{' => value[1..value.len() - 1].to_string(),
+            _ => value.to_string(),
+        };
         match self {
             ValueType::Common => {
                 format!("{} = {}", name, val)

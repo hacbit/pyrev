@@ -6,12 +6,7 @@ use color::color_utils::*;
 use repybytecode::setup;
 
 fn main() {
-    /* let warn_color = ColorMode {
-        front_color: Color::Red,
-        ..Default::default()
-    }; */
     let warn_color = ColorMode::from(Color::Red);
-    let warn_color2 = DisplayMode::Blink.into();
     let file_name = env::args().nth(1).unwrap_or_else(|| {
         eprintln!(
             "[{}] Problem parsing arguments: {}",
@@ -23,8 +18,8 @@ fn main() {
     setup(&file_name).unwrap_or_else(|err| {
         eprintln!(
             "[{}] Application error: {err}",
-            "x".to_color_string(&warn_color2),
-            err = err.to_string().to_color_string(&warn_color2)
+            "x".to_color_string(&warn_color),
+            err = err.to_string().to_color_string(&warn_color)
         );
         exit(0);
     });

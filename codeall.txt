@@ -5,12 +5,12 @@
               6 LIST_EXTEND              1
               8 STORE_NAME               0 (arr)
 
-  2          10 LOAD_NAME                0 (arr)
+  3          10 LOAD_NAME                0 (arr)
              12 GET_ITER
         >>   14 FOR_ITER                13 (to 42)
              16 STORE_NAME               1 (i)
 
-  3          18 PUSH_NULL
+  4          18 PUSH_NULL
              20 LOAD_NAME                2 (print)
              22 LOAD_NAME                1 (i)
              24 PRECALL                  1
@@ -18,5 +18,5 @@
              38 POP_TOP
              40 JUMP_BACKWARD           14 (to 14)
 
-  2     >>   42 LOAD_CONST               1 (None)
+  3     >>   42 LOAD_CONST               1 (None)
              44 RETURN_VALUE

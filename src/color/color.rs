@@ -18,9 +18,9 @@ impl ColorString {
     pub fn to_string(&self) -> String {
         format!(
             "\x1b[{};{};{}m{}\x1b[0m",
-            self.color_mode.mode.to_display_mode(),
-            self.color_mode.front_color.to_front_color(),
-            self.color_mode.back_color.to_back_color(),
+            self.color_mode.mode.mode(),
+            self.color_mode.front_color.front(),
+            self.color_mode.back_color.back(),
             self.content
         )
     }
@@ -29,8 +29,8 @@ impl ColorString {
 #[allow(unused)]
 #[derive(Clone)]
 pub struct ColorMode {
-    pub front_color: Color,
-    pub back_color: Color,
+    pub front_color: FrontColor,
+    pub back_color: BackColor,
     pub mode: DisplayMode,
 }
 
@@ -38,12 +38,18 @@ pub struct ColorMode {
 impl Default for ColorMode {
     fn default() -> Self {
         ColorMode {
-            front_color: Color::White,
-            back_color: Color::Black,
+            front_color: FrontColor::White,
+            back_color: BackColor::Black,
             mode: DisplayMode::Highlight, // 注意高亮不是系统本身的默认值
         }
     }
 }
+
+#[allow(unused)]
+pub type FrontColor = Color;
+
+#[allow(unused)]
+pub type BackColor = Color;
 
 #[allow(unused)]
 #[derive(Clone)]
@@ -58,9 +64,29 @@ pub enum Color {
     White,
 }
 
+/* 可以通过Color::Red.into()或者ColorMode::from(Color::Red)来快捷创建一个ColorMode */
+/* 注意！这里只实现了前景色的封装，没有为背景色提供一个高效的简洁的方法 */
+
 #[allow(unused)]
-impl Color {
-    pub fn to_front_color(&self) -> u8 {
+impl From<Color> for ColorMode {
+    fn from(color: Color) -> Self {
+        ColorMode {
+            front_color: color.into(),
+            ..Default::default()
+        }
+    }
+}
+
+trait Front {
+    fn front(&self) -> u8;
+}
+
+trait Back {
+    fn back(&self) -> u8;
+}
+
+impl Front for FrontColor {
+    fn front(&self) -> u8 {
         match self {
             Color::Black => 30,
             Color::Red => 31,
@@ -72,8 +98,10 @@ impl Color {
             Color::White => 37,
         }
     }
+}
 
-    pub fn to_back_color(&self) -> u8 {
+impl Back for BackColor {
+    fn back(&self) -> u8 {
         match self {
             Color::Black => 40,
             Color::Red => 41,
@@ -103,7 +131,7 @@ pub enum DisplayMode {
 
 #[allow(unused)]
 impl DisplayMode {
-    pub fn to_display_mode(&self) -> u8 {
+    pub fn mode(&self) -> u8 {
         match self {
             DisplayMode::Default => 0,
             DisplayMode::Highlight => 1,
@@ -114,6 +142,15 @@ impl DisplayMode {
             DisplayMode::NonBlink => 25,
             DisplayMode::Reverse => 7,
             DisplayMode::NonReverse => 27,
+        }
+    }
+}
+
+impl From<DisplayMode> for ColorMode {
+    fn from(mode: DisplayMode) -> Self {
+        ColorMode {
+            mode,
+            ..Default::default()
         }
     }
 }

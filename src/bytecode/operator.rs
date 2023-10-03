@@ -6,21 +6,25 @@ use std::vec::Vec;
 一个缓冲区，用来储存解析字节码过程的临时数据
 其实就是把Vec<String>封装了一下
 */
-struct BytecodeBuffer {
-    scr: Vec<String>,
+type BytecodeBuffer = Vec<String>;
+
+trait Buffer {
+    fn new() -> Self;
+    fn push(&mut self, s: String);
+    fn pop(&mut self) -> Option<String>;
 }
 
-impl BytecodeBuffer {
+impl Buffer for BytecodeBuffer {
     fn new() -> BytecodeBuffer {
-        BytecodeBuffer { scr: Vec::new() }
+        Vec::new()
     }
 
     fn push(&mut self, s: String) {
-        self.scr.push(s);
+        self.push(s);
     }
 
     fn pop(&mut self) -> Option<String> {
-        match self.scr.pop() {
+        match self.pop() {
             Some(s) => Some(s),
             None => Some(String::from("")),
         }
@@ -70,13 +74,16 @@ impl BytecodeBlock {
         self.script_line_number = line.next().unwrap().parse::<u32>().unwrap();
         loop {
             if let Some(cmd_offset) = line.next() {
-                self.cmd_offset.push(cmd_offset.parse::<u32>().unwrap());
+                if cmd_offset == ">>" {
+                    let cmd_offset = line.next().unwrap();
+                }
+                self.cmd_offset.push(cmd_offset.parse::<u32>().unwrap_or(0));
             }
             if let Some(bytecode) = line.next() {
                 self.bytecode.push(Bytecode::get(bytecode));
             }
             if let Some(arg) = line.next() {
-                self.arg.push(arg.parse::<u32>().unwrap());
+                self.arg.push(arg.parse::<u32>().unwrap_or(0));
             }
             // 去除实参最外层的括号
             // 考虑到实参中可能有空格，所以把line后面的所以迭代内容都拼接起来
@@ -104,28 +111,56 @@ impl BytecodeBlock {
     转换为：
     a = [1, 3, 'asf']
     */
-    fn to_python(&self) -> String {
+
+    unsafe fn to_python(&self) -> String {
         let mut pyscript_line = String::new();
         let mut buffer = BytecodeBuffer::new();
         let mut value_types = ValueTypeVec::new();
+        let mut is_for = false;
+        let mut is_if = false;
+        let mut is_while = false;
+        let mut jump_offset = 0; // 跳转偏移
         for (i, bcode) in self.bytecode.iter().enumerate() {
             let rarg = self.real_arg[i].as_str();
             match bcode {
-                Bytecode::LoadConst => {
-                    self.load(&mut buffer, bcode, rarg);
+                Bytecode::LoadConst | Bytecode::LoadName | Bytecode::LoadFast => {
+                    buffer.push(rarg.to_string());
                 }
-                Bytecode::StoreName => {
-                    self.store(
-                        &mut pyscript_line,
-                        &mut buffer,
-                        rarg,
-                        value_types.pop().unwrap(),
-                    );
+                Bytecode::StoreName | Bytecode::StoreFast => {
+                    if is_for {
+                        is_for = false;
+                        let enumer = rarg;
+                        pyscript_line.replace("i", enumer);
+                    } else {
+                        let value_type = value_types.pop().unwrap_or(ValueType::None);
+                        self.set_retractions(&mut pyscript_line);
+                        self.store(&mut pyscript_line, &mut buffer, rarg, value_type);
+                    }
                 }
                 Bytecode::BuildList => value_types.push(ValueType::List),
                 Bytecode::BuildTuple => value_types.push(ValueType::Tuple),
                 Bytecode::BuildSet => value_types.push(ValueType::Set),
                 Bytecode::BuildMap => value_types.push(ValueType::Dict),
+
+                Bytecode::BinarySubscr => self.subscr(&mut pyscript_line, &mut buffer),
+
+                Bytecode::Call => {
+                    self.set_retractions(&mut pyscript_line);
+                    self.call(&mut pyscript_line, &mut buffer);
+                }
+
+                Bytecode::ForIter => {
+                    self.for_iter(&mut pyscript_line, &mut buffer);
+                    is_for = true;
+                    RETRACTIONS += 1;
+                    jump_offset = rarg.trim_start_matches("to").parse::<u32>().unwrap_or(0);
+                }
+
+                Bytecode::JumpBackward => {
+                    if RETRACTIONS > 0 {
+                        RETRACTIONS -= 1;
+                    }
+                }
                 _ => {
                     //
                 }
@@ -135,16 +170,9 @@ impl BytecodeBlock {
     }
 
     // todo: 还有很多需要完善的地方
-    fn load(&self, buffer: &mut BytecodeBuffer, bytecode: &Bytecode, rarg: &str) {
-        match bytecode {
-            Bytecode::LoadConst => {
-                buffer.push(rarg.to_string());
-            }
-            _ => {
-                // todo!();
-            }
-        }
-    }
+    /* fn load(&self, buffer: &mut BytecodeBuffer, rarg: &str) {
+        buffer.push(rarg.to_string());
+    } */
 
     // 调用ValueType的build方法，把buffer中的数据转换为对应的类型的python格式
     // store目前还行，可以先实现load
@@ -162,13 +190,53 @@ impl BytecodeBlock {
         );
     }
 
+    fn subscr(&self, pyscript: &mut String, buffer: &mut BytecodeBuffer) {
+        let mut key = buffer.pop().unwrap_or(String::from(""));
+        let mut name = buffer.pop().unwrap_or(String::from(""));
+        buffer.push(format!("{}[{}]", name, key));
+    }
+
+    fn call(&self, pyscript: &mut String, buffer: &mut BytecodeBuffer) {
+        let mut args = buffer.pop().unwrap_or(String::from(""));
+        let mut func = buffer.pop().unwrap_or(String::from(""));
+        pyscript.push_str(format!("{}({})", func, args).as_str());
+    }
+
+    fn for_iter(&self, pyscript: &mut String, buffer: &mut BytecodeBuffer) {
+        let mut iter = buffer.pop().unwrap_or(String::from(""));
+        pyscript.push_str(format!("for i in {}:", iter).as_str());
+    }
+
+    unsafe fn set_retractions(&self, pyscript: &mut String) {
+        for _ in 0..RETRACTIONS {
+            pyscript.push_str("    ");
+        }
+    }
+
     // todo!();
 }
 
+// 一行python代码，包含行数和代码
+#[allow(unused)]
+pub struct PyLine {
+    pub line: u32,
+    pub pyscript: String,
+}
+
+#[allow(unused)]
+impl PyLine {
+    pub fn new(line: u32, pyscript: String) -> PyLine {
+        PyLine { line, pyscript }
+    }
+}
+
+static mut RETRACTIONS: u32 = 0;
+
 // 提供API给外部调用, 用于测试
 #[allow(unused)]
-pub fn test(bcs: &Vec<String>) -> String {
+pub fn reverse_bytecode(bcs: &Vec<String>) -> PyLine {
     let mut block = BytecodeBlock::new();
     block.add(bcs);
-    block.to_python()
+    let pyscript = unsafe { block.to_python() };
+    PyLine::new(block.script_line_number, pyscript)
 }
