@@ -38,7 +38,8 @@ impl Buffer for BytecodeBuffer {
 1           2 BUILD_LIST               0
             4 LOAD_CONST               0 ((1, 3, 'asf'))
             6 LIST_EXTEND              1
-            8 STORE_NAME               0 (a) */
+            8 STORE_NAME               0 (a)
+*/
 /* 第一行的1表示对应到源代码的第一行；
 2468是指令偏移，for，if之类的流程控制就是通过这个偏移来确定跳转的位置；
 然后是bytecode指令，大部分其实可以根据英文意思看出来功能；
@@ -70,7 +71,13 @@ impl BytecodeBlock {
     fn add(&mut self, bytecode_string: &Vec<String>) {
         let mut iter = bytecode_string.iter();
         // 按照空格分割，第一个是行数
-        let mut line: std::str::SplitWhitespace<'_> = iter.next().unwrap().split_whitespace();
+        // 只有第一行有行数，后面的行数都是空格
+        // 每行只把" (.*)"前的内容用空格分割，后面的内容不分割
+        // 长度大于等于42的就是有参数的指令
+        let l = iter.next().unwrap();
+        let binding = l.split_at(if l.len() >= 42 { 42 } else { l.len() - 1 });
+        let mut line = binding.0.split_whitespace();
+        let mut real_arg = binding.1.to_string();
         self.script_line_number = line.next().unwrap().parse::<u32>().unwrap();
         loop {
             if let Some(cmd_offset) = line.next() {
@@ -86,16 +93,17 @@ impl BytecodeBlock {
                 self.arg.push(arg.parse::<u32>().unwrap_or(0));
             }
             // 去除实参最外层的括号
-            // 考虑到实参中可能有空格，所以把line后面的所以迭代内容都拼接起来
-            let mut real_arg: String = line.collect();
-            if real_arg.len() > 0 {
-                real_arg.remove(0);
-                real_arg.remove(real_arg.len() - 1);
+            if real_arg.len() > 3 {
+                // 去除前两个字符" ("和最后一个字符")"
+                real_arg = real_arg.split_at(2).1.to_string();
+                real_arg.pop(); // 去除右侧括号
             }
             self.real_arg.push(real_arg);
 
             if let Some(l) = iter.next() {
-                line = l.split_whitespace();
+                let binding = l.split_at(if l.len() >= 42 { 42 } else { l.len() });
+                line = binding.0.split_whitespace();
+                real_arg = binding.1.to_string();
             } else {
                 break;
             }
@@ -143,6 +151,7 @@ impl BytecodeBlock {
                 Bytecode::BuildMap => value_types.push(ValueType::Dict),
 
                 Bytecode::BinarySubscr => self.subscr(&mut pyscript_line, &mut buffer),
+                Bytecode::BinaryOp => self.op(&mut pyscript_line, &mut buffer, rarg),
 
                 Bytecode::Call => {
                     self.set_retractions(&mut pyscript_line);
@@ -160,6 +169,12 @@ impl BytecodeBlock {
                     if RETRACTIONS > 0 {
                         RETRACTIONS -= 1;
                     }
+                }
+
+                Bytecode::Nop => {
+                    pyscript_line.push_str("While True:");
+                    is_while = true;
+                    RETRACTIONS += 1;
                 }
                 _ => {
                     //
@@ -196,6 +211,19 @@ impl BytecodeBlock {
         buffer.push(format!("{}[{}]", name, key));
     }
 
+    fn op(&self, pyscript: &mut String, buffer: &mut BytecodeBuffer, rarg: &str) {
+        match rarg {
+            "+=" => {
+                let mut right = buffer.pop().unwrap_or(String::from(""));
+                let mut left = buffer.pop().unwrap_or(String::from(""));
+                buffer.push(format!("{} += {}", left, right));
+            }
+            _ => {
+                //
+            }
+        }
+    }
+
     fn call(&self, pyscript: &mut String, buffer: &mut BytecodeBuffer) {
         let mut args = buffer.pop().unwrap_or(String::from(""));
         let mut func = buffer.pop().unwrap_or(String::from(""));
@@ -216,7 +244,7 @@ impl BytecodeBlock {
     // todo!();
 }
 
-// 一行python代码，包含行数和代码
+// 表示一行python代码，包含行数和代码
 #[allow(unused)]
 pub struct PyLine {
     pub line: u32,

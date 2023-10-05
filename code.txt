@@ -1,5 +1,60 @@
- 1           2 BUILD_LIST               0
+  0           0 RESUME                   0
+
+  1           2 BUILD_LIST               0
               4 LOAD_CONST               0 ((1, 2, 3, 'a', 'py'))
               6 LIST_EXTEND              1
               8 STORE_NAME               0 (arr)
 
+  2          10 LOAD_NAME                0 (arr)
+             12 GET_ITER
+        >>   14 FOR_ITER                13 (to 42)
+             16 STORE_NAME               1 (i)
+
+  3          18 PUSH_NULL
+             20 LOAD_NAME                2 (print)
+             22 LOAD_NAME                1 (i)
+             24 PRECALL                  1
+             28 CALL                     1
+             38 POP_TOP
+             40 JUMP_BACKWARD           14 (to 14)
+
+  5     >>   42 PUSH_NULL
+             44 LOAD_NAME                2 (print)
+             46 LOAD_CONST               1 ('Hello World!')
+             48 PRECALL                  1
+             52 CALL                     1
+             62 POP_TOP
+
+  6          64 PUSH_NULL
+             66 LOAD_NAME                2 (print)
+             68 LOAD_NAME                0 (arr)
+             70 PRECALL                  1
+             74 CALL                     1
+             84 POP_TOP
+
+  7          86 LOAD_CONST               2 (0)
+             88 STORE_NAME               1 (i)
+
+  8          90 NOP
+
+  9     >>   92 PUSH_NULL
+             94 LOAD_NAME                2 (print)
+             96 LOAD_NAME                1 (i)
+             98 PRECALL                  1
+            102 CALL                     1
+            112 POP_TOP
+
+ 10         114 LOAD_NAME                1 (i)
+            116 LOAD_CONST               4 (1)
+            118 BINARY_OP               13 (+=)
+            122 STORE_NAME               1 (i)
+
+ 11         124 LOAD_NAME                1 (i)
+            126 LOAD_NAME                0 (arr)
+            128 CONTAINS_OP              1
+            130 POP_JUMP_FORWARD_IF_FALSE     2 (to 136)
+
+ 12         132 LOAD_CONST               5 (None)
+            134 RETURN_VALUE
+
+  8     >>  136 JUMP_BACKWARD           23 (to 92)

@@ -38,12 +38,11 @@ macro_rules! set_colormode {
         }
     };
     /* 使用格式：
-    set_colormode!(FrontColor => FrontColor::White)
+    set_colormode!(front_color => FrontColor::White)
     或者 set_colormode!(
-        FrontColor => FrontColor::White,
-        BackColor => BackColor::Black,
-        DisplayMode => DisplayMode::Highlight
+        front_color => FrontColor::White,
+        back_color => BackColor::Black,
     )
-    注意这里面FrontColor和BackColor后面的值都是Color类型，可以使用Color::Red等
+    注意这里面FrontColor和BackColor都是Color类型，可以使用Color::Red等
     */
 }

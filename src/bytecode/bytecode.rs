@@ -38,9 +38,11 @@ pub enum Bytecode {
     BinaryMultiply,
     BinaryDivide,
     BinaryModulo,
+    BinaryOp,
     Call,
     GetIter,
     ForIter,
+    Nop,
     None,
 }
 
@@ -79,9 +81,11 @@ impl Bytecode {
             "BINARY_MULTIPLY" => Bytecode::BinaryMultiply,
             "BINARY_DIVIDE" => Bytecode::BinaryDivide,
             "BINARY_MODULO" => Bytecode::BinaryModulo,
+            "BINARY_OP" => Bytecode::BinaryOp,
             "CALL" => Bytecode::Call,
             "GET_ITER" => Bytecode::GetIter,
             "FOR_ITER" => Bytecode::ForIter,
+            "NOP" => Bytecode::Nop,
             _ => Bytecode::None,
         }
     }
