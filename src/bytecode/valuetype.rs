@@ -1,4 +1,5 @@
 #[allow(unused)]
+#[derive(Debug)]
 /* 一些常见的python类型 */
 pub enum ValueType {
     Common, // 一般类型，包括int、float、str、bool等
@@ -66,7 +67,7 @@ impl ValueTypeVec {
     pub fn pop(&mut self) -> Option<ValueType> {
         match self.value_type.pop() {
             Some(value_type) => Some(value_type),
-            None => Some(ValueType::Common), // 暂时设置为ValueType::Common，后续可能会改为ValueType::None
+            None => Some(ValueType::None), // 暂时设置为ValueType::Common，后续可能会改为ValueType::None
         }
     }
 }
