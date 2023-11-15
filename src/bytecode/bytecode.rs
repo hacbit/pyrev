@@ -1,7 +1,7 @@
 use super::valuetype::ValueType;
 
 // 根据常见的bytecode指令做了简单的分类
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Bytecode {
     Load,             // 加载值
     Store,            // 存储值

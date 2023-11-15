@@ -1,5 +1,5 @@
 #[allow(unused)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 /* 一些常见的python类型 */
 pub enum ValueType {
     Common, // 一般类型，包括int、float、str、bool等

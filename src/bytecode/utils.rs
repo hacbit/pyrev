@@ -1,8 +1,8 @@
 use super::bytecode::Bytecode;
 use super::op::OP;
 use super::valuetype::ValueType;
-use crate::color::color_utils::*;
 use crate::color::color::*;
+use crate::color::color_utils::*;
 use regex::Regex;
 use std::fs::File;
 use std::io::Read;
@@ -98,7 +98,9 @@ pub fn parse_file(file_name: &str) -> Vec<PyLine> {
         eprintln!(
             "[{}] Application error: {err}",
             "x".to_color_string(&ColorMode::from(FrontColor::Red)),
-            err = err.to_string().to_color_string(&ColorMode::from(FrontColor::Red)),
+            err = err
+                .to_string()
+                .to_color_string(&ColorMode::from(FrontColor::Red)),
         );
         std::process::exit(0);
     });
@@ -107,6 +109,48 @@ pub fn parse_file(file_name: &str) -> Vec<PyLine> {
     parse_input(&bytecode_string)
 }
 
+#[allow(unused)]
+impl PyLine {
+    fn to_python(&self) -> String {
+        let mut python_code = String::new();
+        let mut stack = vec![];
+        let mut now_retraction = 0;
+        let mut idx = 0;
+        loop {
+            let this = self.bytecode_lines.get(idx);
+            if this.is_none() {
+                continue;
+            }
+            let this = this.unwrap().as_ref().unwrap();
+            let offset = this.offset;
+            let bytecode = this.bytecode;
+            let arg = this.arg;
+            let real_arg = this.real_arg.clone();
+            let jump_offset = this.jump_offset;
+            match bytecode {
+                Bytecode::Load => {
+                    if real_arg.is_none() {
+                        stack.push(None);
+                    } else {
+                        stack.push(real_arg.clone());
+                    }
+                }
+                Bytecode::Push => stack.push(None),
+                Bytecode::Pop => {
+                    stack.pop();
+                }
+                Bytecode::Op => {
+                    let (left, right) = (stack.pop().unwrap(), stack.pop().unwrap());
+                    let op = OP::from_str(real_arg.unwrap().as_str()).unwrap();
+                    stack.push(Some(
+                        op.get_expr(left.unwrap().as_str(), right.unwrap().as_str()),
+                    ));
+                }
+                _ => (),
+            }
+        }
+    }
+}
 
 #[cfg(test)]
 mod test {

@@ -1,5 +1,5 @@
 // 处理op操作， 比如加减乘除等
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum OP {
     Add,   // +
     Sub,   // -
