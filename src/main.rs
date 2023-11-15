@@ -12,9 +12,9 @@ fn main() -> std::io::Result<()> {
     let file_name = get_file_name();
     // 获取file的绝对路径
     let file_path = std::fs::canonicalize(&file_name)?; // 返回的是UNC路径, 例如: \\?\C:\Users\hacbit\test
-    // 转换为标准路径, 例如: C:\Users\hacbit\test
+                                                        // 转换为标准路径, 例如: C:\Users\hacbit\test
     let file_path = file_path.to_str().unwrap().split_at(4).1;
-    
+
     println!(
         "[{}] {} {}",
         "*".to_color_string(&BLUE),

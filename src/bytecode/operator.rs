@@ -8,29 +8,6 @@ use std::vec::Vec;
 */
 type BytecodeBuffer = Vec<String>;
 
-trait Buffer {
-    fn new() -> Self;
-    fn push(&mut self, s: String);
-    fn pop(&mut self) -> Option<String>;
-}
-
-impl Buffer for BytecodeBuffer {
-    fn new() -> BytecodeBuffer {
-        Vec::new()
-    }
-
-    fn push(&mut self, s: String) {
-        self.push(s);
-    }
-
-    fn pop(&mut self) -> Option<String> {
-        match self.pop() {
-            Some(s) => Some(s),
-            None => Some(String::from("")),
-        }
-    }
-}
-
 /* 储存一段bytecode指令块，划分依据是源代码的行数
 也就是bytecode每段左上的那个数字，那就代表的行数
 所以每一个bytecode块就是对应着某一行代码 */
@@ -131,61 +108,61 @@ impl BytecodeBlock {
         let mut is_if = false;
         let mut is_self_calculation = false;
         let mut jump_offset = 0; // 跳转偏移
-        for (i, bcode) in self.bytecode.iter().enumerate() {
-            let rarg = self.real_arg[i].as_str();
-            match bcode {
-                Bytecode::LoadConst
-                | Bytecode::LoadName
-                | Bytecode::LoadFast
-                | Bytecode::LoadGlobal => {
-                    buffer.push(rarg.to_string());
-                }
-                Bytecode::StoreName | Bytecode::StoreFast | Bytecode::LoadGlobal => {
-                    if is_for | is_if | is_self_calculation {
-                        is_for = false;
-                        let enumer = rarg;
-                        pyscript_line.replace("i", enumer);
-                    } else {
-                        let value_type = value_types.pop().unwrap_or(ValueType::None);
-                        println!("value_type: {:#?}", value_type);
-                        println!("py_line: {}", pyscript_line);
-                        self.store(&mut pyscript_line, &mut buffer, rarg, value_type);
-                    }
-                }
-                Bytecode::BuildList => value_types.push(ValueType::List),
-                Bytecode::BuildTuple => value_types.push(ValueType::Tuple),
-                Bytecode::BuildSet => value_types.push(ValueType::Set),
-                Bytecode::BuildMap => value_types.push(ValueType::Dict),
+                                 /* for (i, bcode) in self.bytecode.iter().enumerate() {
+                                     let rarg = self.real_arg[i].as_str();
+                                     match bcode {
+                                         Bytecode::LoadConst
+                                         | Bytecode::LoadName
+                                         | Bytecode::LoadFast
+                                         | Bytecode::LoadGlobal => {
+                                             buffer.push(rarg.to_string());
+                                         }
+                                         Bytecode::StoreName | Bytecode::StoreFast | Bytecode::LoadGlobal => {
+                                             if is_for | is_if | is_self_calculation {
+                                                 is_for = false;
+                                                 let enumer = rarg;
+                                                 pyscript_line.replace("i", enumer);
+                                             } else {
+                                                 let value_type = value_types.pop().unwrap_or(ValueType::None);
+                                                 println!("value_type: {:#?}", value_type);
+                                                 println!("py_line: {}", pyscript_line);
+                                                 self.store(&mut pyscript_line, &mut buffer, rarg, value_type);
+                                             }
+                                         }
+                                         Bytecode::BuildList => value_types.push(ValueType::List),
+                                         Bytecode::BuildTuple => value_types.push(ValueType::Tuple),
+                                         Bytecode::BuildSet => value_types.push(ValueType::Set),
+                                         Bytecode::BuildMap => value_types.push(ValueType::Dict),
 
-                Bytecode::BinarySubscr => self.subscr(&mut pyscript_line, &mut buffer),
-                Bytecode::BinaryOp => self.op(&mut pyscript_line, &mut buffer, rarg, &mut is_self_calculation),
+                                         Bytecode::BinarySubscr => self.subscr(&mut pyscript_line, &mut buffer),
+                                         Bytecode::BinaryOp => self.op(&mut pyscript_line, &mut buffer, rarg, &mut is_self_calculation),
 
-                Bytecode::Call => {
-                    self.call(&mut pyscript_line, &mut buffer);
-                }
+                                         Bytecode::Call => {
+                                             self.call(&mut pyscript_line, &mut buffer);
+                                         }
 
-                Bytecode::ForIter => {
-                    is_for = true;
-                    self.for_iter(&mut pyscript_line, &mut buffer);
-                }
+                                         Bytecode::ForIter => {
+                                             is_for = true;
+                                             self.for_iter(&mut pyscript_line, &mut buffer);
+                                         }
 
-                Bytecode::JumpBackward => {
-                    jump_offset = rarg.trim_start_matches("to ").parse::<u32>().unwrap_or(0);
-                    pyscript_line.push_str(format!("goto {}", jump_offset).as_str());
-                    // 设置jump_offset
-                    if jump_offset != 0 {
-                        self.jump_offset = Some(jump_offset);
-                    }
-                }
+                                         Bytecode::JumpBackward => {
+                                             jump_offset = rarg.trim_start_matches("to ").parse::<u32>().unwrap_or(0);
+                                             pyscript_line.push_str(format!("goto {}", jump_offset).as_str());
+                                             // 设置jump_offset
+                                             if jump_offset != 0 {
+                                                 self.jump_offset = Some(jump_offset);
+                                             }
+                                         }
 
-                Bytecode::Nop => {
-                    pyscript_line.push_str("True");
-                }
-                _ => {
-                    //
-                }
-            }
-        }
+                                         Bytecode::Nop => {
+                                             pyscript_line.push_str("True");
+                                         }
+                                         _ => {
+                                             //
+                                         }
+                                     }
+                                 } */
         pyscript_line
     }
 
@@ -218,7 +195,13 @@ impl BytecodeBlock {
     }
 
     // 操作符
-    fn op(&self, pyscript: &mut String, buffer: &mut BytecodeBuffer, rarg: &str, is_self_calculation: &mut bool) {
+    fn op(
+        &self,
+        pyscript: &mut String,
+        buffer: &mut BytecodeBuffer,
+        rarg: &str,
+        is_self_calculation: &mut bool,
+    ) {
         match rarg {
             "+=" => {
                 *is_self_calculation = true;
@@ -288,5 +271,10 @@ pub fn reverse_bytecode(bcs: &Vec<String>) -> PyLine {
     block.add(bcs);
     let pyscript = unsafe { block.to_python() };
     let start_offset = block.cmd_offset[0];
-    PyLine::new(block.script_line_number, pyscript, start_offset, block.jump_offset)
+    PyLine::new(
+        block.script_line_number,
+        pyscript,
+        start_offset,
+        block.jump_offset,
+    )
 }

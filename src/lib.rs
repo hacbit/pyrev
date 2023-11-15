@@ -68,7 +68,12 @@ impl PyScript for PyScripts {
 
             let mut this_pyscript = new_pyscripts.pop().unwrap();
             if this_pyscript.pyscript.contains("goto") {
-                this_pyscript.pyscript = this_pyscript.pyscript.split("goto").last().unwrap().to_string();
+                this_pyscript.pyscript = this_pyscript
+                    .pyscript
+                    .split("goto")
+                    .last()
+                    .unwrap()
+                    .to_string();
                 this_pyscript.retractions = now_retraction;
                 now_retraction -= 1;
                 new_pyscripts.push(this_pyscript);

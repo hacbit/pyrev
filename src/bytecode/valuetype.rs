@@ -42,6 +42,16 @@ impl ValueType {
             }
         }
     }
+
+    pub fn get(s: &str) -> ValueType {
+        match s.to_lowercase().as_str() {
+            "list" => ValueType::List,
+            "tuple" => ValueType::Tuple,
+            "set" => ValueType::Set,
+            "dict" => ValueType::Dict,
+            _ => ValueType::Common,
+        }
+    }
 }
 
 // 把Vec<ValueType>抽象一层，方便后续的操作
