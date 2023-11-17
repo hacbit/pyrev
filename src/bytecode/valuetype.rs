@@ -1,3 +1,5 @@
+use regex::Regex;
+
 #[allow(unused)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 /* 一些常见的python类型 */
@@ -15,31 +17,60 @@ impl ValueType {
     /* 根据不同类型来转换为对应的格式
     其类型将在operator中解析bytecode时确定
     比如解析到BUILD_LIST，就会把类型解释为list */
-    pub fn build(&self, name: &str, value: &str) -> String {
-        // 去除字符串两端的括号
-        /* 注意！
-        这可能会破坏某些数据，比如value是((1, 2), (2, 3))
-        去除括号后就会变成 1, 2), (2, 3 */
-        let val = match value.chars().next().unwrap_or(' ') {
-            '(' | '[' | '{' => value[1..value.len() - 1].to_string(),
-            _ => value.to_string(),
-        };
+    pub fn build(&self, value: Option<&str>) -> String {
         match self {
-            ValueType::Common => {
-                format!("{} = {}", name, val)
-            }
             ValueType::List => {
-                format!("{} = [{}]", name, val)
+                if value.is_none() {
+                    return String::from("[]");
+                }
+                let value = Regex::new(r"\(.+\))")
+                    .unwrap()
+                    .captures(value.unwrap())
+                    .and_then(|cap| cap.get(0))
+                    .map_or("", |m| m.as_str());
+                format!("[{}]", value)
             }
-            ValueType::Tuple => {
-                format!("{} = ({})", name, val)
+            ValueType::Set => {
+                if value.is_none() {
+                    return String::from("{}");
+                }
+                let value = Regex::new(r"\(.+\))")
+                    .unwrap()
+                    .captures(value.unwrap())
+                    .and_then(|cap| cap.get(0))
+                    .map_or("", |m| m.as_str());
+                format!("{{{}}}", value)
             }
-            ValueType::Set | ValueType::Dict => {
-                format!("{} = {{{}}}", name, val)
+            ValueType::Tuple => value.unwrap().to_string(),
+            ValueType::Dict => {
+                if value.is_none() {
+                    return String::from("{}");
+                }
+                let value = Regex::new(r"\(.+\))")
+                    .unwrap()
+                    .captures(value.unwrap())
+                    .and_then(|cap| cap.get(0))
+                    .map_or("", |m| m.as_str());
+                format!("{{{}}}", value)
             }
-            ValueType::None => {
-                format!("{}", name)
-            }
+            ValueType::Common => value.unwrap().to_string(),
+            ValueType::None => String::from(""),
+        }
+    }
+
+    pub fn extend(&self, src: &str, etn: &str) -> String {
+        if "()[]{}".contains(src) {
+            assert!(src.len() == 2);
+            format!(
+                "{}{}{}",
+                src.chars().next().unwrap(),
+                Regex::new(r"^\(|\)$|^\[|\]$|^\{|\}$")
+                    .unwrap()
+                    .replacen(etn, 2, ""),
+                src.chars().nth(1).unwrap(),
+            )
+        } else {
+            format!("{} + {}", src, etn)
         }
     }
 

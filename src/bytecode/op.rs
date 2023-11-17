@@ -29,8 +29,8 @@ pub enum OP {
 
 #[allow(unused)]
 impl OP {
-    pub fn from_str(op: &str) -> Option<Self> {
-        match op {
+    pub fn from_str(s: &str) -> Option<OP> {
+        match s {
             "+" => Some(OP::Add),
             "-" => Some(OP::Sub),
             "*" => Some(OP::Mul),
@@ -59,7 +59,7 @@ impl OP {
         }
     }
 
-    pub fn to_str(&self) -> &'static str {
+    pub fn to_str(self) -> &'static str {
         match self {
             OP::Add => "+",
             OP::Sub => "-",

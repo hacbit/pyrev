@@ -4,6 +4,16 @@ authors = ["hacbit <hacbit@foxmail.com>"]
 version = "0.1.1"
 edition = "2021"
 
+[features]
+clippy = []
+
 [dependencies]
+atty = "0.2.14"
+clap = { version = "4.4.8", features = ["derive", "cargo"] }
+colored = "2.0.4"
 lazy_static = "1.4.0"
 regex = "1.10.2"
+
+[profile.dev]
+# Uncomment the following lines to allow clippy to break your build.
+# rustflags = ["-D", "warnings"]

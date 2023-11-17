@@ -1,30 +1,39 @@
-use super::bytecode::Bytecode;
+use super::bytecode_type::BytecodeType;
 use super::op::OP;
-use super::valuetype::ValueType;
-use crate::color::color::*;
-use crate::color::color_utils::*;
+
+use colored::Colorize;
+use atty::Stream;
 use regex::Regex;
 use std::fs::File;
-use std::io::Read;
+use std::path::Path;
+use std::io::{Error, ErrorKind, Read, Write};
 
-#[derive(Debug)]
+type Result<T> = std::result::Result<T, Error>;
+
+// #[derive(Debug)]
 #[allow(unused)]
-struct BytecodeLine {
+struct BytecodeBlock {
     offset: u32,
-    bytecode: Bytecode,
+    bytecode: BytecodeType,
     arg: Option<u32>,
     real_arg: Option<String>,
     jump_offset: Option<u32>,
 }
 
+// #[derive(Debug)]
+pub struct PyObj {
+    line: usize,
+    bytecode_lines: Vec<Option<BytecodeBlock>>,
+}
+
 #[derive(Debug)]
-pub struct PyLine {
-    line: u32,
-    bytecode_lines: Vec<Option<BytecodeLine>>,
+pub struct PyScript {
+    line: usize,
+    script: Option<String>,
 }
 
 #[allow(unused)]
-impl From<&str> for PyLine {
+impl From<&str> for PyObj {
     fn from(py_line_str: &str) -> Self {
         let re = Regex::new(
             r#"(?x)
@@ -44,9 +53,8 @@ impl From<&str> for PyLine {
         let bytecode_lines = re
             .captures_iter(py_line_str)
             .map(|cap| {
-                match cap.name("line") {
-                    Some(l) => line = l.as_str().parse::<u32>().unwrap(),
-                    None => (),
+                if let Some(l) = cap.name("line") {
+                    line = l.as_str().parse::<usize>().unwrap();
                 }
                 let group = (
                     cap.name("off"),
@@ -55,26 +63,18 @@ impl From<&str> for PyLine {
                     cap.name("ra"),
                 );
                 match group {
-                    (Some(off), Some(bc), a, ra) => Some(BytecodeLine {
+                    (Some(off), Some(bc), a, ra) => Some(BytecodeBlock {
                         offset: off.as_str().parse::<u32>().unwrap(),
-                        bytecode: Bytecode::get(bc.as_str()),
-                        arg: if a.is_none() {
-                            None
-                        } else {
-                            a.unwrap().as_str().parse::<u32>().ok()
-                        },
-                        real_arg: if ra.is_none() {
-                            None
-                        } else {
-                            Some(ra.unwrap().as_str().to_string())
-                        },
+                        bytecode: BytecodeType::get(bc.as_str()),
+                        arg: a.map(|a| a.as_str().parse::<u32>().unwrap()),
+                        real_arg: ra.map(|ra| ra.as_str().to_string()),
                         jump_offset: None,
                     }),
                     _ => None,
                 }
             })
-            .collect::<Vec<Option<BytecodeLine>>>();
-        PyLine {
+            .collect::<Vec<Option<BytecodeBlock>>>();
+        PyObj {
             line,
             bytecode_lines,
         }
@@ -82,40 +82,12 @@ impl From<&str> for PyLine {
 }
 
 #[allow(unused)]
-fn parse_input(input: &str) -> Vec<PyLine> {
-    input
-        .trim()
-        .split("\n")
-        .collect::<Vec<&str>>()
-        .split(|line| line.trim().is_empty())
-        .map(|lines| PyLine::from(lines.join("\n").as_str()))
-        .collect::<Vec<PyLine>>()
-}
-
-#[allow(unused)]
-pub fn parse_file(file_name: &str) -> Vec<PyLine> {
-    let mut file = File::open(file_name).unwrap_or_else(|err| {
-        eprintln!(
-            "[{}] Application error: {err}",
-            "x".to_color_string(&ColorMode::from(FrontColor::Red)),
-            err = err
-                .to_string()
-                .to_color_string(&ColorMode::from(FrontColor::Red)),
-        );
-        std::process::exit(0);
-    });
-    let mut bytecode_string = String::new();
-    file.read_to_string(&mut bytecode_string).unwrap();
-    parse_input(&bytecode_string)
-}
-
-#[allow(unused)]
-impl PyLine {
-    fn to_python(&self) -> String {
-        let mut python_code = String::new();
-        let mut stack = vec![];
-        let mut now_retraction = 0;
-        let mut idx = 0;
+impl PyObj {
+    pub fn to_python(&self) -> String {
+        let mut python_code: String = String::new();
+        let mut stack: Vec<Option<String>> = Vec::new();
+        let mut now_retraction: u32 = 0;
+        let mut idx: usize = 0;
         loop {
             let this = self.bytecode_lines.get(idx);
             if this.is_none() {
@@ -128,67 +100,170 @@ impl PyLine {
             let real_arg = this.real_arg.clone();
             let jump_offset = this.jump_offset;
             match bytecode {
-                Bytecode::Load => {
-                    if real_arg.is_none() {
+                BytecodeType::Load => {
+                    if let Some(real_arg) = real_arg {
                         stack.push(None);
                     } else {
-                        stack.push(real_arg.clone());
+                        stack.push(Some(real_arg.unwrap()));
                     }
                 }
-                Bytecode::Push => stack.push(None),
-                Bytecode::Pop => {
+                BytecodeType::Push => stack.push(None),
+                BytecodeType::Pop => {
                     stack.pop();
                 }
-                Bytecode::Op => {
-                    let (left, right) = (stack.pop().unwrap(), stack.pop().unwrap());
+                BytecodeType::Op => {
+                    let right = stack.pop().unwrap().unwrap();
+                    let left = stack.pop().unwrap().unwrap();
                     let op = OP::from_str(real_arg.unwrap().as_str()).unwrap();
-                    stack.push(Some(
-                        op.get_expr(left.unwrap().as_str(), right.unwrap().as_str()),
-                    ));
+                    stack.push(Some(op.get_expr(&left, &right)));
                 }
+                BytecodeType::Call => {
+                    let mut args = vec![];
+                    let mut arg_str = String::new();
+                    let arg_count = arg.unwrap();
+                    // call 对应的arg是参数的个数
+                    for _ in 0..arg_count {
+                        args.push(stack.pop().unwrap().unwrap());
+                    }
+                    args.reverse(); // 逆序
+                    arg_str = args.join(", ");
+                    let func = stack.pop().unwrap().unwrap();
+                    stack.push(Some(format!("{}({})", func, arg_str)));
+                }
+                BytecodeType::Build(value_type) => {
+                    if arg.unwrap() == 0 {
+                        stack.push(Some(value_type.build(None)))
+                    } else {
+                        let mut args = vec![];
+                        for _ in 0..arg.unwrap() {
+                            args.push(stack.pop().unwrap().unwrap());
+                        }
+                        args.reverse();
+                        stack.push(Some(value_type.build(Some(args.join(", ").as_str()))));
+                    }
+                }
+                BytecodeType::Store => {
+                    let value = stack.pop().unwrap().unwrap();
+                    let name = stack.pop().unwrap().unwrap();
+                    stack.push(Some(format!("{} = {}", name, value)));
+                }
+                BytecodeType::Return => {}
                 _ => (),
             }
         }
     }
 }
 
-#[cfg(test)]
-mod test {
-    use super::*;
-    #[test]
-    fn test_regex() {
-        let py_line = PyLine::from(
-            r#" 1 >>             58 LOAD_NAME                2 (print)
-        60 LOAD_NAME                0 (arr)"
-        "#,
-        );
-        dbg!(py_line);
-        // assert!(false);
+pub trait ToPyObj {
+    fn to_pyobj(&self) -> Vec<PyObj>;
+}
+
+#[allow(unused)]
+impl ToPyObj for &str {
+    fn to_pyobj(&self) -> Vec<PyObj> {
+        let mut pyobj = self.trim()
+            .split('\n')
+            .collect::<Vec<&str>>()
+            .split(|line| line.trim().is_empty())
+            .map(|lines| PyObj::from(lines.join("\n").as_str()))
+            .collect::<Vec<PyObj>>();
+        pyobj.sort_by(|a, b| a.line.cmp(&b.line));
+        pyobj
     }
+}
 
-    #[test]
-    fn test_parser() {
-        let py_lines = parse_input(
-            r#"
-        1           2 BUILD_LIST               0
-                    4 LOAD_CONST               0 ((1, 2, 3, 'a', 'py'))
-                    6 LIST_EXTEND              1
-                    8 STORE_NAME               0 (arr)
+pub trait ToPythonScript {
+    fn to_pyscript(&self) -> Vec<PyScript>;
+}
 
-        2          10 LOAD_NAME                0 (arr)
-                   12 GET_ITER
-              >>   14 FOR_ITER                10 (to 38)
-                   18 STORE_NAME               1 (i)
-
-        3          20 PUSH_NULL
-                   22 LOAD_NAME                2 (print)
-                   24 LOAD_NAME                1 (i)
-                   26 CALL                     1
-                   34 POP_TOP
-                   36 JUMP_BACKWARD           12 (to 14)
-        "#,
-        );
-        dbg!(py_lines);
-        // assert!(false);
+#[allow(unused)]
+impl ToPythonScript for Vec<PyObj> {
+    fn to_pyscript(&self) -> Vec<PyScript> {
+        let mut pyscripts: Vec<PyScript> = Vec::new();
+        let mut line = 0;
+        let mut script = String::new();
+        for pyobj in self.iter() {
+            let pycode = pyobj.to_python();
+            pyscripts.push(PyScript {
+                line,
+                script: Some(pycode),
+            })
+        }
+        pyscripts
     }
+}
+
+// 正常输出到终端
+fn display_pycode_with_line(pyscripts: &[PyScript]) -> Result<()> {
+    for PyScript { line, script } in pyscripts.iter() {
+        print!(
+            "{:>17}: ",
+            line.to_string().green(),
+        );
+        if let Some(script) = script {
+            println!("{}", script);
+        }
+    }
+    Ok(())
+}
+
+// 重定向标准输出流时，不输出行号
+fn display_pycode_without_line(pyscripts: &[PyScript]) -> Result<()> {
+    for PyScript { script, .. } in pyscripts.iter() {
+        if let Some(script) = script {
+            println!("{}", script);
+        }
+    }
+    Ok(())
+}
+
+#[allow(unused)]
+pub fn display_pycode(pyscripts: &[PyScript]) -> Result<()> {
+    // 判断是否重定向了标准输出流
+    if atty::is(Stream::Stdout) {
+        display_pycode_with_line(pyscripts)?;
+    } else {
+        display_pycode_without_line(pyscripts)?;
+    }
+    Ok(())
+}
+
+#[allow(unused)]
+pub fn read_file(file_name: &str) -> Result<String> {
+    if !Path::new(file_name).exists() {
+        return Err(Error::new(
+            ErrorKind::NotFound,
+            format!("file {} not found", file_name),
+        ));
+    }
+    let mut file = File::open(file_name).unwrap_or_else(|err| {
+        eprintln!(
+            "[{}] Application error: {err}",
+            "x".red(),
+            err = err.to_string().red(),
+        );
+        panic!();
+    });
+    let mut content = String::new();
+    file.read_to_string(&mut content).unwrap();
+    Ok(content)
+}
+
+// 如果在args中指定了输出文件名，则尝试写入到指定文件中
+#[allow(unused)]
+pub fn write_file(file_name: &str, pyscripts: &[PyScript]) -> Result<()> {
+    if File::open(file_name).is_ok() {
+        return Err(Error::new(
+            ErrorKind::AlreadyExists,
+            format!("file {} already exists", file_name),
+        ));
+    }
+    let mut file = File::create(file_name)?;
+    for PyScript { line, script } in pyscripts.iter() {
+        if let Some(script) = script {
+            file.write_all(script.as_bytes())?;
+        }
+        file.write_all("\n".as_bytes())?;
+    }
+    Ok(())
 }
