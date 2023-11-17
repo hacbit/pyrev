@@ -27,10 +27,8 @@ fn main() -> std::io::Result<()> {
         )
         .get_matches();
 
-    let ifile = matches.get_one::<String>("file").unwrap();
-    let ofile = matches.get_one::<String>("output");
-    println!("ifile: {:?}", ifile);
-    println!("ofile: {:?}", ofile);
+    let ifile = matches.get_one::<PathBuf>("file").unwrap();
+    let ofile = matches.get_one::<PathBuf>("output");
     App::new(ifile).add(ofile).run().unwrap();
     Ok(())
 }

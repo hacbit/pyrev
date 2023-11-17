@@ -1,3 +1,4 @@
+use super::binary::Binary;
 use super::valuetype::ValueType;
 
 // 根据常见的BytecodeType指令做了简单的分类
@@ -6,10 +7,11 @@ pub enum BytecodeType {
     Load,             // 加载值
     Store,            // 存储值
     Build(ValueType), // 构建特定类型的值
+    Extend,           // 扩展
     Loop,             // 循环
     Jump,             // 跳转
     Function,         // 函数
-    Op,               // 操作符
+    Binary(Binary),   // 二元操作
     Call,             // 调用函数
     Return,           // 返回值
     Push,             // 压栈
@@ -30,14 +32,18 @@ impl BytecodeType {
             "STORE" => return BytecodeType::Store,
             "POP" => return BytecodeType::Pop,
             "PUSH" => return BytecodeType::Push,
-            "BUILD" => return BytecodeType::Build(ValueType::get(name_split[1])),
+            "BUILD" => return BytecodeType::Build(ValueType::get(name_split[1]).unwrap()),
+            "BINARY" => return BytecodeType::Binary(Binary::get(name_split[1]).unwrap()),
             "CALL" => return BytecodeType::Call,
             "RETURN" => return BytecodeType::Return,
             "JUMP" => return BytecodeType::Jump,
             "LOOP" => return BytecodeType::Loop,
             "NOP" => return BytecodeType::Nop,
-            "OP" => return BytecodeType::Op,
             _ => (),
+        }
+
+        if name.contains("EXTEND") {
+            return BytecodeType::Extend;
         }
 
         BytecodeType::None

@@ -1,23 +1,24 @@
 mod bytecode;
 use bytecode::utils::*;
 use std::io::Error;
+use std::path::PathBuf;
 
 type Result<T> = std::result::Result<T, Error>;
 
 pub struct App {
-    ifile: String,         // input file
-    ofile: Option<String>, // output file
+    ifile: PathBuf,         // input file
+    ofile: Option<PathBuf>, // output file
 }
 
 impl App {
-    pub fn new(ifile: &str) -> Self {
+    pub fn new(ifile: &PathBuf) -> Self {
         App {
             ifile: ifile.to_owned(),
             ofile: None,
         }
     }
 
-    pub fn add(&mut self, ofile: Option<&String>) -> &mut Self {
+    pub fn add(&mut self, ofile: Option<&PathBuf>) -> &mut Self {
         if let Some(ofile) = ofile {
             self.ofile = Some(ofile.clone());
         }

@@ -6,6 +6,7 @@ use regex::Regex;
 pub enum ValueType {
     Common, // 一般类型，包括int、float、str、bool等
     List,
+    Slice,
     Tuple,
     Set,
     Dict,
@@ -23,18 +24,24 @@ impl ValueType {
                 if value.is_none() {
                     return String::from("[]");
                 }
-                let value = Regex::new(r"\(.+\))")
+                let value = Regex::new(r"\((.+)\)")
                     .unwrap()
                     .captures(value.unwrap())
                     .and_then(|cap| cap.get(0))
                     .map_or("", |m| m.as_str());
                 format!("[{}]", value)
             }
+            ValueType::Slice => value
+                .unwrap()
+                .split(", ")
+                .collect::<Vec<&str>>()
+                .join(":")
+                .replace("None", ""),
             ValueType::Set => {
                 if value.is_none() {
                     return String::from("{}");
                 }
-                let value = Regex::new(r"\(.+\))")
+                let value = Regex::new(r"\((.+)\)")
                     .unwrap()
                     .captures(value.unwrap())
                     .and_then(|cap| cap.get(0))
@@ -46,7 +53,7 @@ impl ValueType {
                 if value.is_none() {
                     return String::from("{}");
                 }
-                let value = Regex::new(r"\(.+\))")
+                let value = Regex::new(r"\((.+)\)")
                     .unwrap()
                     .captures(value.unwrap())
                     .and_then(|cap| cap.get(0))
@@ -74,13 +81,14 @@ impl ValueType {
         }
     }
 
-    pub fn get(s: &str) -> ValueType {
+    pub fn get(s: &str) -> Option<ValueType> {
         match s.to_lowercase().as_str() {
-            "list" => ValueType::List,
-            "tuple" => ValueType::Tuple,
-            "set" => ValueType::Set,
-            "dict" => ValueType::Dict,
-            _ => ValueType::Common,
+            "list" => Some(ValueType::List),
+            "slice" => Some(ValueType::Slice),
+            "tuple" => Some(ValueType::Tuple),
+            "set" => Some(ValueType::Set),
+            "dict" => Some(ValueType::Dict),
+            _ => Some(ValueType::Common),
         }
     }
 }

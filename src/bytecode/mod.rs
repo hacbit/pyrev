@@ -12,6 +12,6 @@ pub mod valuetype;
 /*
 用来解释op操作
 */
-pub mod op;
+pub mod binary;
 
 pub mod utils;

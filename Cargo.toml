@@ -11,6 +11,7 @@ clippy = []
 atty = "0.2.14"
 clap = { version = "4.4.8", features = ["derive", "cargo"] }
 colored = "2.0.4"
+lazy_format = "2.0.0"
 lazy_static = "1.4.0"
 regex = "1.10.2"
 

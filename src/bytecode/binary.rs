@@ -1,35 +1,55 @@
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Binary {
+    Op,
+    Subscr,
+    Slice,
+}
+
+impl Binary {
+    pub fn get(s: &str) -> Option<Binary> {
+        match s.to_lowercase().as_str() {
+            "op" => Some(Binary::Op),
+            "subscr" => Some(Binary::Subscr),
+            "slice" => Some(Binary::Slice),
+            _ => None,
+        }
+    }
+}
+
 // 处理op操作， 比如加减乘除等
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum OP {
-    Add,   // +
-    Sub,   // -
-    Mul,   // *
-    Div,   // /
-    Mod,   // %
-    Xor,   // ^
-    Or,    // |
-    And,   // &
-    Not,   // ~
-    Eq,    // ==   Equal
-    Ne,    // !=   Not Equal
-    Gt,    // >    Greater than
-    Lt,    // <    Less than
-    Ge,    // >=   Greater than or equal to
-    Le,    // <=   Less than or equal to
-    AddEq, // +=
-    SubEq, // -=
-    MulEq, // *=
-    DivEq, // /=
-    ModEq, // %=
-    XorEq, // ^=
-    OrEq,  // |=
-    AndEq, // &=
-    NotEq, // ~=
+    Add,      // +
+    Sub,      // -
+    Mul,      // *
+    Div,      // /
+    Mod,      // %
+    Xor,      // ^
+    Or,       // |
+    And,      // &
+    Not,      // ~
+    FloorDiv, // //
+    Pow,      // **
+    Eq,       // ==   Equal
+    Ne,       // !=   Not Equal
+    Gt,       // >    Greater than
+    Lt,       // <    Less than
+    Ge,       // >=   Greater than or equal to
+    Le,       // <=   Less than or equal to
+    AddEq,    // +=
+    SubEq,    // -=
+    MulEq,    // *=
+    DivEq,    // /=
+    ModEq,    // %=
+    XorEq,    // ^=
+    OrEq,     // |=
+    AndEq,    // &=
+    NotEq,    // ~=
 }
 
 #[allow(unused)]
 impl OP {
-    pub fn from_str(s: &str) -> Option<OP> {
+    pub fn get(s: &str) -> Option<OP> {
         match s {
             "+" => Some(OP::Add),
             "-" => Some(OP::Sub),
@@ -40,6 +60,8 @@ impl OP {
             "|" => Some(OP::Or),
             "&" => Some(OP::And),
             "~" => Some(OP::Not),
+            "//" => Some(OP::FloorDiv),
+            "**" => Some(OP::Pow),
             "==" => Some(OP::Eq),
             "!=" => Some(OP::Ne),
             ">" => Some(OP::Gt),
@@ -70,6 +92,8 @@ impl OP {
             OP::Or => "|",
             OP::And => "&",
             OP::Not => "~",
+            OP::FloorDiv => "//",
+            OP::Pow => "**",
             OP::Eq => "==",
             OP::Ne => "!=",
             OP::Gt => ">",
