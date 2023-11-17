@@ -1,12 +1,12 @@
 use super::bytecode_type::BytecodeType;
 use super::op::OP;
 
-use colored::Colorize;
 use atty::Stream;
+use colored::Colorize;
 use regex::Regex;
 use std::fs::File;
-use std::path::Path;
 use std::io::{Error, ErrorKind, Read, Write};
+use std::path::Path;
 
 type Result<T> = std::result::Result<T, Error>;
 
@@ -161,7 +161,8 @@ pub trait ToPyObj {
 #[allow(unused)]
 impl ToPyObj for &str {
     fn to_pyobj(&self) -> Vec<PyObj> {
-        let mut pyobj = self.trim()
+        let mut pyobj = self
+            .trim()
             .split('\n')
             .collect::<Vec<&str>>()
             .split(|line| line.trim().is_empty())
@@ -196,10 +197,7 @@ impl ToPythonScript for Vec<PyObj> {
 // 正常输出到终端
 fn display_pycode_with_line(pyscripts: &[PyScript]) -> Result<()> {
     for PyScript { line, script } in pyscripts.iter() {
-        print!(
-            "{:>17}: ",
-            line.to_string().green(),
-        );
+        print!("{:>17}: ", line.to_string().green(),);
         if let Some(script) = script {
             println!("{}", script);
         }
