@@ -3,6 +3,9 @@ pub enum Binary {
     Op,
     Subscr,
     Slice,
+    Compare,
+    In,
+    Is,
 }
 
 impl Binary {
@@ -11,8 +14,42 @@ impl Binary {
             "op" => Some(Binary::Op),
             "subscr" => Some(Binary::Subscr),
             "slice" => Some(Binary::Slice),
+            "compare" => Some(Binary::Compare),
+            "contains" => Some(Binary::In),
+            "is" => Some(Binary::Is),
             _ => None,
         }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Unary {
+    Not,    // ! / not
+    Neg,    // -
+    Invert, // ~
+}
+
+#[allow(unused)]
+impl Unary {
+    pub fn get(s: &str) -> Option<Unary> {
+        match s.to_lowercase().as_str() {
+            "not" => Some(Unary::Not),
+            "negative" => Some(Unary::Neg),
+            "invert" => Some(Unary::Invert),
+            _ => None,
+        }
+    }
+
+    pub fn to_str(self) -> &'static str {
+        match self {
+            Unary::Not => "not ",
+            Unary::Neg => "-",
+            Unary::Invert => "~",
+        }
+    }
+
+    pub fn get_expr(&self, expr: &str) -> String {
+        format!("{}{}", self.to_str(), expr)
     }
 }
 
@@ -27,9 +64,10 @@ pub enum OP {
     Xor,      // ^
     Or,       // |
     And,      // &
-    Not,      // ~
     FloorDiv, // //
     Pow,      // **
+    LShift,   // <<
+    RShift,   // >>
     Eq,       // ==   Equal
     Ne,       // !=   Not Equal
     Gt,       // >    Greater than
@@ -44,7 +82,9 @@ pub enum OP {
     XorEq,    // ^=
     OrEq,     // |=
     AndEq,    // &=
-    NotEq,    // ~=
+    InvEq,    // ~=
+    LShiftEq, // <<=
+    RShiftEq, // >>=
 }
 
 #[allow(unused)]
@@ -59,9 +99,10 @@ impl OP {
             "^" => Some(OP::Xor),
             "|" => Some(OP::Or),
             "&" => Some(OP::And),
-            "~" => Some(OP::Not),
             "//" => Some(OP::FloorDiv),
             "**" => Some(OP::Pow),
+            "<<" => Some(OP::LShift),
+            ">>" => Some(OP::RShift),
             "==" => Some(OP::Eq),
             "!=" => Some(OP::Ne),
             ">" => Some(OP::Gt),
@@ -76,7 +117,9 @@ impl OP {
             "^=" => Some(OP::XorEq),
             "|=" => Some(OP::OrEq),
             "&=" => Some(OP::AndEq),
-            "~=" => Some(OP::NotEq),
+            "~=" => Some(OP::InvEq),
+            "<<=" => Some(OP::LShiftEq),
+            ">>=" => Some(OP::RShiftEq),
             _ => None,
         }
     }
@@ -91,9 +134,10 @@ impl OP {
             OP::Xor => "^",
             OP::Or => "|",
             OP::And => "&",
-            OP::Not => "~",
             OP::FloorDiv => "//",
             OP::Pow => "**",
+            OP::LShift => "<<",
+            OP::RShift => ">>",
             OP::Eq => "==",
             OP::Ne => "!=",
             OP::Gt => ">",
@@ -108,7 +152,9 @@ impl OP {
             OP::XorEq => "^=",
             OP::OrEq => "|=",
             OP::AndEq => "&=",
-            OP::NotEq => "~=",
+            OP::InvEq => "~=",
+            OP::LShiftEq => "<<=",
+            OP::RShiftEq => ">>=",
         }
     }
 

@@ -1,0 +1,537 @@
+  2           0 LOAD_CONST               0 (0)
+              2 LOAD_CONST               1 (('*',))
+              4 IMPORT_NAME              0 (base64)
+              6 IMPORT_STAR
+
+  3           8 LOAD_CONST               0 (0)
+             10 LOAD_CONST               2 (None)
+             12 IMPORT_NAME              1 (string)
+             14 STORE_NAME               1 (string)
+
+  5          16 LOAD_CONST               3 (<code object check at 0x000001D4BE733B30, file "<dis>", line 5>)
+             18 LOAD_CONST               4 ('check')
+             20 MAKE_FUNCTION            0
+             22 STORE_NAME               2 (check)
+
+ 15          24 LOAD_CONST               5 (<code object init at 0x000001D4BE733BE0, file "<dis>", line 15>)
+             26 LOAD_CONST               6 ('init')
+             28 MAKE_FUNCTION            0
+             30 STORE_NAME               3 (init)
+
+ 23          32 LOAD_CONST               7 (<code object fun at 0x000001D4BE733D40, file "<dis>", line 23>)
+             34 LOAD_CONST               8 ('fun')
+             36 MAKE_FUNCTION            0
+             38 STORE_NAME               4 (fun)
+
+ 32          40 LOAD_CONST               9 (<code object encrypt1 at 0x000001D4BE733EA0, file "<dis>", line 32>)
+             42 LOAD_CONST              10 ('encrypt1')
+             44 MAKE_FUNCTION            0
+             46 STORE_NAME               5 (encrypt1)
+
+ 44          48 LOAD_CONST              11 (<code object encrypt2 at 0x000001D4BE733C90, file "<dis>", line 44>)
+             50 LOAD_CONST              12 ('encrypt2')
+             52 MAKE_FUNCTION            0
+             54 STORE_NAME               6 (encrypt2)
+
+ 56          56 LOAD_CONST              13 (<code object encrypt at 0x000001D4BE73E0E0, file "<dis>", line 56>)
+             58 LOAD_CONST              14 ('encrypt')
+             60 MAKE_FUNCTION            0
+             62 STORE_NAME               7 (encrypt)
+
+ 68          64 LOAD_NAME                8 (__name__)
+             66 LOAD_CONST              15 ('__main__')
+             68 COMPARE_OP               2 (==)
+             70 POP_JUMP_IF_FALSE      206
+
+ 69          72 LOAD_NAME                9 (input)
+             74 LOAD_CONST              16 ('Please input your key:')
+             76 CALL_FUNCTION            1
+             78 STORE_NAME              10 (key)
+
+ 70          80 LOAD_NAME                2 (check)
+             82 LOAD_NAME               10 (key)
+             84 CALL_FUNCTION            1
+             86 LOAD_CONST              17 (1)
+             88 COMPARE_OP               2 (==)
+             90 POP_JUMP_IF_FALSE      102
+
+ 71          92 LOAD_NAME               11 (print)
+             94 LOAD_CONST              18 ('Right!')
+             96 CALL_FUNCTION            1
+             98 POP_TOP
+            100 JUMP_FORWARD            14 (to 116)
+
+ 73     >>  102 LOAD_NAME               11 (print)
+            104 LOAD_CONST              19 ('Wrong!')
+            106 CALL_FUNCTION            1
+            108 POP_TOP
+
+ 74         110 LOAD_NAME               12 (exit)
+            112 CALL_FUNCTION            0
+            114 POP_TOP
+
+ 75     >>  116 LOAD_NAME                9 (input)
+            118 LOAD_CONST              20 ('Please input your message:')
+            120 CALL_FUNCTION            1
+            122 STORE_NAME              13 (msg)
+
+ 76         124 LOAD_NAME                3 (init)
+            126 LOAD_NAME               10 (key)
+            128 CALL_FUNCTION            1
+            130 STORE_NAME              14 (box)
+
+ 77         132 LOAD_NAME                7 (encrypt)
+            134 LOAD_NAME               13 (msg)
+            136 LOAD_NAME               14 (box)
+            138 CALL_FUNCTION            2
+            140 STORE_NAME              15 (encode)
+
+ 78         142 LOAD_CONST              21 ('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/')
+            144 STORE_NAME              16 (string1)
+
+ 79         146 LOAD_CONST              22 ('YRiAOe4PlGvxaCoNj2ZgX+q8t/5Em6IUpM9FrVb7BKwsT1n3fSydhDWuQHJ0ckzL')
+            148 STORE_NAME              17 (string2)
+
+ 80         150 LOAD_NAME               18 (b64encode)
+            152 LOAD_NAME               19 (bytes)
+            154 LOAD_NAME               15 (encode)
+            156 CALL_FUNCTION            1
+            158 CALL_FUNCTION            1
+            160 LOAD_METHOD             20 (decode)
+            162 CALL_METHOD              0
+            164 LOAD_METHOD             21 (translate)
+            166 LOAD_NAME               22 (str)
+            168 LOAD_METHOD             23 (maketrans)
+            170 LOAD_NAME               16 (string1)
+            172 LOAD_NAME               17 (string2)
+            174 CALL_METHOD              2
+            176 CALL_METHOD              1
+            178 STORE_NAME              15 (encode)
+
+ 81         180 LOAD_NAME               15 (encode)
+            182 LOAD_CONST              23 ('mWGFL24R/RSZY3pzK9H4FOmFOnXJKyCjXWbZ7Ijy11GbCBukDrjsiPPFiYB=')
+            184 COMPARE_OP               2 (==)
+            186 POP_JUMP_IF_FALSE      198
+
+ 82         188 LOAD_NAME               11 (print)
+            190 LOAD_CONST              24 ('Congraduation!You get the right flag!')
+            192 CALL_FUNCTION            1
+            194 POP_TOP
+            196 JUMP_FORWARD             8 (to 206)
+
+ 84     >>  198 LOAD_NAME               11 (print)
+            200 LOAD_CONST              19 ('Wrong!')
+            202 CALL_FUNCTION            1
+            204 POP_TOP
+        >>  206 LOAD_CONST               2 (None)
+            208 RETURN_VALUE
+
+Disassembly of <code object check at 0x000001D4BE733B30, file "<dis>", line 5>:
+  6           0 BUILD_LIST               0
+              2 LOAD_CONST               1 ((78, 82, 81, 64, 80, 67, 125, 83, 96, 56, 121, 84, 61, 126, 81, 79, 79, 119, 38, 120, 39, 74, 112, 38, 44, 126, 103))
+              4 LIST_EXTEND              1
+              6 STORE_FAST               1 (x)
+
+  7           8 LOAD_GLOBAL              0 (len)
+             10 LOAD_FAST                0 (key)
+             12 CALL_FUNCTION            1
+             14 LOAD_GLOBAL              0 (len)
+             16 LOAD_FAST                1 (x)
+             18 CALL_FUNCTION            1
+             20 COMPARE_OP               3 (!=)
+             22 POP_JUMP_IF_FALSE       38
+
+  8          24 LOAD_GLOBAL              1 (print)
+             26 LOAD_CONST               2 ('Wrong length!')
+             28 CALL_FUNCTION            1
+             30 POP_TOP
+
+  9          32 LOAD_GLOBAL              2 (exit)
+             34 CALL_FUNCTION            0
+             36 POP_TOP
+
+ 10     >>   38 LOAD_GLOBAL              3 (range)
+             40 LOAD_GLOBAL              0 (len)
+             42 LOAD_FAST                0 (key)
+             44 CALL_FUNCTION            1
+             46 CALL_FUNCTION            1
+             48 GET_ITER
+        >>   50 FOR_ITER                34 (to 86)
+             52 STORE_FAST               2 (i)
+
+ 11          54 LOAD_GLOBAL              4 (ord)
+             56 LOAD_FAST                0 (key)
+             58 LOAD_FAST                2 (i)
+             60 BINARY_SUBSCR
+             62 CALL_FUNCTION            1
+             64 LOAD_FAST                2 (i)
+             66 BINARY_XOR
+             68 LOAD_FAST                1 (x)
+             70 LOAD_FAST                2 (i)
+             72 BINARY_SUBSCR
+             74 COMPARE_OP               3 (!=)
+             76 POP_JUMP_IF_FALSE       50
+
+ 12          78 POP_TOP
+             80 LOAD_CONST               3 (0)
+             82 RETURN_VALUE
+             84 JUMP_ABSOLUTE           50
+
+ 13     >>   86 LOAD_CONST               4 (1)
+             88 RETURN_VALUE
+
+Disassembly of <code object init at 0x000001D4BE733BE0, file "<dis>", line 15>:
+ 16           0 LOAD_GLOBAL              0 (list)
+              2 LOAD_GLOBAL              1 (range)
+              4 LOAD_CONST               1 (256)
+              6 CALL_FUNCTION            1
+              8 CALL_FUNCTION            1
+             10 STORE_FAST               1 (s_box)
+
+ 17          12 LOAD_CONST               2 (0)
+             14 STORE_FAST               2 (j)
+
+ 18          16 LOAD_GLOBAL              1 (range)
+             18 LOAD_CONST               1 (256)
+             20 CALL_FUNCTION            1
+             22 GET_ITER
+        >>   24 FOR_ITER                66 (to 92)
+             26 STORE_FAST               3 (i)
+
+ 19          28 LOAD_FAST                2 (j)
+             30 LOAD_FAST                1 (s_box)
+             32 LOAD_FAST                3 (i)
+             34 BINARY_SUBSCR
+             36 BINARY_ADD
+             38 LOAD_GLOBAL              2 (ord)
+             40 LOAD_FAST                0 (key)
+             42 LOAD_FAST                3 (i)
+             44 LOAD_GLOBAL              3 (len)
+             46 LOAD_FAST                0 (key)
+             48 CALL_FUNCTION            1
+             50 BINARY_MODULO
+             52 BINARY_SUBSCR
+             54 CALL_FUNCTION            1
+             56 BINARY_ADD
+             58 LOAD_CONST               1 (256)
+             60 BINARY_MODULO
+             62 STORE_FAST               2 (j)
+
+ 20          64 LOAD_FAST                1 (s_box)
+             66 LOAD_FAST                2 (j)
+             68 BINARY_SUBSCR
+             70 LOAD_FAST                1 (s_box)
+             72 LOAD_FAST                3 (i)
+             74 BINARY_SUBSCR
+             76 ROT_TWO
+             78 LOAD_FAST                1 (s_box)
+             80 LOAD_FAST                3 (i)
+             82 STORE_SUBSCR
+             84 LOAD_FAST                1 (s_box)
+             86 LOAD_FAST                2 (j)
+             88 STORE_SUBSCR
+             90 JUMP_ABSOLUTE           24
+
+ 21     >>   92 LOAD_FAST                1 (s_box)
+             94 RETURN_VALUE
+
+Disassembly of <code object fun at 0x000001D4BE733D40, file "<dis>", line 23>:
+ 24           0 LOAD_CONST               1 ("Just kidding, don't take it personally!")
+              2 STORE_FAST               1 (key)
+
+ 25           4 BUILD_LIST               0
+              6 STORE_FAST               2 (x)
+
+ 26           8 LOAD_GLOBAL              0 (range)
+             10 LOAD_GLOBAL              1 (len)
+             12 LOAD_FAST                0 (msg)
+             14 CALL_FUNCTION            1
+             16 CALL_FUNCTION            1
+             18 GET_ITER
+        >>   20 FOR_ITER                42 (to 64)
+             22 STORE_FAST               3 (i)
+
+ 27          24 LOAD_FAST                2 (x)
+             26 LOAD_METHOD              2 (append)
+             28 LOAD_GLOBAL              3 (ord)
+             30 LOAD_FAST                0 (msg)
+             32 LOAD_FAST                3 (i)
+             34 BINARY_SUBSCR
+             36 CALL_FUNCTION            1
+             38 LOAD_GLOBAL              3 (ord)
+             40 LOAD_FAST                1 (key)
+             42 LOAD_FAST                3 (i)
+             44 LOAD_GLOBAL              1 (len)
+             46 LOAD_FAST                1 (key)
+             48 CALL_FUNCTION            1
+             50 BINARY_MODULO
+             52 BINARY_SUBSCR
+             54 CALL_FUNCTION            1
+             56 BINARY_XOR
+             58 CALL_METHOD              1
+             60 POP_TOP
+             62 JUMP_ABSOLUTE           20
+
+ 28     >>   64 LOAD_GLOBAL              0 (range)
+             66 LOAD_GLOBAL              1 (len)
+             68 LOAD_FAST                2 (x)
+             70 CALL_FUNCTION            1
+             72 CALL_FUNCTION            1
+             74 GET_ITER
+        >>   76 FOR_ITER                20 (to 98)
+             78 STORE_FAST               3 (i)
+
+ 29          80 LOAD_FAST                2 (x)
+             82 LOAD_FAST                3 (i)
+             84 DUP_TOP_TWO
+             86 BINARY_SUBSCR
+             88 LOAD_FAST                3 (i)
+             90 INPLACE_XOR
+             92 ROT_THREE
+             94 STORE_SUBSCR
+             96 JUMP_ABSOLUTE           76
+
+ 30     >>   98 LOAD_FAST                2 (x)
+            100 RETURN_VALUE
+
+Disassembly of <code object encrypt1 at 0x000001D4BE733EA0, file "<dis>", line 32>:
+ 33           0 BUILD_LIST               0
+              2 STORE_FAST               2 (x)
+
+ 34           4 LOAD_CONST               1 (0)
+              6 STORE_FAST               3 (i)
+
+ 35           8 LOAD_CONST               1 (0)
+             10 STORE_FAST               4 (j)
+
+ 36          12 LOAD_GLOBAL              0 (range)
+             14 LOAD_GLOBAL              1 (len)
+             16 LOAD_FAST                0 (msg)
+             18 CALL_FUNCTION            1
+             20 CALL_FUNCTION            1
+             22 GET_ITER
+        >>   24 FOR_ITER               104 (to 130)
+             26 STORE_FAST               5 (k)
+
+ 37          28 LOAD_FAST                3 (i)
+             30 LOAD_CONST               2 (1)
+             32 BINARY_ADD
+             34 LOAD_CONST               3 (256)
+             36 BINARY_MODULO
+             38 STORE_FAST               3 (i)
+
+ 38          40 LOAD_FAST                4 (j)
+             42 LOAD_FAST                1 (s_box)
+             44 LOAD_FAST                3 (i)
+             46 BINARY_SUBSCR
+             48 BINARY_ADD
+             50 LOAD_CONST               3 (256)
+             52 BINARY_MODULO
+             54 STORE_FAST               4 (j)
+
+ 39          56 LOAD_FAST                1 (s_box)
+             58 LOAD_FAST                4 (j)
+             60 BINARY_SUBSCR
+             62 LOAD_FAST                1 (s_box)
+             64 LOAD_FAST                3 (i)
+             66 BINARY_SUBSCR
+             68 ROT_TWO
+             70 LOAD_FAST                1 (s_box)
+             72 LOAD_FAST                3 (i)
+             74 STORE_SUBSCR
+             76 LOAD_FAST                1 (s_box)
+             78 LOAD_FAST                4 (j)
+             80 STORE_SUBSCR
+
+ 40          82 LOAD_FAST                1 (s_box)
+             84 LOAD_FAST                3 (i)
+             86 BINARY_SUBSCR
+             88 LOAD_FAST                1 (s_box)
+             90 LOAD_FAST                4 (j)
+             92 BINARY_SUBSCR
+             94 BINARY_ADD
+             96 LOAD_CONST               3 (256)
+             98 BINARY_MODULO
+            100 STORE_FAST               6 (t)
+
+ 41         102 LOAD_FAST                2 (x)
+            104 LOAD_METHOD              2 (append)
+            106 LOAD_GLOBAL              3 (ord)
+            108 LOAD_FAST                0 (msg)
+            110 LOAD_FAST                5 (k)
+            112 BINARY_SUBSCR
+            114 CALL_FUNCTION            1
+            116 LOAD_FAST                1 (s_box)
+            118 LOAD_FAST                6 (t)
+            120 BINARY_SUBSCR
+            122 BINARY_XOR
+            124 CALL_METHOD              1
+            126 POP_TOP
+            128 JUMP_ABSOLUTE           24
+
+ 42     >>  130 LOAD_FAST                2 (x)
+            132 RETURN_VALUE
+
+Disassembly of <code object encrypt2 at 0x000001D4BE733C90, file "<dis>", line 44>:
+ 45           0 BUILD_LIST               0
+              2 STORE_FAST               3 (x)
+
+ 46           4 LOAD_CONST               1 (0)
+              6 STORE_FAST               4 (i)
+
+ 47           8 LOAD_CONST               1 (0)
+             10 STORE_FAST               5 (j)
+
+ 48          12 LOAD_GLOBAL              0 (range)
+             14 LOAD_GLOBAL              1 (len)
+             16 LOAD_FAST                0 (msg)
+             18 CALL_FUNCTION            1
+             20 CALL_FUNCTION            1
+             22 GET_ITER
+        >>   24 FOR_ITER               116 (to 142)
+             26 STORE_FAST               6 (k)
+
+ 49          28 LOAD_FAST                4 (i)
+             30 LOAD_CONST               2 (1)
+             32 BINARY_ADD
+             34 LOAD_CONST               3 (256)
+             36 BINARY_MODULO
+             38 STORE_FAST               4 (i)
+
+ 50          40 LOAD_FAST                5 (j)
+             42 LOAD_FAST                1 (s_box)
+             44 LOAD_FAST                4 (i)
+             46 BINARY_SUBSCR
+             48 BINARY_ADD
+             50 LOAD_CONST               3 (256)
+             52 BINARY_MODULO
+             54 STORE_FAST               5 (j)
+
+ 51          56 LOAD_FAST                1 (s_box)
+             58 LOAD_FAST                5 (j)
+             60 BINARY_SUBSCR
+             62 LOAD_FAST                1 (s_box)
+             64 LOAD_FAST                4 (i)
+             66 BINARY_SUBSCR
+             68 ROT_TWO
+             70 LOAD_FAST                1 (s_box)
+             72 LOAD_FAST                4 (i)
+             74 STORE_SUBSCR
+             76 LOAD_FAST                1 (s_box)
+             78 LOAD_FAST                5 (j)
+             80 STORE_SUBSCR
+
+ 52          82 LOAD_FAST                1 (s_box)
+             84 LOAD_FAST                4 (i)
+             86 BINARY_SUBSCR
+             88 LOAD_FAST                1 (s_box)
+             90 LOAD_FAST                5 (j)
+             92 BINARY_SUBSCR
+             94 BINARY_ADD
+             96 LOAD_CONST               3 (256)
+             98 BINARY_MODULO
+            100 STORE_FAST               7 (t)
+
+ 53         102 LOAD_FAST                3 (x)
+            104 LOAD_METHOD              2 (append)
+            106 LOAD_GLOBAL              3 (ord)
+            108 LOAD_FAST                0 (msg)
+            110 LOAD_FAST                6 (k)
+            112 BINARY_SUBSCR
+            114 CALL_FUNCTION            1
+            116 LOAD_FAST                1 (s_box)
+            118 LOAD_FAST                7 (t)
+            120 BINARY_SUBSCR
+            122 BINARY_XOR
+            124 LOAD_GLOBAL              3 (ord)
+            126 LOAD_FAST                2 (key)
+            128 LOAD_FAST                4 (i)
+            130 BINARY_SUBSCR
+            132 CALL_FUNCTION            1
+            134 BINARY_XOR
+            136 CALL_METHOD              1
+            138 POP_TOP
+            140 JUMP_ABSOLUTE           24
+
+ 54     >>  142 LOAD_FAST                3 (x)
+            144 RETURN_VALUE
+
+Disassembly of <code object encrypt at 0x000001D4BE73E0E0, file "<dis>", line 56>:
+ 57           0 BUILD_LIST               0
+              2 STORE_FAST               2 (x)
+
+ 58           4 LOAD_CONST               1 (0)
+              6 STORE_FAST               3 (i)
+
+ 59           8 LOAD_CONST               1 (0)
+             10 STORE_FAST               4 (j)
+
+ 60          12 LOAD_GLOBAL              0 (range)
+             14 LOAD_GLOBAL              1 (len)
+             16 LOAD_FAST                0 (msg)
+             18 CALL_FUNCTION            1
+             20 CALL_FUNCTION            1
+             22 GET_ITER
+        >>   24 FOR_ITER               108 (to 134)
+             26 STORE_FAST               5 (k)
+
+ 61          28 LOAD_FAST                3 (i)
+             30 LOAD_CONST               2 (1)
+             32 BINARY_ADD
+             34 LOAD_CONST               3 (256)
+             36 BINARY_MODULO
+             38 STORE_FAST               3 (i)
+
+ 62          40 LOAD_FAST                4 (j)
+             42 LOAD_FAST                1 (s_box)
+             44 LOAD_FAST                3 (i)
+             46 BINARY_SUBSCR
+             48 BINARY_ADD
+             50 LOAD_CONST               3 (256)
+             52 BINARY_MODULO
+             54 STORE_FAST               4 (j)
+
+ 63          56 LOAD_FAST                1 (s_box)
+             58 LOAD_FAST                4 (j)
+             60 BINARY_SUBSCR
+             62 LOAD_FAST                1 (s_box)
+             64 LOAD_FAST                3 (i)
+             66 BINARY_SUBSCR
+             68 ROT_TWO
+             70 LOAD_FAST                1 (s_box)
+             72 LOAD_FAST                3 (i)
+             74 STORE_SUBSCR
+             76 LOAD_FAST                1 (s_box)
+             78 LOAD_FAST                4 (j)
+             80 STORE_SUBSCR
+
+ 64          82 LOAD_FAST                1 (s_box)
+             84 LOAD_FAST                3 (i)
+             86 BINARY_SUBSCR
+             88 LOAD_FAST                1 (s_box)
+             90 LOAD_FAST                4 (j)
+             92 BINARY_SUBSCR
+             94 BINARY_ADD
+             96 LOAD_CONST               3 (256)
+             98 BINARY_MODULO
+            100 STORE_FAST               6 (t)
+
+ 65         102 LOAD_FAST                2 (x)
+            104 LOAD_METHOD              2 (append)
+            106 LOAD_GLOBAL              3 (ord)
+            108 LOAD_FAST                0 (msg)
+            110 LOAD_FAST                5 (k)
+            112 BINARY_SUBSCR
+            114 CALL_FUNCTION            1
+            116 LOAD_FAST                1 (s_box)
+            118 LOAD_FAST                6 (t)
+            120 BINARY_SUBSCR
+            122 BINARY_XOR
+            124 LOAD_FAST                3 (i)
+            126 BINARY_XOR
+            128 CALL_METHOD              1
+            130 POP_TOP
+            132 JUMP_ABSOLUTE           24
+
+ 66     >>  134 LOAD_FAST                2 (x)
+            136 RETURN_VALUE

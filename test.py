@@ -1,9 +1,2 @@
-a = [1, 2, 4, 5, 3, 7]
-a[2:4]
-a[2:]
-a[:4]
-a[:]
-a[::2]
-a[::-1]
-a[1:5:2]
-a[5]
+from pwn import *
+import py_compile as pc

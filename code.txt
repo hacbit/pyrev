@@ -1,60 +1,13 @@
   0           0 RESUME                   0
 
-  1           2 BUILD_LIST               0
-              4 LOAD_CONST               0 ((1, 2, 4, 5, 3, 7))
-              6 LIST_EXTEND              1
-              8 STORE_NAME               0 (a)
+  1           2 LOAD_CONST               0 (0)
+              4 LOAD_CONST               1 (('*',))
+              6 IMPORT_NAME              0 (pwn)
+              8 CALL_INTRINSIC_1         2 (INTRINSIC_IMPORT_STAR)
+             10 POP_TOP
 
-  2          10 LOAD_NAME                0 (a)
-             12 LOAD_CONST               1 (2)
-             14 LOAD_CONST               2 (4)
-             16 BINARY_SLICE
-             18 POP_TOP
-
-  3          20 LOAD_NAME                0 (a)
-             22 LOAD_CONST               1 (2)
-             24 LOAD_CONST               3 (None)
-             26 BINARY_SLICE
-             28 POP_TOP
-
-  4          30 LOAD_NAME                0 (a)
-             32 LOAD_CONST               3 (None)
-             34 LOAD_CONST               2 (4)
-             36 BINARY_SLICE
-             38 POP_TOP
-
-  5          40 LOAD_NAME                0 (a)
-             42 LOAD_CONST               3 (None)
-             44 LOAD_CONST               3 (None)
-             46 BINARY_SLICE
-             48 POP_TOP
-
-  6          50 LOAD_NAME                0 (a)
-             52 LOAD_CONST               3 (None)
-             54 LOAD_CONST               3 (None)
-             56 LOAD_CONST               1 (2)
-             58 BUILD_SLICE              3
-             60 BINARY_SUBSCR
-             64 POP_TOP
-
-  7          66 LOAD_NAME                0 (a)
-             68 LOAD_CONST               3 (None)
-             70 LOAD_CONST               3 (None)
-             72 LOAD_CONST               4 (-1)
-             74 BUILD_SLICE              3
-             76 BINARY_SUBSCR
-             80 POP_TOP
-
-  8          82 LOAD_NAME                0 (a)
-             84 LOAD_CONST               5 (1)
-             86 LOAD_CONST               6 (5)
-             88 LOAD_CONST               1 (2)
-             90 BUILD_SLICE              3
-             92 BINARY_SUBSCR
-             96 POP_TOP
-
-  9          98 LOAD_NAME                0 (a)
-            100 LOAD_CONST               6 (5)
-            102 BINARY_SUBSCR
-            106 POP_TOP
-            108 RETURN_CONST             3 (None)
+  2          12 LOAD_CONST               0 (0)
+             14 LOAD_CONST               2 (None)
+             16 IMPORT_NAME              1 (py_compile)
+             18 STORE_NAME               2 (pc)
+             20 RETURN_CONST             2 (None)

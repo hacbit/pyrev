@@ -41,7 +41,7 @@ impl From<&str> for PyObj {
             ([\s>]+)?
             (?P<off>\d+)        # offset
             [\s+]
-            (?P<bc>[A-Z_]+)     # bytecode
+            (?P<bc>[A-Z0-9_]+)     # bytecode
             ([\ ]+)?
             (?P<a>\d+)?         # arg   (optional)
             [\s+]?
@@ -87,15 +87,12 @@ impl PyObj {
         let mut python_code: String = String::new();
         let mut stack: Vec<Option<String>> = Vec::new();
         let mut now_retraction: u32 = 0;
+        let mut is_import = false;
         let mut idx: usize = 0;
         loop {
             let this = self.bytecode_lines.get(idx);
             if this.is_none() {
-                break stack
-                    .into_iter()
-                    .flatten()
-                    .collect::<Vec<String>>()
-                    .join("\n");
+                break stack.pop().unwrap().unwrap();
             }
             let this = this.unwrap().as_ref().unwrap();
             let offset = this.offset;
@@ -103,7 +100,7 @@ impl PyObj {
             let arg = this.arg;
             let real_arg = this.real_arg.clone();
             let jump_offset = this.jump_offset;
-
+            //println!("stack: {:?}", stack);
             match bytecode {
                 BytecodeType::Load => {
                     if let Some(real_arg) = real_arg {
@@ -116,8 +113,12 @@ impl PyObj {
                 BytecodeType::Pop => {
                     stack.pop();
                 } */
+                BytecodeType::Unary(unary) => {
+                    let expr = stack.pop().unwrap().unwrap();
+                    stack.push(Some(unary.get_expr(&expr)));
+                }
                 BytecodeType::Binary(binary) => match binary {
-                    Binary::Op => {
+                    Binary::Op | Binary::Compare => {
                         let op = OP::get(real_arg.unwrap().as_str()).unwrap();
                         let right = stack.pop().unwrap().unwrap();
                         let left = stack.pop().unwrap().unwrap();
@@ -140,6 +141,21 @@ impl PyObj {
                         let target = stack.pop().unwrap().unwrap();
                         stack.push(Some(format!("{}[{}:{}]", target, start, end)));
                     }
+                    /*
+                    当 IS_OP 或者 CONTAINS_OP 的 arg 为 0 时，表示in/is，为1时表示 not in/is not
+                     */
+                    Binary::In => {
+                        let op = if arg.unwrap() == 0 { "in" } else { "not in" };
+                        let right = stack.pop().unwrap().unwrap();
+                        let left = stack.pop().unwrap().unwrap();
+                        stack.push(Some(format!("{} {} {}", left, op, right)));
+                    }
+                    Binary::Is => {
+                        let op = if arg.unwrap() == 0 { "is" } else { "is not" };
+                        let right = stack.pop().unwrap().unwrap();
+                        let left = stack.pop().unwrap().unwrap();
+                        stack.push(Some(format!("{} {} {}", left, op, right)));
+                    } // END BINARY
                 },
                 BytecodeType::Call => {
                     let mut args = vec![];
@@ -167,6 +183,23 @@ impl PyObj {
                         stack.push(Some(value_type.build(Some(args.join(", ").as_str()))));
                     }
                 }
+                BytecodeType::Import(import_type) => {
+                    is_import = true;
+                    let old_expr = stack.pop().unwrap().unwrap_or_default();
+                    let re = Regex::new(r"import (?P<module>.+)")
+                        .unwrap()
+                        .captures(&old_expr);
+                    let mut expr = if let Some(caps) = re {
+                        old_expr + ", " + real_arg.unwrap().as_str()
+                    } else {
+                        old_expr + " " + &import_type.get_expr(real_arg.unwrap().as_str())
+                    };
+
+                    if expr == "None" {
+                        expr.clear();
+                    }
+                    stack.push(Some(expr));
+                }
                 BytecodeType::Extend => {
                     // Only LIST_EXTEND
                     let etn = stack.pop().unwrap().unwrap();
@@ -176,9 +209,46 @@ impl PyObj {
                 BytecodeType::Store => {
                     let value = stack.pop().unwrap().unwrap();
                     let name = real_arg.unwrap();
-                    stack.push(Some(format!("{} = {}", name, value)));
+                    if is_import {
+                        let mut expr = value.clone();
+                        if !expr.contains("import") {
+                            expr = expr.replace("from", "import");
+                        }
+                        if !expr.starts_with("import") || !expr.contains("from") {
+                            let re = Regex::new(r"([import|from]+ .+)").unwrap().captures(&expr);
+                            if let Some(cap) = re {
+                                expr = cap[1].to_string();
+                            }
+                        }
+                        if expr
+                            .split_whitespace()
+                            .collect::<Vec<&str>>()
+                            .pop()
+                            .unwrap()
+                            != name
+                        {
+                            expr.push_str(&format!(" as {}", &name));
+                        }
+                        stack.push(Some(expr));
+                    } else {
+                        stack.push(Some(format!("{} = {}", name, value)));
+                    }
                 }
                 BytecodeType::Return => {}
+                // Other 是不稳定模块， 懒得分类或者不好分类的，塞了一些不常用的指令
+                BytecodeType::Other => {
+                    println!("real_arg: {:?}", real_arg);
+                    if let Some("INTRINSIC_IMPORT_STAR") = real_arg.as_deref() {
+                        let expr = stack.pop().unwrap().unwrap();
+                        let re = Regex::new(r"from (?P<module>.+)")
+                            .unwrap()
+                            .captures(&expr);
+                        if let Some(caps) = re {
+                            println!("caps: {:?}", caps);
+                            stack.push(Some(format!("from {} import *", &caps["module"])));
+                        }
+                    }
+                }
                 _ => (),
             }
             idx += 1;
@@ -329,64 +399,18 @@ mod test {
         let content = r#"
         0           0 RESUME                   0
 
-        1           2 BUILD_LIST               0
-                    4 LOAD_CONST               0 ((1, 2, 4, 5, 3, 7))
-                    6 LIST_EXTEND              1
-                    8 STORE_NAME               0 (a)
+        1           2 LOAD_CONST               0 (0)
+                    4 LOAD_CONST               1 (('*',))
+                    6 IMPORT_NAME              0 (pwn)
+                    8 CALL_INTRINSIC_1         2 (INTRINSIC_IMPORT_STAR)
+                   10 POP_TOP
       
-        2          10 LOAD_NAME                0 (a)
-                   12 LOAD_CONST               1 (2)
-                   14 LOAD_CONST               2 (4)
-                   16 BINARY_SLICE
-                   18 POP_TOP
+        2          12 LOAD_CONST               0 (0)
+                   14 LOAD_CONST               2 (None)
+                   16 IMPORT_NAME              1 (py_compile)
+                   18 STORE_NAME               2 (pc)
+                   20 RETURN_CONST             2 (None)
       
-        3          20 LOAD_NAME                0 (a)
-                   22 LOAD_CONST               1 (2)
-                   24 LOAD_CONST               3 (None)
-                   26 BINARY_SLICE
-                   28 POP_TOP
-      
-        4          30 LOAD_NAME                0 (a)
-                   32 LOAD_CONST               3 (None)
-                   34 LOAD_CONST               2 (4)
-                   36 BINARY_SLICE
-                   38 POP_TOP
-      
-        5          40 LOAD_NAME                0 (a)
-                   42 LOAD_CONST               3 (None)
-                   44 LOAD_CONST               3 (None)
-                   46 BINARY_SLICE
-                   48 POP_TOP
-      
-        6          50 LOAD_NAME                0 (a)
-                   52 LOAD_CONST               3 (None)
-                   54 LOAD_CONST               3 (None)
-                   56 LOAD_CONST               1 (2)
-                   58 BUILD_SLICE              3
-                   60 BINARY_SUBSCR
-                   64 POP_TOP
-      
-        7          66 LOAD_NAME                0 (a)
-                   68 LOAD_CONST               3 (None)
-                   70 LOAD_CONST               3 (None)
-                   72 LOAD_CONST               4 (-1)
-                   74 BUILD_SLICE              3
-                   76 BINARY_SUBSCR
-                   80 POP_TOP
-      
-        8          82 LOAD_NAME                0 (a)
-                   84 LOAD_CONST               5 (1)
-                   86 LOAD_CONST               6 (5)
-                   88 LOAD_CONST               1 (2)
-                   90 BUILD_SLICE              3
-                   92 BINARY_SUBSCR
-                   96 POP_TOP
-      
-        9          98 LOAD_NAME                0 (a)
-                  100 LOAD_CONST               6 (5)
-                  102 BINARY_SUBSCR
-                  106 POP_TOP
-                  108 RETURN_CONST             3 (None)
                     "#;
         let pyobjs = content.to_pyobj();
         dbg!(pyobjs);
