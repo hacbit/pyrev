@@ -1,9 +1,9 @@
 mod bytecode;
 use bytecode::utils::*;
-use std::io::Error;
+use std::error::Error;
 use std::path::PathBuf;
 
-type Result<T> = std::result::Result<T, Error>;
+type Result<T> = std::result::Result<T, Box<dyn Error>>;
 
 pub struct App {
     ifile: PathBuf,         // input file
@@ -26,7 +26,9 @@ impl App {
     }
 
     pub fn run(&self) -> Result<()> {
-        let pyscript = read_file(&self.ifile)?.as_str().to_pyobj().to_pyscript();
+        let pyscript = PyCodeString::from(read_file(&self.ifile)?)
+            .to_pyobjs()
+            .to_pyscript();
         if let Some(ofile) = &self.ofile {
             write_file(ofile, &pyscript)
         } else {

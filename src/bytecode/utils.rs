@@ -1,28 +1,29 @@
-use super::binary::*;
-use super::bytecode_type::BytecodeType;
+use super::types::*;
 
 use atty::Stream;
 use colored::Colorize;
 use lazy_format::lazy_format;
 use regex::Regex;
+use std::collections::HashMap;
 use std::fs::File;
-use std::io::{Error, ErrorKind, Read, Write};
+use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 
-type Result<T> = std::result::Result<T, Error>;
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct BytecodeLine {
-    offset: u32,
+    offset: usize,
     bytecode: BytecodeType,
-    arg: Option<u32>,
+    arg: Option<usize>,
     real_arg: Option<String>,
-    jump_offset: Option<u32>,
+    jump_offset: Option<usize>,
 }
 
 #[derive(Debug)]
 pub struct PyObj {
     line: usize,
+    retractions: usize,
     bytecode_lines: Vec<Option<BytecodeLine>>,
 }
 
@@ -32,20 +33,27 @@ pub struct PyScript {
     script: Option<String>,
 }
 
-#[allow(unused)]
+impl Iterator for PyObj {
+    type Item = PyObj;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        None
+    }
+}
+
 impl From<&str> for PyObj {
     fn from(py_line_str: &str) -> Self {
         let re = Regex::new(
             r#"(?x)
-            (?P<line>\d+)?      # line  (optional)
+            (?P<line>\d+)?          # line  (optional)
             ([\s>]+)?
-            (?P<off>\d+)        # offset
+            (?P<off>\d+)            # offset
             [\s+]
-            (?P<bc>[A-Z0-9_]+)     # bytecode
+            (?P<bc>[A-Z0-9_]+)      # bytecode
             ([\ ]+)?
-            (?P<a>\d+)?         # arg   (optional)
+            (?P<a>\d+)?             # arg   (optional)
             [\s+]?
-            (\((?P<ra>.+)\))?   # real arg  (optional)
+            (\((?P<ra>.+)\))?       # real arg  (optional)
             "#,
         )
         .unwrap();
@@ -54,7 +62,7 @@ impl From<&str> for PyObj {
             .captures_iter(py_line_str)
             .map(|cap| {
                 if let Some(l) = cap.name("line") {
-                    line = l.as_str().parse::<usize>().unwrap();
+                    line = l.as_str().parse::<usize>().unwrap_or(0)
                 }
                 let group = (
                     cap.name("off"),
@@ -64,9 +72,9 @@ impl From<&str> for PyObj {
                 );
                 match group {
                     (Some(off), Some(bc), a, ra) => Some(BytecodeLine {
-                        offset: off.as_str().parse::<u32>().unwrap(),
+                        offset: off.as_str().parse::<usize>().unwrap(),
                         bytecode: BytecodeType::get(bc.as_str()),
-                        arg: a.map(|a| a.as_str().parse::<u32>().unwrap()),
+                        arg: a.map(|a| a.as_str().parse::<usize>().unwrap()),
                         real_arg: ra.map(|ra| ra.as_str().to_string()),
                         jump_offset: None,
                     }),
@@ -76,18 +84,16 @@ impl From<&str> for PyObj {
             .collect::<Vec<Option<BytecodeLine>>>();
         PyObj {
             line,
+            retractions: 0,
             bytecode_lines,
         }
     }
 }
 
-#[allow(unused)]
 impl PyObj {
     pub fn to_python(&self) -> String {
-        let mut python_code: String = String::new();
         let mut stack: Vec<Option<String>> = Vec::new();
-        let mut now_retraction: u32 = 0;
-        let mut is_import = false;
+        // let mut is_import = false;
         let mut idx: usize = 0;
         loop {
             let this = self.bytecode_lines.get(idx);
@@ -95,16 +101,18 @@ impl PyObj {
                 break stack.pop().unwrap().unwrap();
             }
             let this = this.unwrap().as_ref().unwrap();
-            let offset = this.offset;
             let bytecode = this.bytecode;
             let arg = this.arg;
             let real_arg = this.real_arg.clone();
-            let jump_offset = this.jump_offset;
-            //println!("stack: {:?}", stack);
+            // println!("stack: {:?}", stack);
             match bytecode {
                 BytecodeType::Load => {
                     if let Some(real_arg) = real_arg {
-                        stack.push(Some(real_arg));
+                        if real_arg == "None" {
+                            stack.push(None);
+                        } else {
+                            stack.push(Some(real_arg));
+                        }
                     } else {
                         stack.push(None);
                     }
@@ -130,14 +138,14 @@ impl PyObj {
                         stack.push(Some(format!("{}[{}]", target, idx)));
                     }
                     Binary::Slice => {
-                        let mut end = stack.pop().unwrap().unwrap();
-                        let mut start = stack.pop().unwrap().unwrap();
-                        if start == "None" {
+                        let end = stack.pop().unwrap().unwrap();
+                        let start = stack.pop().unwrap().unwrap();
+                        /* if start == "None" {
                             start.clear();
                         }
                         if end == "None" {
                             end.clear();
-                        }
+                        } */
                         let target = stack.pop().unwrap().unwrap();
                         stack.push(Some(format!("{}[{}:{}]", target, start, end)));
                     }
@@ -159,7 +167,6 @@ impl PyObj {
                 },
                 BytecodeType::Call => {
                     let mut args = vec![];
-                    let mut arg_str = String::new();
                     let arg_count = arg.unwrap();
 
                     // call 对应的arg是参数的个数
@@ -167,7 +174,7 @@ impl PyObj {
                         args.push(stack.pop().unwrap().unwrap());
                     }
                     args.reverse(); // 逆序
-                    arg_str = args.join(", ");
+                    let arg_str = args.join(", ");
                     let func = stack.pop().unwrap().unwrap();
                     stack.push(Some(format!("{}({})", func, arg_str)));
                 }
@@ -184,21 +191,38 @@ impl PyObj {
                     }
                 }
                 BytecodeType::Import(import_type) => {
-                    is_import = true;
-                    let old_expr = stack.pop().unwrap().unwrap_or_default();
-                    let re = Regex::new(r"import (?P<module>.+)")
-                        .unwrap()
-                        .captures(&old_expr);
-                    let mut expr = if let Some(caps) = re {
-                        old_expr + ", " + real_arg.unwrap().as_str()
+                    let old_expr = stack.pop().unwrap();
+                    if let Some(old_expr) = old_expr {
+                        match import_type {
+                            ImportType::ImportName => {
+                                stack.push(Some(format!("import {}", real_arg.unwrap())))
+                            }
+                            ImportType::ImportFrom => {
+                                if old_expr.starts_with("import") {
+                                    let import_name = old_expr
+                                        .split_whitespace()
+                                        .collect::<Vec<&str>>()
+                                        .pop()
+                                        .unwrap();
+                                    if import_name.split('.').collect::<Vec<&str>>().pop().unwrap()
+                                        != real_arg.as_ref().unwrap()
+                                    {
+                                        stack.push(Some(format!(
+                                            "from {} import {}",
+                                            import_name,
+                                            real_arg.unwrap()
+                                        )));
+                                    } else {
+                                        stack.push(Some(old_expr))
+                                    }
+                                } else {
+                                    stack.push(Some(format!("{}, {}", old_expr, real_arg.unwrap())))
+                                }
+                            }
+                        }
                     } else {
-                        old_expr + " " + &import_type.get_expr(real_arg.unwrap().as_str())
-                    };
-
-                    if expr == "None" {
-                        expr.clear();
+                        stack.push(Some(format!("import {}", real_arg.unwrap())))
                     }
-                    stack.push(Some(expr));
                 }
                 BytecodeType::Extend => {
                     // Only LIST_EXTEND
@@ -209,27 +233,17 @@ impl PyObj {
                 BytecodeType::Store => {
                     let value = stack.pop().unwrap().unwrap();
                     let name = real_arg.unwrap();
-                    if is_import {
-                        let mut expr = value.clone();
-                        if !expr.contains("import") {
-                            expr = expr.replace("from", "import");
-                        }
-                        if !expr.starts_with("import") || !expr.contains("from") {
-                            let re = Regex::new(r"([import|from]+ .+)").unwrap().captures(&expr);
-                            if let Some(cap) = re {
-                                expr = cap[1].to_string();
-                            }
-                        }
-                        if expr
+                    if value.contains("import") {
+                        let import_ = value
                             .split_whitespace()
                             .collect::<Vec<&str>>()
                             .pop()
-                            .unwrap()
-                            != name
-                        {
-                            expr.push_str(&format!(" as {}", &name));
+                            .unwrap();
+                        if import_ != name {
+                            stack.push(Some(value + " as " + &name))
+                        } else {
+                            stack.push(Some(value));
                         }
-                        stack.push(Some(expr));
                     } else {
                         stack.push(Some(format!("{} = {}", name, value)));
                     }
@@ -237,16 +251,15 @@ impl PyObj {
                 BytecodeType::Return => {}
                 // Other 是不稳定模块， 懒得分类或者不好分类的，塞了一些不常用的指令
                 BytecodeType::Other => {
-                    println!("real_arg: {:?}", real_arg);
                     if let Some("INTRINSIC_IMPORT_STAR") = real_arg.as_deref() {
                         let expr = stack.pop().unwrap().unwrap();
-                        let re = Regex::new(r"from (?P<module>.+)")
-                            .unwrap()
-                            .captures(&expr);
-                        if let Some(caps) = re {
-                            println!("caps: {:?}", caps);
-                            stack.push(Some(format!("from {} import *", &caps["module"])));
-                        }
+                        assert!(expr.starts_with("import"));
+                        let import_name = expr
+                            .split_whitespace()
+                            .collect::<Vec<&str>>()
+                            .pop()
+                            .unwrap();
+                        stack.push(Some(format!("from {} import *", import_name)));
                     }
                 }
                 _ => (),
@@ -256,14 +269,21 @@ impl PyObj {
     }
 }
 
-pub trait ToPyObj {
-    fn to_pyobj(&self) -> Vec<PyObj>;
+#[derive(Debug)]
+pub struct PyCodeString {
+    code: String,
 }
 
-#[allow(unused)]
-impl ToPyObj for &str {
-    fn to_pyobj(&self) -> Vec<PyObj> {
-        let mut pyobj = self
+impl From<String> for PyCodeString {
+    fn from(code: String) -> Self {
+        PyCodeString { code }
+    }
+}
+
+impl PyCodeString {
+    pub fn to_pyobjs(&self) -> PyObjs {
+        let pyobjs = self
+            .code
             .trim()
             .split('\n')
             .collect::<Vec<&str>>()
@@ -271,24 +291,59 @@ impl ToPyObj for &str {
             .skip(1)
             .map(|lines| PyObj::from(lines.join("\n").as_str()))
             .collect::<Vec<PyObj>>();
-        pyobj.sort_by(|a, b| a.line.cmp(&b.line));
-        pyobj
+        /* let mut stack: Vec<(usize, usize)> = Vec::new();
+        let lines = pyobjs.iter().map(|pyobj| pyobj.line).collect::<Vec<usize>>();
+        // 相同行号的两段代码之间的代码缩进加1
+        lines.iter().enumerate().for_each(|(idx, line)| {
+            for (i, l) in lines[idx + 1..].iter().enumerate() {
+                if line == l {
+                    stack.push((idx, i)); // start, end
+                }
+            }
+        });
+        for (start, end) in stack.iter() {
+            for pyobj in pyobjs.iter_mut().skip(*start + 1).take(*end) {
+                pyobj.retractions += 1;
+            }
+        } */
+        // 返回的pyobj中，相同行号的按照顺序拼接
+        let mut map: HashMap<usize, Vec<Vec<Option<BytecodeLine>>>> = HashMap::new();
+        for pyobj in pyobjs {
+            map.entry(pyobj.line)
+                .or_default()
+                .push(pyobj.bytecode_lines);
+        }
+        let mut pyobjs = map
+            .iter()
+            .map(|(line, bytecode_lines)| PyObj {
+                line: *line,
+                retractions: 0,
+                bytecode_lines: bytecode_lines
+                    .iter()
+                    .flatten()
+                    .cloned()
+                    .collect::<Vec<Option<BytecodeLine>>>(),
+            })
+            .collect::<Vec<PyObj>>();
+        pyobjs.sort_by(|a, b| a.line.cmp(&b.line));
+        PyObjs { objs: pyobjs }
     }
 }
 
-pub trait ToPythonScript {
-    fn to_pyscript(&self) -> Vec<PyScript>;
+#[derive(Debug)]
+pub struct PyObjs {
+    objs: Vec<PyObj>,
 }
 
-#[allow(unused)]
-impl ToPythonScript for Vec<PyObj> {
-    fn to_pyscript(&self) -> Vec<PyScript> {
+impl PyObjs {
+    // 将PyObj转换为PyScript
+    pub fn to_pyscript(&self) -> Vec<PyScript> {
         let mut pyscripts: Vec<PyScript> = Vec::new();
-        for pyobj in self.iter() {
+        for pyobj in self.objs.iter() {
             let script = pyobj.to_python();
             pyscripts.push(PyScript {
                 line: pyobj.line,
-                script: Some(script),
+                script: Some("    ".repeat(pyobj.retractions) + script.as_str()),
             });
         }
         pyscripts
@@ -329,7 +384,6 @@ fn display_pycode_without_line(pyscripts: &[PyScript]) -> Result<()> {
     Ok(())
 }
 
-#[allow(unused)]
 pub fn display_pycode(pyscripts: &[PyScript]) -> Result<()> {
     // 判断是否重定向了标准输出流
     if atty::is(Stream::Stdout) {
@@ -340,13 +394,9 @@ pub fn display_pycode(pyscripts: &[PyScript]) -> Result<()> {
     Ok(())
 }
 
-#[allow(unused)]
 pub fn read_file(file_name: &PathBuf) -> Result<String> {
     if !Path::new(file_name).exists() {
-        return Err(Error::new(
-            ErrorKind::NotFound,
-            format!("file {:?} not found", file_name),
-        ));
+        return Err(format!("file {:?} not found", file_name).into());
     }
     let mut file = File::open(file_name).unwrap_or_else(|err| {
         eprintln!(
@@ -362,16 +412,12 @@ pub fn read_file(file_name: &PathBuf) -> Result<String> {
 }
 
 // 如果在args中指定了输出文件名，则尝试写入到指定文件中
-#[allow(unused)]
 pub fn write_file(file_name: &PathBuf, pyscripts: &[PyScript]) -> Result<()> {
     if File::open(file_name).is_ok() {
-        return Err(Error::new(
-            ErrorKind::AlreadyExists,
-            format!("file {:?} already exists", file_name),
-        ));
+        return Err(format!("file {:?} already exists", file_name).into());
     }
     let mut file = File::create(file_name)?;
-    for PyScript { line, script } in pyscripts.iter() {
+    for PyScript { script, .. } in pyscripts.iter() {
         if let Some(script) = script {
             file.write_all(script.as_bytes())?;
         }
@@ -387,32 +433,9 @@ mod test {
 
     #[test]
     fn test_pyobj() {
-        let path = PathBuf::from("./code.txt");
+        let path = PathBuf::from("./test/code.txt");
         let content = read_file(&path).unwrap();
-        let pyobjs = content.as_str().to_pyobj();
-        dbg!(pyobjs);
-        assert!(true);
-    }
-
-    #[test]
-    fn test_binary() {
-        let content = r#"
-        0           0 RESUME                   0
-
-        1           2 LOAD_CONST               0 (0)
-                    4 LOAD_CONST               1 (('*',))
-                    6 IMPORT_NAME              0 (pwn)
-                    8 CALL_INTRINSIC_1         2 (INTRINSIC_IMPORT_STAR)
-                   10 POP_TOP
-      
-        2          12 LOAD_CONST               0 (0)
-                   14 LOAD_CONST               2 (None)
-                   16 IMPORT_NAME              1 (py_compile)
-                   18 STORE_NAME               2 (pc)
-                   20 RETURN_CONST             2 (None)
-      
-                    "#;
-        let pyobjs = content.to_pyobj();
+        let pyobjs = PyCodeString::from(content).to_pyobjs();
         dbg!(pyobjs);
         assert!(false);
     }
