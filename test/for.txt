@@ -1,0 +1,32 @@
+  0           0 RESUME                   0
+
+  1           2 BUILD_LIST               0
+              4 LOAD_CONST               0 ((1, 3, 5, 7, 9))
+              6 LIST_EXTEND              1
+              8 STORE_NAME               0 (arr)
+
+  2          10 PUSH_NULL
+             12 LOAD_NAME                1 (enumerate)
+             14 LOAD_NAME                0 (arr)
+             16 CALL                     1
+             24 GET_ITER
+        >>   26 FOR_ITER                19 (to 68)
+             30 UNPACK_SEQUENCE          2
+             34 STORE_NAME               2 (i)
+             36 STORE_NAME               3 (v)
+
+  3          38 LOAD_NAME                2 (i)
+             40 LOAD_CONST               1 (1)
+             42 BINARY_OP                0 (+)
+             46 STORE_NAME               4 (line)
+
+  4          48 PUSH_NULL
+             50 LOAD_NAME                5 (print)
+             52 LOAD_NAME                4 (line)
+             54 LOAD_NAME                3 (v)
+             56 CALL                     2
+             64 POP_TOP
+             66 JUMP_BACKWARD           21 (to 26)
+
+  2     >>   68 END_FOR
+             70 RETURN_CONST             2 (None)

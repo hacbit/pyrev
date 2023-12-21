@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": true,
-      "cwd": "d:/CTFground/SICTF",
-      "program": "d:/CTFground/SICTF/build/Debug/outDebug",
+      "cwd": "c:/Users/15202/Desktop",
+      "program": "c:/Users/15202/Desktop/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [

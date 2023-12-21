@@ -3,21 +3,21 @@ use regex::Regex;
 // 根据常见的BytecodeType指令做了简单的分类
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BytecodeType {
-    Load,               // 加载值
-    Store,              // 存储值
-    Build(ValueType),   // 构建特定类型的值
-    Extend,             // 扩展
-    Jump,               // 跳转
-    Function,           // 函数
-    Unary(Unary),       // 一元操作
-    Binary(Binary),     // 二元操作
-    Call,               // 调用函数
-    Return,             // 返回值
-    Push,               // 压栈
-    Pop,                // 出栈
-    Import(ImportType), // 导入
-    Nop,                //
-    None,               // 未知指令
+    Load,             // 加载值
+    Store,            // 存储值
+    Build(ValueType), // 构建特定类型的值
+    Extend,           // 扩展
+    Jump(Jump),       // 跳转
+    Function,         // 函数
+    Unary(Unary),     // 一元操作
+    Binary(Binary),   // 二元操作
+    Call,             // 调用函数
+    Return,           // 返回值
+    Push,             // 压栈
+    Pop,              // 出栈
+    Import(Import),   // 导入
+    Nop,              //
+    None,             // 未知指令
     Other,
 }
 
@@ -27,7 +27,10 @@ impl BytecodeType {
             return BytecodeType::Function;
         } else if name.contains("CALL_INTRINSIC") {
             return BytecodeType::Other;
+        } else if name == "LIST_EXTEND" {
+            return BytecodeType::Extend;
         }
+
         let name_split = name.split('_').collect::<Vec<&str>>();
         match name_split[0] {
             "LOAD" => return BytecodeType::Load,
@@ -40,23 +43,34 @@ impl BytecodeType {
             "CALL" => return BytecodeType::Call,
             "COPY" => return BytecodeType::Other,
             "RETURN" => return BytecodeType::Return,
-            "IMPORT" => return BytecodeType::Import(ImportType::get(name_split[1]).unwrap()),
+            "IMPORT" => return BytecodeType::Import(Import::get(name_split[1]).unwrap()),
             "NOP" => return BytecodeType::Nop,
             _ => (),
         }
 
-        let jump_list = ["FOR", "JUMP"];
+        /* let jump_list = ["FOR", "JUMP"];
         // name_split中包含jump_list中任意元素即可
         if jump_list.iter().any(|&x| name_split.contains(&x)) {
             return BytecodeType::Jump;
+        } */
+        if name_split.contains(&"FOR") {
+            return BytecodeType::Jump(Jump::For);
+        } else if name_split.contains(&"IF") {
+            return BytecodeType::Jump(Jump::If);
+        } else if name_split.contains(&"ELSE") {
+            return BytecodeType::Jump(Jump::Else);
+        } else if name_split.contains(&"WHILE") {
+            return BytecodeType::Jump(Jump::While);
+        } else if name_split.contains(&"CONTINUE") {
+            return BytecodeType::Jump(Jump::Continue);
+        } else if name_split.contains(&"BREAK") {
+            return BytecodeType::Jump(Jump::Break);
+        } else if name_split.contains(&"END") {
+            return BytecodeType::Jump(Jump::End);
         }
 
         if name_split[1] == "OP" {
             return BytecodeType::Binary(Binary::get(name_split[0]).unwrap());
-        }
-
-        if name.contains("EXTEND") {
-            return BytecodeType::Extend;
         }
 
         BytecodeType::None
@@ -65,19 +79,68 @@ impl BytecodeType {
 
 // Import
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum ImportType {
+pub enum Import {
     ImportFrom,
     ImportName,
 }
 
-impl ImportType {
-    pub fn get(name: &str) -> Option<ImportType> {
+impl Import {
+    pub fn get(name: &str) -> Option<Import> {
         match name {
-            "FROM" => Some(ImportType::ImportFrom),
-            "NAME" => Some(ImportType::ImportName),
+            "FROM" => Some(Import::ImportFrom),
+            "NAME" => Some(Import::ImportName),
             _ => None,
         }
     }
+}
+
+static mut FOR_STATES: Vec<usize> = Vec::new();
+// if true, it means the for expr is not end
+static mut FOR_FLAGS: Vec<bool> = Vec::new();
+// 状态机， 用于处理for循环， if判断等
+pub struct JumpState;
+
+impl JumpState {
+    pub fn begin_for(offset: usize) {
+        unsafe {
+            FOR_STATES.push(offset);
+            FOR_FLAGS.push(true);
+        }
+    }
+
+    pub fn try_end_for(offset: usize) -> bool {
+        unsafe {
+            if FOR_STATES.is_empty() || FOR_STATES.last().unwrap() != &offset {
+                return false;
+            }
+            FOR_STATES.pop();
+            FOR_FLAGS.pop();
+            true
+        }
+    }
+
+    pub fn is_forexpr_not_end() -> bool {
+        unsafe { !FOR_FLAGS.is_empty() && *FOR_FLAGS.last().unwrap() }
+    }
+
+    pub fn end_forexpr() {
+        unsafe {
+            if !FOR_FLAGS.is_empty() {
+                *FOR_FLAGS.last_mut().unwrap() = false
+            }
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Jump {
+    For,
+    If,
+    Else,
+    While,
+    Continue,
+    Break,
+    End,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -143,8 +206,7 @@ impl ValueType {
         }
     }
 
-    #[allow(dead_code)]
-    pub fn extend(&self, src: &str, etn: &str) -> String {
+    /* pub fn extend(&self, src: &str, etn: &str) -> String {
         if "()[]{}".contains(src) {
             assert!(src.len() == 2);
             format!(
@@ -158,7 +220,7 @@ impl ValueType {
         } else {
             format!("{} + {}", src, etn)
         }
-    }
+    } */
 
     pub fn get(s: &str) -> Option<ValueType> {
         match s.to_lowercase().as_str() {

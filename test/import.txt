@@ -13,29 +13,22 @@
 
   3          20 LOAD_CONST               0 (0)
              22 LOAD_CONST               1 (None)
-             24 IMPORT_NAME              2 (PIL.Image)
-             26 IMPORT_FROM              3 (Image)
-             28 STORE_NAME               3 (Image)
-             30 POP_TOP
+             24 IMPORT_NAME              2 (numpy)
+             26 STORE_NAME               3 (np)
 
-  4          32 LOAD_CONST               0 (0)
-             34 LOAD_CONST               1 (None)
-             36 IMPORT_NAME              4 (numpy)
-             38 STORE_NAME               5 (np)
+  4          28 LOAD_CONST               0 (0)
+             30 LOAD_CONST               1 (None)
+             32 IMPORT_NAME              4 (matplotlib.pyplot)
+             34 IMPORT_FROM              5 (pyplot)
+             36 STORE_NAME               6 (plt)
+             38 POP_TOP
 
   5          40 LOAD_CONST               0 (0)
-             42 LOAD_CONST               1 (None)
-             44 IMPORT_NAME              6 (matplotlib.pyplot)
-             46 IMPORT_FROM              7 (pyplot)
-             48 STORE_NAME               8 (plt)
-             50 POP_TOP
-
-  6          52 LOAD_CONST               0 (0)
-             54 LOAD_CONST               3 (('system', 'popen'))
-             56 IMPORT_NAME              9 (os)
-             58 IMPORT_FROM             10 (system)
-             60 STORE_NAME              10 (system)
-             62 IMPORT_FROM             11 (popen)
-             64 STORE_NAME              11 (popen)
-             66 POP_TOP
-             68 RETURN_CONST             1 (None)
+             42 LOAD_CONST               3 (('system', 'popen'))
+             44 IMPORT_NAME              7 (os)
+             46 IMPORT_FROM              8 (system)
+             48 STORE_NAME               8 (system)
+             50 IMPORT_FROM              9 (popen)
+             52 STORE_NAME               9 (popen)
+             54 POP_TOP
+             56 RETURN_CONST             1 (None)
