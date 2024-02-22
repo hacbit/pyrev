@@ -56,7 +56,11 @@ impl BytecodeType {
         if name_split.contains(&"FOR") {
             return BytecodeType::Jump(Jump::For);
         } else if name_split.contains(&"IF") {
-            return BytecodeType::Jump(Jump::If);
+            if name_split.last() == Some(&"TRUE") {
+                return BytecodeType::Jump(Jump::If(true));
+            } else if name_split.last() == Some(&"FALSE") {
+                return BytecodeType::Jump(Jump::If(false));
+            }
         } else if name_split.contains(&"ELSE") {
             return BytecodeType::Jump(Jump::Else);
         } else if name_split.contains(&"WHILE") {
@@ -97,45 +101,108 @@ impl Import {
 static mut FOR_STATES: Vec<usize> = Vec::new();
 // if true, it means the for expr is not end
 static mut FOR_FLAGS: Vec<bool> = Vec::new();
+static mut IF_STATES: Vec<usize> = Vec::new();
+// true -> if, false -> else
+static mut IF_COUNTS: Vec<usize> = Vec::new();
+
 // 状态机， 用于处理for循环， if判断等
 pub struct JumpState;
 
 impl JumpState {
-    pub fn begin_for(offset: usize) {
+    pub fn begin(id: Jump, offset: usize) {
         unsafe {
-            FOR_STATES.push(offset);
-            FOR_FLAGS.push(true);
-        }
-    }
-
-    pub fn try_end_for(offset: usize) -> bool {
-        unsafe {
-            if FOR_STATES.is_empty() || FOR_STATES.last().unwrap() != &offset {
-                return false;
-            }
-            FOR_STATES.pop();
-            FOR_FLAGS.pop();
-            true
-        }
-    }
-
-    pub fn is_forexpr_not_end() -> bool {
-        unsafe { !FOR_FLAGS.is_empty() && *FOR_FLAGS.last().unwrap() }
-    }
-
-    pub fn end_forexpr() {
-        unsafe {
-            if !FOR_FLAGS.is_empty() {
-                *FOR_FLAGS.last_mut().unwrap() = false
+            match id {
+                Jump::For => {
+                    FOR_STATES.push(offset);
+                    FOR_FLAGS.push(true);
+                }
+                Jump::If(boolen) => match boolen {
+                    true => {
+                        IF_STATES.push(offset);
+                        IF_COUNTS.push(0);
+                    }
+                    false => {
+                        IF_STATES.push(offset);
+                        if IF_COUNTS.len() == IF_STATES.len() {
+                            *IF_COUNTS.last_mut().unwrap() += 1;
+                        } else {
+                            IF_COUNTS.push(1);
+                        }
+                    }
+                },
+                _ => (),
             }
         }
+    }
+
+    pub fn try_end(id: Jump, offset: usize) -> bool {
+        unsafe {
+            match id {
+                Jump::For => {
+                    if FOR_STATES.is_empty() || FOR_STATES.last().unwrap() != &offset {
+                        return false;
+                    }
+                    FOR_STATES.pop();
+                    FOR_FLAGS.pop();
+                    true
+                }
+                Jump::If(boolen) => match boolen {
+                    true => {
+                        if IF_STATES.is_empty() || IF_STATES.last().unwrap() != &offset {
+                            return false;
+                        }
+                        IF_STATES.pop();
+                        IF_COUNTS.pop();
+                        true
+                    }
+                    false => {
+                        if IF_STATES.is_empty()
+                            || IF_STATES.last().unwrap() != &offset
+                            || !IF_COUNTS.last().unwrap().eq(&1)
+                        {
+                            return false;
+                        }
+                        IF_STATES.pop();
+                        IF_COUNTS.pop();
+                        true
+                    }
+                },
+                _ => false,
+            }
+        }
+    }
+
+    pub fn is_expr_not_end(id: Jump) -> bool {
+        unsafe {
+            match id {
+                Jump::For => !FOR_FLAGS.is_empty() && *FOR_FLAGS.last().unwrap(),
+                _ => false,
+            }
+        }
+    }
+
+    pub fn end_expr(id: Jump) {
+        unsafe {
+            match id {
+                Jump::For => {
+                    if !FOR_FLAGS.is_empty() {
+                        *FOR_FLAGS.last_mut().unwrap() = false
+                    }
+                }
+                _ => (),
+            }
+        }
+    }
+
+    pub fn get_if_count() -> usize {
+        unsafe { IF_COUNTS.last().unwrap().clone() }
     }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Jump {
     For,
-    If,
+    If(bool),
     Else,
     While,
     Continue,

@@ -60,7 +60,7 @@ Mode                 LastWriteTime         Length Name
  4|     print(line, v)
 ```
 
-**Or run `cargo test` to compare all result generated from *.txt with *.py **
+**Or run `cargo test` to compare the differences between all results generated from `*.txt` and the corresponding  `*.py`**
 
 ```shell
 /$path_to/repybytecode> cargo test

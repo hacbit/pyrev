@@ -10,7 +10,7 @@
              14 LOAD_NAME                0 (arr)
              16 CALL                     1
              24 GET_ITER
-        >>   26 FOR_ITER                19 (to 68)
+        >>   26 FOR_ITER                26 (to 82)
              30 UNPACK_SEQUENCE          2
              34 STORE_NAME               2 (i)
              36 STORE_NAME               3 (v)
@@ -26,7 +26,28 @@
              54 LOAD_NAME                3 (v)
              56 CALL                     2
              64 POP_TOP
-             66 JUMP_BACKWARD           21 (to 26)
 
-  2     >>   68 END_FOR
-             70 RETURN_CONST             2 (None)
+  5          66 LOAD_NAME                2 (i)
+             68 LOAD_CONST               2 (2)
+             70 COMPARE_OP              40 (==)
+             74 POP_JUMP_IF_FALSE        2 (to 80)
+
+  6          76 POP_TOP
+             78 JUMP_FORWARD            10 (to 100)
+
+  8     >>   80 JUMP_BACKWARD           28 (to 26)
+
+  2     >>   82 END_FOR
+
+ 10          84 PUSH_NULL
+             86 LOAD_NAME                5 (print)
+             88 LOAD_CONST               3 ('end')
+             90 CALL                     1
+             98 POP_TOP
+
+ 11     >>  100 PUSH_NULL
+            102 LOAD_NAME                5 (print)
+            104 LOAD_CONST               4 ('Test')
+            106 CALL                     1
+            114 POP_TOP
+            116 RETURN_CONST             5 (None)

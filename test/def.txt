@@ -1,0 +1,24 @@
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ('a')
+              4 LOAD_NAME                0 (int)
+              6 LOAD_CONST               1 ('return')
+              8 LOAD_NAME                0 (int)
+             10 BUILD_TUPLE              4
+             12 LOAD_CONST               2 (<code object test at 0x000001ED8D1B44E0, file "test/def.py", line 1>)
+             14 MAKE_FUNCTION            4 (annotations)
+             16 STORE_NAME               1 (test)
+             18 RETURN_CONST             3 (None)
+
+Disassembly of <code object test at 0x000001ED8D1B44E0, file "test/def.py", line 1>:
+  1           0 RESUME                   0
+
+  2           2 LOAD_GLOBAL              1 (NULL + len)
+             12 LOAD_GLOBAL              3 (NULL + bin)
+             22 LOAD_FAST                0 (a)
+             24 CALL                     1
+             32 LOAD_CONST               1 (2)
+             34 LOAD_CONST               0 (None)
+             36 BINARY_SLICE
+             38 CALL                     1
+             46 RETURN_VALUE

@@ -2,13 +2,16 @@ use super::types::*;
 use atty::Stream;
 use colored::Colorize;
 use lazy_format::lazy_format;
+//use lazy_static::lazy_static;
 use regex::Regex;
-// use std::collections::HashMap;
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+
+static mut OUT_PYTHON: Option<HashMap<usize, String>> = None;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct BytecodeLine {
@@ -251,7 +254,7 @@ impl PyObj {
                         } else {
                             stack.push(Some(value));
                         }
-                    } else if JumpState::is_forexpr_not_end() {
+                    } else if JumpState::is_expr_not_end(Jump::For) {
                         // value is iterable
                         let re = Regex::new(r"for (?P<name>\w+) in (?P<iter>.+):")
                             .unwrap()
@@ -264,7 +267,7 @@ impl PyObj {
                             stack.push(Some(format!("for {} in {}:", name, value)))
                         }
                         if self.bytecode_lines.last().unwrap().as_ref() == Some(this) {
-                            JumpState::end_forexpr();
+                            JumpState::end_expr(Jump::For);
                         }
                     } else {
                         stack.push(Some(name + " = " + value.as_str()));
@@ -276,7 +279,7 @@ impl PyObj {
                 }
                 BytecodeType::Jump(jump) => match jump {
                     Jump::For => {
-                        if !JumpState::try_end_for(this.offset) {
+                        if !JumpState::try_end(Jump::For, this.offset) {
                             let jump_offset = real_arg
                                 .unwrap()
                                 .split("to ")
@@ -285,7 +288,32 @@ impl PyObj {
                                 .unwrap()
                                 .parse::<usize>()
                                 .unwrap();
-                            JumpState::begin_for(jump_offset);
+                            JumpState::begin(Jump::For, jump_offset);
+                        }
+                    }
+                    Jump::If(boolen) => {
+                        if !JumpState::try_end(Jump::If(boolen), this.offset) {
+                            let jump_offset = real_arg
+                                .unwrap()
+                                .split("to ")
+                                .collect::<Vec<&str>>()
+                                .last()
+                                .unwrap()
+                                .parse::<usize>()
+                                .unwrap();
+                            JumpState::begin(Jump::If(boolen), jump_offset);
+                            match boolen {
+                                true => {
+                                    let expr = stack.pop().unwrap().unwrap();
+                                    stack.push(Some(format!("if {}:", expr)));
+                                }
+                                false => {
+                                    let expr = stack.pop().unwrap().unwrap();
+                                    /* if get_if_count() == 1 {
+                                        stack.push(Some(format!("if ")))
+                                    } */
+                                }
+                            }
                         }
                     }
                     _ => {}
@@ -314,17 +342,17 @@ impl PyObj {
 }
 
 #[derive(Debug)]
-pub struct PyCodeString {
+pub struct BytecodeString {
     code: String,
 }
 
-impl From<String> for PyCodeString {
+impl From<String> for BytecodeString {
     fn from(code: String) -> Self {
-        PyCodeString { code }
+        BytecodeString { code }
     }
 }
 
-impl PyCodeString {
+impl BytecodeString {
     pub fn to_pyobjs(&self) -> PyObjs {
         let mut pyobjs = self
             .code
@@ -382,14 +410,14 @@ impl PyCodeString {
 }
 
 #[derive(Debug)]
-pub struct PyObjs {
+struct PyObjs {
     objs: Vec<PyObj>,
 }
 
 impl PyObjs {
     // 将PyObj转换为PyScript
     pub fn to_pyscript(&self) -> Vec<PyScript> {
-        let mut pyscripts: Vec<PyScript> = Vec::new();
+        let mut pyscripts = Vec::new();
         for pyobj in self.objs.iter() {
             let script = pyobj.to_python();
             if let Some(script) = script {
@@ -397,9 +425,12 @@ impl PyObjs {
                     line: pyobj.line,
                     script: Some("    ".repeat(pyobj.retractions) + script.as_str()),
                 });
-            } else {
-                continue;
-            };
+                /* if let Some(out_python) = unsafe { OUT_PYTHON.as_mut() } {
+                    out_python.insert(pyobj.line, script);
+                } else {
+                    unsafe { OUT_PYTHON = Some(HashMap::new()) };
+                } */
+            }
         }
         pyscripts
     }
@@ -439,7 +470,7 @@ fn display_pycode_without_line(pyscripts: &[PyScript]) -> Result<()> {
     Ok(())
 }
 
-pub fn display_pycode(pyscripts: &[PyScript]) -> Result<()> {
+fn display_pycode(pyscripts: &[PyScript]) -> Result<()> {
     // 判断是否重定向了标准输出流
     if atty::is(Stream::Stdout) {
         display_pycode_with_line(pyscripts)?;
@@ -449,13 +480,13 @@ pub fn display_pycode(pyscripts: &[PyScript]) -> Result<()> {
     Ok(())
 }
 
-pub fn read_file(file_name: &PathBuf) -> Result<String> {
+fn read_file(file_name: &PathBuf) -> Result<String> {
     if !Path::new(file_name).exists() {
         return Err(format!("file {:?} not found", file_name).into());
     }
     let mut file = File::open(file_name).unwrap_or_else(|err| {
         eprintln!(
-            "[{}] Application error: {err}",
+            "[{}] Decompilerlication error: {err}",
             "x".red(),
             err = err.to_string().red(),
         );
@@ -467,7 +498,7 @@ pub fn read_file(file_name: &PathBuf) -> Result<String> {
 }
 
 // 如果在args中指定了输出文件名，则尝试写入到指定文件中
-pub fn write_file(file_name: &PathBuf, pyscripts: &[PyScript]) -> Result<()> {
+fn write_file(file_name: &PathBuf, pyscripts: &[PyScript]) -> Result<()> {
     if File::open(file_name).is_ok() {
         return Err(format!("file {:?} already exists", file_name).into());
     }
@@ -479,6 +510,60 @@ pub fn write_file(file_name: &PathBuf, pyscripts: &[PyScript]) -> Result<()> {
         file.write_all("\n".as_bytes())?;
     }
     Ok(())
+}
+
+pub struct Decompiler {
+    ifile: PathBuf,                // input file
+    result: Option<Vec<PyScript>>, // decompile result
+}
+
+impl Decompiler {
+    pub fn from(ifile: &PathBuf) -> Self {
+        Decompiler {
+            ifile: ifile.to_owned(),
+            result: None,
+        }
+    }
+
+    pub fn decompile(mut self) -> Self {
+        let content = read_file(&self.ifile).unwrap();
+        let pyobjs = BytecodeString::from(content).to_pyobjs();
+        pyobjs.to_pyscript();
+
+        let mut result = Vec::new();
+
+        if let Some(out_python) = unsafe { OUT_PYTHON.as_ref() } {
+            for key in out_python.keys() {
+                let code = out_python.get(key).unwrap();
+                let code = "    ".repeat(pyobjs.objs[*key].retractions) + code;
+                result.push(PyScript {
+                    line: *key,
+                    script: Some(code),
+                });
+            }
+        } else {
+            eprintln!("Decompile error or there is no thing to decompile");
+        }
+
+        self.result = Some(result);
+        self
+    }
+
+    pub fn to_stdout(&self) -> Result<()> {
+        if let Some(result) = &self.result {
+            display_pycode(result)
+        } else {
+            Err("decompile result is None".into())
+        }
+    }
+
+    pub fn to_file(&self, ofile: &PathBuf) -> Result<()> {
+        if let Some(result) = &self.result {
+            write_file(ofile, result)
+        } else {
+            Err("decompile result is None".into())
+        }
+    }
 }
 
 #[cfg(test)]
@@ -497,15 +582,22 @@ mod test {
         let test_path = PathBuf::from(TEST_DIR);
         let py = read_file(&test_path.join(py)).unwrap();
         let txt = read_file(&test_path.join(txt)).unwrap();
-        let pycode = PyCodeString::from(txt.to_string());
-        let pyobjs = pycode.to_pyobjs();
-        let pyscripts = pyobjs.to_pyscript();
-        let result = pyscripts
+        let result = BytecodeString::from(txt)
+            .to_pyobjs()
+            .to_pyscript()
             .iter()
-            .map(|py| py.script.as_ref().unwrap().as_str())
-            .collect::<Vec<&str>>()
+            .map(|pyscr| {
+                pyscr
+                    .script
+                    .as_ref()
+                    .unwrap_or(&"".to_string())
+                    .trim_end()
+                    .to_string()
+            })
+            .collect::<Vec<String>>()
             .join(NEWLINE);
-        assert_eq!(result, py);
+        let origin = py.lines().collect::<Vec<&str>>().join(NEWLINE);
+        assert_eq!(result, origin);
     }
 
     #[test]
