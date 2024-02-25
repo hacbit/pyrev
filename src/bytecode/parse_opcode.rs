@@ -1,13 +1,11 @@
 use super::{common::OrderMap, opcode::OpcodeInstruction};
-
 use regex::Regex;
-use std::collections::HashMap;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 pub type ObjectMark = String;
 pub type LineNumber = usize;
-pub type CodeObject = HashMap<LineNumber, Vec<OpcodeInstruction>>;
+pub type CodeObject = OrderMap<LineNumber, Vec<OpcodeInstruction>>;
 pub type CodeObjectMap = OrderMap<ObjectMark, CodeObject>;
 
 pub trait OpcodeParser {
@@ -35,7 +33,7 @@ where
         )?;
         let mut last_line = 0;
         let mut this_obj_mark = "<main>".to_string();
-        let mut code_object: CodeObject = HashMap::new();
+        let mut code_object = CodeObject::new();
         let mut code_object_map = CodeObjectMap::new();
         for cap in reg.captures_iter(self.as_ref()) {
             let mark = cap.name("mark").map_or("", |m| m.as_str());
@@ -49,7 +47,7 @@ where
             if !mark.is_empty() {
                 code_object_map.insert(this_obj_mark.clone(), code_object);
                 this_obj_mark = mark.to_string();
-                code_object = HashMap::new();
+                code_object = CodeObject::new();
             }
             let instruction = OpcodeInstruction::new(
                 bc,

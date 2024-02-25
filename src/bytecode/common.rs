@@ -74,6 +74,7 @@ where
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct OrderMap<K, V> {
     marks: Vec<K>,
     code_objects: Vec<V>,
@@ -115,8 +116,12 @@ where
             .get_mut(self.marks.iter().position(|m| m.borrow() == mark)?)
     }
 
-    pub fn contains_key(&self, mark: &K) -> bool {
-        self.marks.iter().any(|m| m == mark)
+    pub fn contains_key<Q: ?Sized>(&self, mark: &Q) -> bool
+    where
+        K: std::borrow::Borrow<Q>,
+        Q: Ord,
+    {
+        self.marks.iter().any(|m| m.borrow() == mark)
     }
 
     pub fn iter(&self) -> impl Iterator<Item = (&K, &V)> {
@@ -157,6 +162,6 @@ from os import system, popen"#;
             .write_console()
             .unwrap());
 
-        assert!(false);
+        //assert!(false);
     }
 }

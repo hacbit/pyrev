@@ -1,3 +1,4 @@
+use pyrev_ast::*;
 use super::ast::*;
 use super::opcode::{Opcode, OpcodeInstruction};
 use super::parse_opcode::*;
@@ -11,6 +12,14 @@ pub trait Decompiler {
 
 impl Decompiler for CodeObjectMap {
     fn decompile(&self) -> Result<DecompiledCode> {
+        let mut decompiled_code = DecompiledCode::new();
+        let main_code_object = self.get("<main>").ok_or("main code object not found")?;
+        let mut main_expr = Expr::new();
+        for (_, instruction) in main_code_object.iter() {
+            let expr = Expr::parse(instruction)?;
+            main_expr.extend(*expr);
+        }
+
         todo!()
     }
 }
@@ -24,12 +33,11 @@ impl DecompiledCode {
         Self { code: Vec::new() }
     }
 
-    pub fn insert<S: AsRef<str>>(&mut self, l: usize, s: S) -> &mut Self {
+    pub fn insert<S: AsRef<str>>(&mut self, l: usize, s: S) {
         self.code.push((l, s.as_ref().to_string()));
-        self
     }
 
-    pub fn iter(&mut self) -> impl Iterator<Item = (usize, &String)> + Clone {
+    pub fn iter(&mut self) -> impl Iterator<Item = (usize, &std::string::String)> + Clone {
         self.code.iter().map(|(i, s)| (*i, s))
     }
 }

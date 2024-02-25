@@ -1,5 +1,7 @@
+workspace = { members = [ "src/pyrev_ast", "src/pyrev_ast_derive" ] }
+
 [package]
-name = "repybytecode"
+name = "pyrev"
 authors = ["hacbit <hacbit@foxmail.com>"]
 version = "0.2.1"
 edition = "2021"
@@ -17,6 +19,9 @@ regex = "1.10.2"
 [dependencies.clap]
 version = "4.5.1"
 features = ["derive", "cargo"]
+
+[dependencies.pyrev_ast]
+path = "src/pyrev_ast"
 
 [profile.dev]
 # Uncomment the following lines to allow clippy to break your build.

@@ -16,7 +16,7 @@ pub struct App {
     // the out file name
     output_files: Vec<PathBuf>,
     // the output of the decompiled code
-    output: Vec<DecompiledCode>,
+    output: Vec<Result<DecompiledCode>>,
 }
 
 #[allow(unused)]
@@ -88,8 +88,8 @@ impl App {
     pub fn run(&mut self) -> Result<&mut Self> {
         for (path, code_object_map) in &self.resources {
             println!("{}", format!("Try to decompile {}", path.display()).green());
-            let decompiled_code = code_object_map.decompile()?;
-            self.output.push(decompiled_code);
+            let decompiled_result = code_object_map.decompile();
+            self.output.push(decompiled_result);
         }
         Ok(self)
     }
@@ -98,13 +98,29 @@ impl App {
         self.output
             .iter_mut()
             .enumerate()
-            .try_for_each(|(i, decompiled_code)| {
+            .for_each(|(i, decompiled_result)| {
                 if let Some(file) = self.output_files.get(i) {
-                    decompiled_code.iter().write_file(file)
+                    if let Ok(decompiled_code) = decompiled_result {
+                        decompiled_code.iter().write_file(file).unwrap();
+                    } else {
+                        eprintln!(
+                            "{}",
+                            format!("The file {} decompiled failed", self.files[i].display())
+                                .bright_red()
+                        );
+                    }
                 } else {
-                    decompiled_code.iter().write_console()
+                    if let Ok(decompiled_code) = decompiled_result {
+                        decompiled_code.iter().write_console().unwrap();
+                    } else {
+                        eprintln!(
+                            "{}",
+                            format!("The file {} decompiled failed", self.files[i].display())
+                                .bright_red()
+                        );
+                    }
                 }
-            })?;
+            });
         Ok(())
     }
 }

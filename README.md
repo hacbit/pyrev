@@ -1,4 +1,4 @@
-# repybytecode
+# Pyrev
 
 Reverse tools for bytecode of python
 
@@ -7,7 +7,7 @@ Reverse tools for bytecode of python
 ## Build
 
 ```shell
-/$path_to/repybytecode> cargo build --release [--target your_target_os]
+/$path_to/pyrev> cargo build --release [--target your_target_os]
 ```
 
 
@@ -15,10 +15,10 @@ Reverse tools for bytecode of python
 ## Usage
 
 ```shell
-/$path_to/repybytecode> cargo run help
+/$path_to/pyrev> cargo run help
     Finished dev [unoptimized + debuginfo] target(s) in 0.07s
-     Running `target\debug\repybytecode.exe help`
-Usage: repybytecode.exe [OPTIONS] --file <FILE> [name] [COMMAND]
+     Running `target\debug\pyrev.exe help`
+Usage: pyrev.exe [OPTIONS] --file <FILE> [name] [COMMAND]
 
 Commands:
   test  run the example
@@ -39,7 +39,7 @@ Options:
 ## Test
 
 ```shell
-/$path_to/repybytecode> ls test/
+/$path_to/pyrev> ls test/
 Mode                 LastWriteTime         Length Name
 ----                 -------------         ------ ----
 -a---          2023/12/22     0:59             88 for.py
@@ -50,10 +50,10 @@ Mode                 LastWriteTime         Length Name
 -a---          2023/12/20    10:58           7057 op.txt
 ```
 
-**You can run like `repybytecode --file/-f test/import.txt` and compare the result with `import.py` whom generate `import.txt`**
+**You can run like `pyrev --file/-f test/import.txt` and compare the result with `import.py` whom generate `import.txt`**
 
 ```shell
-/$path_to/repybytecode> repybytecode --file ./test/for.txt
+/$path_to/pyrev> pyrev --file ./test/for.txt
  1| arr = [1, 3, 5, 7, 9]
  2| for i, v in enumerate(arr):
  3|     line = i + 1
@@ -63,7 +63,7 @@ Mode                 LastWriteTime         Length Name
 **Or run `cargo test` to compare the differences between all results generated from `*.txt` and the corresponding  `*.py`**
 
 ```shell
-/$path_to/repybytecode> cargo test
+/$path_to/pyrev> cargo test
 
 running 3 tests
 test bytecode::utils::test::test_import ... ok
@@ -72,13 +72,13 @@ test bytecode::utils::test::test_op ... ok
 
 test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.16s
 
-     Running unittests src\main.rs (target\debug\deps\repybytecode-996dfc06f4b9f586.exe)
+     Running unittests src\main.rs (target\debug\deps\pyrev-996dfc06f4b9f586.exe)
 
 running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-   Doc-tests repybytecode
+   Doc-tests pyrev
 
 running 0 tests
 
