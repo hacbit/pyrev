@@ -11,6 +11,7 @@ where
     where
         S: AsRef<str>,
         U: ?Sized;
+    //fn children_expression(&self) -> Vec<&ExpressionEnum>;
 }
 
 #[derive(Expression, Clone, Debug, PartialEq, Eq)]
@@ -26,7 +27,7 @@ pub struct Function {
 
 #[derive(Expression, Clone, Debug, PartialEq, Eq)]
 pub struct Assign {
-    pub name: String,
+    pub target: Box<ExpressionEnum>,
     pub values: Box<ExpressionEnum>,
 }
 
@@ -49,6 +50,12 @@ pub struct Container {
     pub container_type: ContainerType,
 }
 
+#[derive(Expression, Clone, Debug, PartialEq, Eq)]
+pub struct Attribute {
+    pub parent: Box<ExpressionEnum>,
+    pub attr: Box<ExpressionEnum>,
+}
+
 // String的Expression封装
 #[derive(Expression, Clone, Debug, PartialEq, Eq)]
 pub struct BaseValue {
@@ -63,6 +70,7 @@ pub enum ExpressionEnum {
     BinaryOperation(BinaryOperation),
     Call(Call),
     Container(Container),
+    Attribute(Attribute),
     // ...
 }
 
@@ -117,5 +125,85 @@ impl Expr {
 
     pub fn extend(&mut self, expr: Expr) {
         self.bodys.extend(expr.bodys);
+    }
+}
+
+impl ExpressionEnum {
+    pub fn build(&self) -> Result<Vec<String>> {
+        match self {
+            ExpressionEnum::Function(function) => {
+                let mut code = Vec::new();
+                code.push(format!("def {}():", function.name));
+                for expr in function.bodys.iter() {
+                    let mut sub_code = expr.build()?;
+                    code.append(&mut sub_code);
+                }
+                Ok(code)
+            }
+            ExpressionEnum::Assign(a) => {
+                let mut code = Vec::new();
+                let target_code = a.target.build()?;
+                let value_code = a.values.build()?;
+                if !value_code.first().unwrap().trim().starts_with("def") {
+                    code.push(format!("{} = {}", target_code.join(""), value_code.join("")));
+                } else {
+                    code.push(value_code.join(""));
+                }
+                Ok(code)
+            }
+            ExpressionEnum::BaseValue(base_value) => {
+                Ok(vec![base_value.value.clone()])
+            }
+            ExpressionEnum::Call(call) => {
+                let mut code = Vec::new();
+                let mut func_code = call.func.build()?;
+                code.append(&mut func_code);
+                for arg in call.args.iter() {
+                    let mut arg_code = arg.build()?;
+                    code.append(&mut arg_code);
+                }
+                Ok(code)
+            }
+            ExpressionEnum::BinaryOperation(binary_operation) => Ok(vec![format!(
+                "{} {} {}",
+                binary_operation.left.build()?.join(""),
+                binary_operation.operator,
+                binary_operation.right.build()?.join("")
+            )]),
+            ExpressionEnum::Container(container) => {
+                let mut code = Vec::new();
+                let mut values_code = Vec::new();
+                for value in container.values.iter() {
+                    let mut value_code = value.build()?;
+                    values_code.append(&mut value_code);
+                }
+                match container.container_type {
+                    ContainerType::List => {
+                        code.push(format!("[{}]", values_code.join(", ")));
+                    }
+                    ContainerType::Tuple => {
+                        code.push(format!("({})", values_code.join(", ")));
+                    }
+                    ContainerType::Set => {
+                        code.push(format!("{{ {} }}", values_code.join(", ")));
+                    }
+                    ContainerType::Dict => {
+                        let mut dict_code = Vec::new();
+                        for (i, value) in values_code.iter().enumerate() {
+                            if i % 2 == 0 {
+                                dict_code.push(format!("{}: {}", value, values_code[i + 1]));
+                            }
+                        }
+                        code.push(format!("{{ {} }}", dict_code.join(", ")));
+                    }
+                }
+                Ok(code)
+            }
+            ExpressionEnum::Attribute(attribute) => Ok(vec![format!(
+                "{}.{}",
+                attribute.parent.build()?.join(""),
+                attribute.attr.build()?.join("")
+            )]),
+        }
     }
 }
