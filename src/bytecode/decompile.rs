@@ -26,7 +26,12 @@ impl Decompiler for CodeObjectMap {
         let main_expr = self.merge("<main>", exprs_map)?;
 
         for (i, instruction) in main_expr.bodys.iter().enumerate() {
-            let code = instruction.build()?.iter().enumerate().map(|(l, s)| (l + i, s.to_string())).collect::<Vec<_>>();
+            let code = instruction
+                .build()?
+                .iter()
+                .enumerate()
+                .map(|(l, s)| (l + i, s.to_string()))
+                .collect::<Vec<_>>();
             decompiled_code.code.extend(code);
         }
         Ok(decompiled_code)
@@ -34,9 +39,7 @@ impl Decompiler for CodeObjectMap {
 
     fn merge(&self, mark: &str, maps: HashMap<String, Expr>) -> Result<Expr> {
         let mut this_expr = maps.get(mark).ok_or(format!("No {} expr", &mark))?.clone();
-        for (i, instruction) in this_expr.bodys.iter().enumerate() {
-            
-        }
+        for (i, instruction) in this_expr.bodys.iter().enumerate() {}
         Ok(this_expr)
     }
 }
@@ -46,9 +49,7 @@ fn process_expression(expr: &mut ExpressionEnum, maps: HashMap<String, Expr>) {
         ExpressionEnum::Function(f) => {
             f.bodys = maps.get(&f.mark).unwrap().bodys.clone();
         }
-        _ => {
-            process_expression(expr, maps)
-        }
+        _ => process_expression(expr, maps),
     }
 }
 
@@ -71,12 +72,11 @@ impl DecompiledCode {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use super::super::parse_opcode::*;
     use super::super::opcode::*;
+    use super::super::parse_opcode::*;
+    use super::*;
 
     #[test]
     fn test_parse_code_object() {

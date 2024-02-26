@@ -1,3 +1,5 @@
+use std::any::{Any, TypeId};
+
 pub use pyrev_ast_derive::*;
 use regex::Regex;
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -7,14 +9,30 @@ where
     Self: Clone + std::fmt::Debug + PartialEq + Eq,
 {
     fn build_code(&self) -> Vec<(usize, String)>;
-    fn query<S, U>(&self, field_name: S) -> Option<&U>
-    where
-        S: AsRef<str>,
-        U: ?Sized;
-    //fn children_expression(&self) -> Vec<&ExpressionEnum>;
 }
 
-#[derive(Expression, Clone, Debug, PartialEq, Eq)]
+pub trait Queryable: Any {
+    fn as_any(&self) -> &dyn Any;
+    fn get_query<T: 'static>(&self) -> Vec<&T> {
+        if TypeId::of::<T>() == TypeId::of::<Self>() {
+            vec![unsafe { &*(self.as_any() as *const dyn Any as *const T) }]
+        } else {
+            vec![]
+        }
+    }
+}
+
+impl<T: 'static> Queryable for T {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+
+pub trait Query {
+    fn query<T: 'static>(&self) -> Vec<&T>;
+}
+
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
 pub struct Function {
     pub mark: String,
     pub name: String,
@@ -25,39 +43,39 @@ pub struct Function {
     pub bodys: Vec<ExpressionEnum>,
 }
 
-#[derive(Expression, Clone, Debug, PartialEq, Eq)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
 pub struct Assign {
     pub target: Box<ExpressionEnum>,
     pub values: Box<ExpressionEnum>,
 }
 
-#[derive(Expression, Clone, Debug, PartialEq, Eq)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
 pub struct BinaryOperation {
     pub left: Box<ExpressionEnum>,
     pub right: Box<ExpressionEnum>,
     pub operator: String,
 }
 
-#[derive(Expression, Clone, Debug, PartialEq, Eq)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
 pub struct Call {
     pub func: Box<ExpressionEnum>,
     pub args: Vec<ExpressionEnum>,
 }
 
-#[derive(Expression, Clone, Debug, PartialEq, Eq)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
 pub struct Container {
     pub values: Vec<ExpressionEnum>,
     pub container_type: ContainerType,
 }
 
-#[derive(Expression, Clone, Debug, PartialEq, Eq)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
 pub struct Attribute {
     pub parent: Box<ExpressionEnum>,
     pub attr: Box<ExpressionEnum>,
 }
 
 // String的Expression封装
-#[derive(Expression, Clone, Debug, PartialEq, Eq)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
 pub struct BaseValue {
     pub value: String,
 }
@@ -74,6 +92,20 @@ pub enum ExpressionEnum {
     // ...
 }
 
+impl Query for ExpressionEnum {
+    fn query<T: 'static>(&self) -> Vec<&T> {
+        match self {
+            ExpressionEnum::Function(f) => f.get_query(),
+            ExpressionEnum::Assign(a) => a.get_query(),
+            ExpressionEnum::BaseValue(b) => b.get_query(),
+            ExpressionEnum::BinaryOperation(b) => b.get_query(),
+            ExpressionEnum::Call(c) => c.get_query(),
+            ExpressionEnum::Container(c) => c.get_query(),
+            ExpressionEnum::Attribute(a) => a.get_query(),
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ContainerType {
     List,
@@ -82,7 +114,13 @@ pub enum ContainerType {
     Dict,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+impl Query for ContainerType {
+    fn query<T: 'static>(&self) -> Vec<&T> {
+        vec![]
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Query)]
 pub struct Expr {
     pub bodys: Vec<ExpressionEnum>,
 }
@@ -145,24 +183,29 @@ impl ExpressionEnum {
                 let target_code = a.target.build()?;
                 let value_code = a.values.build()?;
                 if !value_code.first().unwrap().trim().starts_with("def") {
-                    code.push(format!("{} = {}", target_code.join(""), value_code.join("")));
+                    code.push(format!(
+                        "{} = {}",
+                        target_code.join(""),
+                        value_code.join("")
+                    ));
                 } else {
                     code.push(value_code.join(""));
                 }
                 Ok(code)
             }
-            ExpressionEnum::BaseValue(base_value) => {
-                Ok(vec![base_value.value.clone()])
-            }
+            ExpressionEnum::BaseValue(base_value) => Ok(vec![base_value.value.clone()]),
             ExpressionEnum::Call(call) => {
-                let mut code = Vec::new();
-                let mut func_code = call.func.build()?;
-                code.append(&mut func_code);
+                let func_code = call.func.build()?.join("");
+                let mut args_code = Vec::new();
                 for arg in call.args.iter() {
-                    let mut arg_code = arg.build()?;
-                    code.append(&mut arg_code);
+                    let arg_code = arg.build()?;
+                    args_code.push(arg_code.join(""));
                 }
-                Ok(code)
+                Ok(vec![format!(
+                    "{}({})",
+                    func_code,
+                    args_code.join(", ").trim_end_matches(", ")
+                )])
             }
             ExpressionEnum::BinaryOperation(binary_operation) => Ok(vec![format!(
                 "{} {} {}",

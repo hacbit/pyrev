@@ -313,4 +313,20 @@ mod tests {
         dbg!(res);
         assert!(false);
     }
+
+    #[test]
+    fn test_query() {
+        let expr = ExpressionEnum::Assign(Assign {
+                target: Box::new(ExpressionEnum::BaseValue(BaseValue {
+                    value: "a".to_string(),
+                })),
+                values: Box::new(ExpressionEnum::BaseValue(BaseValue {
+                    value: "1".to_string(),
+                })),
+            });
+        let query = expr.query::<BaseValue>();
+        
+        dbg!(query);
+        assert!(false);
+    }
 }
