@@ -76,8 +76,8 @@ where
 
 #[derive(Debug, Clone)]
 pub struct OrderMap<K, V> {
-    marks: Vec<K>,
-    code_objects: Vec<V>,
+    keys: Vec<K>,
+    values: Vec<V>,
 }
 
 #[allow(unused)]
@@ -88,14 +88,14 @@ where
 {
     pub fn new() -> Self {
         Self {
-            marks: Vec::new(),
-            code_objects: Vec::new(),
+            keys: Vec::new(),
+            values: Vec::new(),
         }
     }
 
     pub fn insert(&mut self, mark: K, code_object: V) {
-        self.marks.push(mark);
-        self.code_objects.push(code_object);
+        self.keys.push(mark);
+        self.values.push(code_object);
     }
 
     pub fn get<Q: ?Sized>(&self, mark: &Q) -> Option<&V>
@@ -103,8 +103,8 @@ where
         K: std::borrow::Borrow<Q>,
         Q: Ord,
     {
-        self.code_objects
-            .get(self.marks.iter().position(|m| m.borrow() == mark)?)
+        self.values
+            .get(self.keys.iter().position(|m| m.borrow() == mark)?)
     }
 
     pub fn get_mut<Q: ?Sized>(&mut self, mark: &Q) -> Option<&mut V>
@@ -112,8 +112,8 @@ where
         K: std::borrow::Borrow<Q>,
         Q: Ord,
     {
-        self.code_objects
-            .get_mut(self.marks.iter().position(|m| m.borrow() == mark)?)
+        self.values
+            .get_mut(self.keys.iter().position(|m| m.borrow() == mark)?)
     }
 
     pub fn contains_key<Q: ?Sized>(&self, mark: &Q) -> bool
@@ -121,15 +121,15 @@ where
         K: std::borrow::Borrow<Q>,
         Q: Ord,
     {
-        self.marks.iter().any(|m| m.borrow() == mark)
+        self.keys.iter().any(|m| m.borrow() == mark)
     }
 
     pub fn iter(&self) -> impl Iterator<Item = (&K, &V)> {
-        self.marks.iter().zip(self.code_objects.iter())
+        self.keys.iter().zip(self.values.iter())
     }
 
     pub fn keys(&self) -> impl Iterator<Item = &K> {
-        self.marks.iter()
+        self.keys.iter()
     }
 }
 

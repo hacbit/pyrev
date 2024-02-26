@@ -1,12 +1,10 @@
-use std::default;
-
 pub use pyrev_ast_derive::*;
 use regex::Regex;
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 pub trait Expression
 where
-    Self: Clone,
+    Self: Clone + std::fmt::Debug + PartialEq + Eq,
 {
     fn build_code(&self) -> Vec<(usize, String)>;
     fn query<S, U>(&self, field_name: S) -> Option<&U>
@@ -15,7 +13,7 @@ where
         U: ?Sized;
 }
 
-#[derive(Expression, Clone)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq)]
 pub struct Function {
     pub mark: String,
     pub name: String,
@@ -26,28 +24,57 @@ pub struct Function {
     pub bodys: Vec<ExpressionEnum>,
 }
 
-#[derive(Expression, Clone)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq)]
 pub struct Assign {
     pub name: String,
     pub values: Box<ExpressionEnum>,
 }
 
+#[derive(Expression, Clone, Debug, PartialEq, Eq)]
+pub struct BinaryOperation {
+    pub left: Box<ExpressionEnum>,
+    pub right: Box<ExpressionEnum>,
+    pub operator: String,
+}
+
+#[derive(Expression, Clone, Debug, PartialEq, Eq)]
+pub struct Call {
+    pub func: Box<ExpressionEnum>,
+    pub args: Vec<ExpressionEnum>,
+}
+
+#[derive(Expression, Clone, Debug, PartialEq, Eq)]
+pub struct Container {
+    pub values: Vec<ExpressionEnum>,
+    pub container_type: ContainerType,
+}
+
 // String的Expression封装
-#[derive(Expression, Clone)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq)]
 pub struct BaseValue {
     pub value: String,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ExpressionEnum {
     Function(Function),
     Assign(Assign),
     BaseValue(BaseValue),
-    Expr(Expr),
+    BinaryOperation(BinaryOperation),
+    Call(Call),
+    Container(Container),
     // ...
 }
 
-#[derive(Expression, Clone)]
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum ContainerType {
+    List,
+    Tuple,
+    Set,
+    Dict,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Expr {
     pub bodys: Vec<ExpressionEnum>,
 }
@@ -69,19 +96,12 @@ impl Function {
             bodys: Vec::new(),
         })
     }
-}
 
-impl ExpressionEnum {
-    fn query<S, U>(&self, field_name: S) -> Option<&U>
-    where
-        S: AsRef<str>,
-        U: ?Sized,
-    {
-        match self {
-            Self::Function(f) => f.query(field_name),
-            Self::Assign(a) => a.query(field_name),
-            Self::BaseValue(b) => b.query(field_name),
-            Self::Expr(e) => e.query(field_name),
+    pub fn from(expr: ExpressionEnum) -> Result<Self> {
+        if let ExpressionEnum::BaseValue(value) = expr {
+            Self::new(value.value)
+        } else {
+            Err("Function name must be a string".into())
         }
     }
 }

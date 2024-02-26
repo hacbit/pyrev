@@ -28,7 +28,7 @@ where
             ([\ ]+)?
             (?P<a>\d+)?             # arg   (optional)
             [\ ]?
-            (\((?P<ra>\S+)\))?       # real arg  (optional)
+            (\((?P<ra>[\S\ ]+)\))?       # real arg  (optional)
             "#,
         )?;
         let mut last_line = 0;
@@ -153,7 +153,7 @@ mod tests {
                     opcode: Opcode::LoadConst,
                     opname: "LOAD_CONST".to_string(),
                     arg: Some(2,),
-                    argval: None,
+                    argval: Some(r#"<code object test at 0x00000279922BDB80, file "test/def.py", line 1>"#.to_string(),),
                     offset: 12,
                     starts_line: None,
                     is_jump_target: false,
