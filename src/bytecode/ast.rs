@@ -316,17 +316,90 @@ mod tests {
 
     #[test]
     fn test_query() {
-        let expr = ExpressionEnum::Assign(Assign {
+        let expr = Box::new(Expr {
+            bodys: [ExpressionEnum::Assign(Assign {
+                target: Box::new(ExpressionEnum::BaseValue(BaseValue {
+                    value: "test".into()
+                })),
+                values: Box::new(ExpressionEnum::Function(Function {
+                    mark:
+                        "<code object test at 0x00000279922BDB80, file \"test/def.py\", line 1>"
+                            .into(),
+                    name: "test".into(),
+                    args: ["a".into(), "return".into(),].into(),
+                    args_annotation: ["int".into(), "int".into(),].into(),
+                    start_line: 1,
+                    end_line: 1,
+                    bodys: vec![],
+                },)),
+            },),]
+            .into(),
+        });
+        let assign_query = expr.query::<Assign>();
+        let function_query = expr.query::<Function>();
+        //dbg!(query);
+        //assert!(false);
+        assert_eq!(
+            assign_query,
+            vec![&Assign {
+                target: Box::new(ExpressionEnum::BaseValue(BaseValue {
+                    value: "test".into()
+                })),
+                values: Box::new(ExpressionEnum::Function(Function {
+                    mark:
+                        "<code object test at 0x00000279922BDB80, file \"test/def.py\", line 1>"
+                            .into(),
+                    name: "test".into(),
+                    args: ["a".into(), "return".into(),].into(),
+                    args_annotation: ["int".into(), "int".into(),].into(),
+                    start_line: 1,
+                    end_line: 1,
+                    bodys: vec![],
+                },)),
+            }]
+        );
+        assert_eq!(
+            function_query,
+            vec![&Function {
+                mark:
+                    "<code object test at 0x00000279922BDB80, file \"test/def.py\", line 1>"
+                        .into(),
+                name: "test".into(),
+                args: ["a".into(), "return".into(),].into(),
+                args_annotation: ["int".into(), "int".into(),].into(),
+                start_line: 1,
+                end_line: 1,
+                bodys: vec![],
+            }]
+        );
+    }
+
+    #[test]
+    fn test_any() {
+        let expr = Assign {
                 target: Box::new(ExpressionEnum::BaseValue(BaseValue {
                     value: "a".to_string(),
                 })),
                 values: Box::new(ExpressionEnum::BaseValue(BaseValue {
                     value: "1".to_string(),
                 })),
-            });
-        let query = expr.query::<BaseValue>();
+            };
+        let any = expr.try_query::<Assign>();
         
-        dbg!(query);
-        assert!(false);
+        //dbg!(any);
+        //assert!(false);
+        assert_eq!(
+            any,
+            Some(
+                &Assign {
+                    target: Box::new(ExpressionEnum::BaseValue(BaseValue {
+                        value: "a".to_string(),
+                    })),
+                    values: Box::new(ExpressionEnum::BaseValue(BaseValue {
+                        value: "1".to_string(),
+                    })),
+                }
+            )
+        )
     }
 }

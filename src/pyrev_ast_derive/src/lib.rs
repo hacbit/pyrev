@@ -31,13 +31,17 @@ pub fn derive_query(input: TokenStream) -> TokenStream {
             let field_names = fields.named.iter().map(|f| &f.ident).collect::<Vec<_>>();
             let gen = quote! {
                 impl Query for #name {
-                    fn query<T: 'static>(&self) -> Vec<&T> {
+                    fn query<T: std::fmt::Debug +'static>(&self) -> Vec<&T> {
                         match self {
                             #name { #(#field_names),* } => {
                                 let mut result = Vec::new();
-                                #(if let Some(value) = #field_names.as_any().downcast_ref::<T>() {
-                                    result.push(value);
-                                })*
+                                if let Some(v) = self.try_query::<T>() {
+                                    result.push(v);
+                                } else {
+                                    #(
+                                        result.extend(#field_names.query::<T>());
+                                    )*
+                                }
                                 result
                             }
                         }

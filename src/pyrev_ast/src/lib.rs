@@ -11,13 +11,13 @@ where
     fn build_code(&self) -> Vec<(usize, String)>;
 }
 
-pub trait Queryable: Any {
+pub trait Queryable {
     fn as_any(&self) -> &dyn Any;
-    fn get_query<T: 'static>(&self) -> Vec<&T> {
-        if TypeId::of::<T>() == TypeId::of::<Self>() {
-            vec![unsafe { &*(self.as_any() as *const dyn Any as *const T) }]
+    fn try_query<T: 'static>(&self) -> Option<&T> {
+        if TypeId::of::<T>() == self.as_any().type_id() {
+            unsafe { Some(&*(self.as_any() as *const dyn Any as *const T)) }
         } else {
-            vec![]
+            None
         }
     }
 }
@@ -29,7 +29,7 @@ impl<T: 'static> Queryable for T {
 }
 
 pub trait Query {
-    fn query<T: 'static>(&self) -> Vec<&T>;
+    fn query<T: std::fmt::Debug + 'static>(&self) -> Vec<&T>;
 }
 
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
@@ -93,15 +93,15 @@ pub enum ExpressionEnum {
 }
 
 impl Query for ExpressionEnum {
-    fn query<T: 'static>(&self) -> Vec<&T> {
+    fn query<T: std::fmt::Debug + 'static>(&self) -> Vec<&T> {
         match self {
-            ExpressionEnum::Function(f) => f.get_query(),
-            ExpressionEnum::Assign(a) => a.get_query(),
-            ExpressionEnum::BaseValue(b) => b.get_query(),
-            ExpressionEnum::BinaryOperation(b) => b.get_query(),
-            ExpressionEnum::Call(c) => c.get_query(),
-            ExpressionEnum::Container(c) => c.get_query(),
-            ExpressionEnum::Attribute(a) => a.get_query(),
+            ExpressionEnum::Function(f) => f.query(),
+            ExpressionEnum::Assign(a) => a.query(),
+            ExpressionEnum::BaseValue(b) => b.query(),
+            ExpressionEnum::BinaryOperation(b) => b.query(),
+            ExpressionEnum::Call(c) => c.query(),
+            ExpressionEnum::Container(c) => c.query(),
+            ExpressionEnum::Attribute(a) => a.query(),
         }
     }
 }
@@ -117,6 +117,34 @@ pub enum ContainerType {
 impl Query for ContainerType {
     fn query<T: 'static>(&self) -> Vec<&T> {
         vec![]
+    }
+}
+
+impl Query for String {
+    fn query<U: 'static>(&self) -> Vec<&U> {
+        vec![]
+    }
+}
+
+impl Query for usize {
+    fn query<U: 'static>(&self) -> Vec<&U> {
+        vec![]
+    }
+}
+
+impl<T: Query> Query for Vec<T> {
+    fn query<U: std::fmt::Debug + 'static>(&self) -> Vec<&U> {
+        let mut result = Vec::new();
+        for item in self.iter() {
+            result.extend(item.query::<U>());
+        }
+        result
+    }
+}
+
+impl<T: Query> Query for Box<T> {
+    fn query<U: std::fmt::Debug + 'static>(&self) -> Vec<&U> {
+        self.as_ref().query::<U>()
     }
 }
 
