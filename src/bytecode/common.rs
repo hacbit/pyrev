@@ -20,6 +20,7 @@ impl<T> IStream for T
 where
     T: AsRef<std::path::Path>,
 {
+    /// 读取文件内容
     fn read(self) -> Result<String> {
         let file = std::fs::OpenOptions::new().read(true).open(self.as_ref())?;
         let reader = std::io::BufReader::new(file);
@@ -37,7 +38,11 @@ where
     T: Iterator<Item = (usize, S)> + Clone,
     S: AsRef<str> + std::fmt::Display,
 {
+    /// 将迭代器中的内容写入控制台
+    /// 带有行号，输出内容会被着色
     fn write_console(&mut self) -> Result<()> {
+        // 判断是否重定向
+        // 如果被重定向(else分支), 则不着色(因为重定向到文件不需要行号和颜色信息)
         if atty::is(Stream::Stdout) {
             let max_wide = self
                 .clone()
@@ -62,6 +67,7 @@ where
         Ok(())
     }
 
+    /// 将迭代器中的内容写入文件
     fn write_file<P: AsRef<Path>>(&mut self, file: P) -> Result<()> {
         let mut file = std::fs::OpenOptions::new()
             .write(true)
@@ -74,12 +80,14 @@ where
     }
 }
 
+/// 一个简单的有序字典
 #[derive(Debug, Clone)]
 pub struct OrderMap<K, V> {
     keys: Vec<K>,
     values: Vec<V>,
 }
 
+/// 实现了HashMap的几个基本方法
 #[allow(unused)]
 impl<K, V> OrderMap<K, V>
 where

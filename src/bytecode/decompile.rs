@@ -12,6 +12,8 @@ pub trait Decompiler {
 }
 
 impl Decompiler for CodeObjectMap {
+    /// todo!
+    /// 从字节码对象映射表中解析为AST, 然后再从AST解析为代码
     fn decompile(&self) -> Result<DecompiledCode> {
         let mut decompiled_code = DecompiledCode::new();
         let mut exprs_map = HashMap::new();
@@ -37,27 +39,32 @@ impl Decompiler for CodeObjectMap {
         Ok(decompiled_code)
     }
 
+    /// todo!
+    /// 用来合并所有的Expr
+    /// 比如<main>有一个函数foo, 就需要把foo的定义合并到<main>里面的foo Function的 bodys
     fn merge(&self, mark: &str, maps: HashMap<String, Expr>) -> Result<Expr> {
-        let mut this_expr = maps.get(mark).ok_or(format!("No {} expr", &mark))?.clone();
-        for (i, instruction) in this_expr.bodys.iter().enumerate() {}
+        let this_expr = maps.get(mark).ok_or(format!("No {} expr", &mark))?.clone();
+        for (_i, _instruction) in this_expr.bodys.iter().enumerate() {}
         Ok(this_expr)
     }
 }
 
-fn process_expression(expr: &mut ExpressionEnum, maps: HashMap<String, Expr>) {
+/// 弃用的API
+/* fn process_expression(expr: &mut ExpressionEnum, maps: HashMap<String, Expr>) {
     match expr {
         ExpressionEnum::Function(f) => {
             f.bodys = maps.get(&f.mark).unwrap().bodys.clone();
         }
         _ => process_expression(expr, maps),
     }
-}
+} */
 
 #[derive(Debug)]
 pub struct DecompiledCode {
-    code: Vec<(usize, String)>,
+    code: Vec<(LineNumber, String)>,
 }
 
+#[allow(unused)]
 impl DecompiledCode {
     pub fn new() -> Self {
         Self { code: Vec::new() }
@@ -74,7 +81,6 @@ impl DecompiledCode {
 
 #[cfg(test)]
 mod tests {
-    use super::super::opcode::*;
     use super::super::parse_opcode::*;
     use super::*;
 

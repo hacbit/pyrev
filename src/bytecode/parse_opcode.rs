@@ -16,6 +16,10 @@ impl<T> OpcodeParser for T
 where
     T: AsRef<str> + 'static,
 {
+    /// 解析一个字节码文件的内容, 返回一个字节码对象映射表(CodeObjectMap)
+    /// ObjectMark 是一个对象的标记(String), 就是字节码里面看到<>包裹的
+    /// LineNumber 是一个行号(usize), 就是字节码里每一段左上角的数字
+    /// CodeObject 是一个字节码对象, 里面包含了一个对象主体的所有指令
     fn parse(&self) -> Result<CodeObjectMap> {
         let reg = Regex::new(
             r#"(?s)(?x)

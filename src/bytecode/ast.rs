@@ -1,15 +1,15 @@
-use pyrev_ast::*;
-
 use super::opcode::{Opcode, OpcodeInstruction};
+use pyrev_ast::*;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 pub trait ExprParser {
-    fn parse(opcode_instructions: &Vec<OpcodeInstruction>) -> Result<Box<Self>>;
+    fn parse(opcode_instructions: &[OpcodeInstruction]) -> Result<Box<Self>>;
 }
 
 impl ExprParser for Expr {
-    fn parse(opcode_instructions: &Vec<OpcodeInstruction>) -> Result<Box<Self>> {
+    /// 用于解析一段字节码指令为AST
+    fn parse(opcode_instructions: &[OpcodeInstruction]) -> Result<Box<Self>> {
         let mut exprs_stack = Vec::<ExpressionEnum>::new();
         for instruction in opcode_instructions {
             match instruction.opcode {
@@ -79,6 +79,8 @@ impl ExprParser for Expr {
                             assert_eq!(container.container_type, ContainerType::Tuple);
                             for (i, value) in container.values.iter().rev().enumerate() {
                                 if let ExpressionEnum::BaseValue(value) = value {
+                                    // 比如 ('a', int, 'return', int)
+                                    // 需要把单引号去掉
                                     if i % 2 == 1 {
                                         function.args_annotation.push(value.value.clone());
                                     } else {
@@ -258,8 +260,7 @@ mod tests {
                 is_jump_target: false,
                 positions: vec![],
             },
-        ]
-        .into();
+        ];
 
         assert_eq!(
             Expr::parse(&instructions).unwrap(),
@@ -290,20 +291,19 @@ mod tests {
         let input = Box::new(Expr {
             bodys: [ExpressionEnum::Assign(Assign {
                 target: Box::new(ExpressionEnum::BaseValue(BaseValue {
-                    value: "test".into()
+                    value: "test".into(),
                 })),
                 values: Box::new(ExpressionEnum::Function(Function {
-                    mark:
-                        "<code object test at 0x00000279922BDB80, file \"test/def.py\", line 1>"
-                            .into(),
+                    mark: "<code object test at 0x00000279922BDB80, file \"test/def.py\", line 1>"
+                        .into(),
                     name: "test".into(),
-                    args: ["a".into(), "return".into(),].into(),
-                    args_annotation: ["int".into(), "int".into(),].into(),
+                    args: ["a".into(), "return".into()].into(),
+                    args_annotation: ["int".into(), "int".into()].into(),
                     start_line: 1,
                     end_line: 1,
                     bodys: vec![],
-                },)),
-            },),]
+                })),
+            })]
             .into(),
         });
         let mut res = Vec::new();
@@ -319,20 +319,19 @@ mod tests {
         let expr = Box::new(Expr {
             bodys: [ExpressionEnum::Assign(Assign {
                 target: Box::new(ExpressionEnum::BaseValue(BaseValue {
-                    value: "test".into()
+                    value: "test".into(),
                 })),
                 values: Box::new(ExpressionEnum::Function(Function {
-                    mark:
-                        "<code object test at 0x00000279922BDB80, file \"test/def.py\", line 1>"
-                            .into(),
+                    mark: "<code object test at 0x00000279922BDB80, file \"test/def.py\", line 1>"
+                        .into(),
                     name: "test".into(),
-                    args: ["a".into(), "return".into(),].into(),
-                    args_annotation: ["int".into(), "int".into(),].into(),
+                    args: ["a".into(), "return".into()].into(),
+                    args_annotation: ["int".into(), "int".into()].into(),
                     start_line: 1,
                     end_line: 1,
                     bodys: vec![],
-                },)),
-            },),]
+                })),
+            })]
             .into(),
         });
         let assign_query = expr.query::<Assign>();
@@ -346,9 +345,8 @@ mod tests {
                     value: "test".into()
                 })),
                 values: Box::new(ExpressionEnum::Function(Function {
-                    mark:
-                        "<code object test at 0x00000279922BDB80, file \"test/def.py\", line 1>"
-                            .into(),
+                    mark: "<code object test at 0x00000279922BDB80, file \"test/def.py\", line 1>"
+                        .into(),
                     name: "test".into(),
                     args: ["a".into(), "return".into(),].into(),
                     args_annotation: ["int".into(), "int".into(),].into(),
@@ -361,9 +359,8 @@ mod tests {
         assert_eq!(
             function_query,
             vec![&Function {
-                mark:
-                    "<code object test at 0x00000279922BDB80, file \"test/def.py\", line 1>"
-                        .into(),
+                mark: "<code object test at 0x00000279922BDB80, file \"test/def.py\", line 1>"
+                    .into(),
                 name: "test".into(),
                 args: ["a".into(), "return".into(),].into(),
                 args_annotation: ["int".into(), "int".into(),].into(),
@@ -377,29 +374,27 @@ mod tests {
     #[test]
     fn test_any() {
         let expr = Assign {
+            target: Box::new(ExpressionEnum::BaseValue(BaseValue {
+                value: "a".to_string(),
+            })),
+            values: Box::new(ExpressionEnum::BaseValue(BaseValue {
+                value: "1".to_string(),
+            })),
+        };
+        let any = expr.try_query::<Assign>();
+
+        //dbg!(any);
+        //assert!(false);
+        assert_eq!(
+            any,
+            Some(&Assign {
                 target: Box::new(ExpressionEnum::BaseValue(BaseValue {
                     value: "a".to_string(),
                 })),
                 values: Box::new(ExpressionEnum::BaseValue(BaseValue {
                     value: "1".to_string(),
                 })),
-            };
-        let any = expr.try_query::<Assign>();
-        
-        //dbg!(any);
-        //assert!(false);
-        assert_eq!(
-            any,
-            Some(
-                &Assign {
-                    target: Box::new(ExpressionEnum::BaseValue(BaseValue {
-                        value: "a".to_string(),
-                    })),
-                    values: Box::new(ExpressionEnum::BaseValue(BaseValue {
-                        value: "1".to_string(),
-                    })),
-                }
-            )
+            })
         )
     }
 }

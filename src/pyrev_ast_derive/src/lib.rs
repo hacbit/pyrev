@@ -17,6 +17,9 @@ pub fn derive_expression(input: TokenStream) -> TokenStream {
     gen.into()
 }
 
+/// Query trait is depend on Queryable trait
+/// It searches for the type T recursively in the struct
+/// It will return immediately when if finds one, even if the return structures contains the target type T
 #[proc_macro_derive(Query)]
 pub fn derive_query(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
@@ -30,14 +33,19 @@ pub fn derive_query(input: TokenStream) -> TokenStream {
             };
             let field_names = fields.named.iter().map(|f| &f.ident).collect::<Vec<_>>();
             let gen = quote! {
-                impl Query for #name {
+                impl Query for #name
+                where
+                    Self: std::fmt::Debug + Queryable + 'static,
+                {
                     fn query<T: std::fmt::Debug +'static>(&self) -> Vec<&T> {
                         match self {
                             #name { #(#field_names),* } => {
                                 let mut result = Vec::new();
+                                // if the type is T, return it
                                 if let Some(v) = self.try_query::<T>() {
                                     result.push(v);
                                 } else {
+                                    // if not, search for the type T in the fields
                                     #(
                                         result.extend(#field_names.query::<T>());
                                     )*

@@ -11,6 +11,8 @@ where
     fn build_code(&self) -> Vec<(usize, String)>;
 }
 
+/// Queryable trait is used to convert the struct to dyn Any
+/// It is used to search for the type T in the Struct
 pub trait Queryable {
     fn as_any(&self) -> &dyn Any;
     fn try_query<T: 'static>(&self) -> Option<&T> {
@@ -28,10 +30,47 @@ impl<T: 'static> Queryable for T {
     }
 }
 
-pub trait Query {
+/// example:
+/// ```
+/// use pyrev_ast::*;
+/// use pyrev_ast_derive::*;
+/// #[derive(Query, Debug)]
+/// struct A {
+///     b: B,
+///     c: C,
+/// }
+/// #[derive(Query, Debug)]
+/// struct B {
+///     d: String,
+/// }
+/// #[derive(Query, Debug, PartialEq)]
+/// struct C {
+///     e: usize,
+/// }
+///     let a = A {
+///         b: B {
+///             d: "hello".to_string(),
+///         },
+///         c: C {
+///             e: 1,
+///         },
+///     };
+///     let result = a.query::<C>();
+///     assert_eq!(
+///         result,
+///         vec![&C {
+///             e: 1,
+///         }]
+///     );
+/// ```
+pub trait Query
+where
+    Self: std::fmt::Debug + Queryable + 'static,
+{
     fn query<T: std::fmt::Debug + 'static>(&self) -> Vec<&T>;
 }
 
+/// 函数
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
 pub struct Function {
     pub mark: String,
@@ -43,12 +82,14 @@ pub struct Function {
     pub bodys: Vec<ExpressionEnum>,
 }
 
+/// 赋值
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
 pub struct Assign {
     pub target: Box<ExpressionEnum>,
     pub values: Box<ExpressionEnum>,
 }
 
+/// 二元操作
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
 pub struct BinaryOperation {
     pub left: Box<ExpressionEnum>,
@@ -56,30 +97,35 @@ pub struct BinaryOperation {
     pub operator: String,
 }
 
+/// 函数调用
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
 pub struct Call {
     pub func: Box<ExpressionEnum>,
     pub args: Vec<ExpressionEnum>,
 }
 
+/// 容器(包括list, tuple, set, dict等)
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
 pub struct Container {
     pub values: Vec<ExpressionEnum>,
     pub container_type: ContainerType,
 }
 
+/// 属性
+/// 例如: a.b
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
 pub struct Attribute {
     pub parent: Box<ExpressionEnum>,
     pub attr: Box<ExpressionEnum>,
 }
 
-// String的Expression封装
+/// String的Expression封装
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
 pub struct BaseValue {
     pub value: String,
 }
 
+/// 为上面的表达式提供一个封装
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ExpressionEnum {
     Function(Function),
@@ -148,6 +194,7 @@ impl<T: Query> Query for Box<T> {
     }
 }
 
+/// 只是对外提供一个ExpressionEnum的封装 (单纯不想使用Vec<ExpressionEnum>而已 )
 #[derive(Clone, Debug, PartialEq, Eq, Query)]
 pub struct Expr {
     pub bodys: Vec<ExpressionEnum>,
@@ -180,6 +227,12 @@ impl Function {
     }
 }
 
+impl Default for Expr {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Expr {
     pub fn new() -> Self {
         Self { bodys: Vec::new() }
@@ -194,6 +247,7 @@ impl Expr {
     }
 }
 
+/// 递归遍历表达式树, 生成代码
 impl ExpressionEnum {
     pub fn build(&self) -> Result<Vec<String>> {
         match self {

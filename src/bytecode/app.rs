@@ -30,6 +30,7 @@ impl App {
         }
     }
 
+    /// 插入一个资源(要解析的字节码文件路径)
     pub fn insert_resource<P: Into<PathBuf>>(&mut self, path: P) -> &mut Self {
         let path = path.into();
         if path.is_file() {
@@ -57,6 +58,7 @@ impl App {
         self
     }
 
+    /// 插入多个
     pub fn insert_resources<P: Into<PathBuf>>(&mut self, paths: Vec<P>) -> &mut Self {
         for path in paths {
             self.insert_resource(path);
@@ -64,6 +66,7 @@ impl App {
         self
     }
 
+    /// 指定输出地址
     pub fn with_file<P: Into<PathBuf>>(&mut self, path: P) -> &mut Self {
         let path = path.into();
         if !path.exists() && !self.output_files.contains(&path) {
@@ -78,6 +81,7 @@ impl App {
         self
     }
 
+    /// 指定多个输出地址
     pub fn with_files<P: Into<PathBuf>>(&mut self, paths: Vec<P>) -> &mut Self {
         for path in paths {
             self.with_file(path);
@@ -94,6 +98,8 @@ impl App {
         Ok(self)
     }
 
+    /// 会按照输入文件路径和输出文件路径的插入顺序导出
+    /// 如果没有匹配到输出文件路径, 则会输出到控制台
     pub fn output(&mut self) -> Result<()> {
         self.output
             .iter_mut()
@@ -109,16 +115,14 @@ impl App {
                                 .bright_red()
                         );
                     }
+                } else if let Ok(decompiled_code) = decompiled_result {
+                    decompiled_code.iter().write_console().unwrap();
                 } else {
-                    if let Ok(decompiled_code) = decompiled_result {
-                        decompiled_code.iter().write_console().unwrap();
-                    } else {
-                        eprintln!(
-                            "{}",
-                            format!("The file {} decompiled failed", self.files[i].display())
-                                .bright_red()
-                        );
-                    }
+                    eprintln!(
+                        "{}",
+                        format!("The file {} decompiled failed", self.files[i].display())
+                            .bright_red()
+                    );
                 }
             });
         Ok(())
