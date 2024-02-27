@@ -12,7 +12,6 @@ pub trait Decompiler {
 }
 
 impl Decompiler for CodeObjectMap {
-    /// todo!
     /// 从字节码对象映射表中解析为AST, 然后再从AST解析为代码
     fn decompile(&self) -> Result<DecompiledCode> {
         let mut decompiled_code = DecompiledCode::new();
@@ -26,6 +25,7 @@ impl Decompiler for CodeObjectMap {
             exprs_map.insert(mark.clone(), expr);
         }
         let main_expr = self.merge("<main>", exprs_map)?;
+        dbg!(&main_expr);
 
         for (i, instruction) in main_expr.bodys.iter().enumerate() {
             let code = instruction
@@ -39,12 +39,25 @@ impl Decompiler for CodeObjectMap {
         Ok(decompiled_code)
     }
 
-    /// todo!
     /// 用来合并所有的Expr
     /// 比如<main>有一个函数foo, 就需要把foo的定义合并到<main>里面的foo Function的 bodys
     fn merge(&self, mark: &str, maps: HashMap<String, Expr>) -> Result<Expr> {
         let this_expr = maps.get(mark).ok_or(format!("No {} expr", &mark))?.clone();
-        for (_i, _instruction) in this_expr.bodys.iter().enumerate() {}
+        let function_query = this_expr.query::<Function>();
+        for function in function_query {
+            if function.bodys.is_empty() {
+                let new_bodys = maps
+                    .get(&function.mark)
+                    .ok_or(format!("No {} expr", &function.mark))?
+                    .bodys
+                    .clone();
+                // 想不到怎么实现 query_mut, 先用unsafe
+                let func_ptr = function as *const Function as *mut Function;
+                unsafe {
+                    (*func_ptr).bodys = new_bodys;
+                }
+            }
+        }
         Ok(this_expr)
     }
 }
