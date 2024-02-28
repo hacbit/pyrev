@@ -2,8 +2,8 @@
 use clap::{arg, command, value_parser, ArgAction, Command};
 use std::path::PathBuf;
 
-mod bytecode;
-use bytecode::app::App;
+mod core;
+use core::app::App;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
