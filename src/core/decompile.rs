@@ -20,12 +20,14 @@ impl Decompiler for CodeObjectMap {
             let mut expr = Expr::new();
             for (_, instruction) in code_object.iter() {
                 let e = Expr::parse(instruction)?;
+                //dbg!(&e);
                 expr.extend(*e);
             }
             exprs_map.insert(mark.clone(), expr);
         }
+        //dbg!(&exprs_map);
         let main_expr = self.merge("<main>", &exprs_map)?;
-        dbg!(&main_expr);
+        //dbg!(&main_expr);
 
         for (i, instruction) in main_expr.bodys.iter().enumerate() {
             let code = instruction
@@ -56,11 +58,12 @@ impl Decompiler for CodeObjectMap {
                     // 想不到怎么实现 query_mut, 先用unsafe
                     let func_ptr = function as *const Function as *mut Function;
                     unsafe {
-                        (*func_ptr).bodys = new_bodys;
+                        (*func_ptr).bodys.extend(new_bodys);
                     }
                     is_merged = false;
                 }
             }
+            //dbg!(&this_expr);
             if is_merged {
                 break;
             }

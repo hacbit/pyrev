@@ -82,11 +82,18 @@ pub struct Function {
     pub bodys: Vec<ExpressionEnum>,
 }
 
+/// 返回
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+pub struct Return {
+    pub value: Box<ExpressionEnum>,
+}
+
 /// 赋值
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
 pub struct Assign {
     pub target: Box<ExpressionEnum>,
     pub values: Box<ExpressionEnum>,
+    pub operator: String,
 }
 
 /// 二元操作
@@ -119,6 +126,13 @@ pub struct Attribute {
     pub attr: Box<ExpressionEnum>,
 }
 
+/// 切片
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+pub struct Slice {
+    pub origin: Box<ExpressionEnum>,
+    pub slice: Vec<ExpressionEnum>,
+}
+
 /// String的Expression封装
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
 pub struct BaseValue {
@@ -129,11 +143,13 @@ pub struct BaseValue {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ExpressionEnum {
     Function(Function),
+    Return(Return),
     Assign(Assign),
     BaseValue(BaseValue),
     BinaryOperation(BinaryOperation),
     Call(Call),
     Container(Container),
+    Slice(Slice),
     Attribute(Attribute),
     // ...
 }
@@ -142,11 +158,13 @@ impl Query for ExpressionEnum {
     fn query<T: std::fmt::Debug + 'static>(&self) -> Vec<&T> {
         match self {
             ExpressionEnum::Function(f) => f.query(),
+            ExpressionEnum::Return(r) => r.query(),
             ExpressionEnum::Assign(a) => a.query(),
             ExpressionEnum::BaseValue(b) => b.query(),
             ExpressionEnum::BinaryOperation(b) => b.query(),
             ExpressionEnum::Call(c) => c.query(),
             ExpressionEnum::Container(c) => c.query(),
+            ExpressionEnum::Slice(s) => s.query(),
             ExpressionEnum::Attribute(a) => a.query(),
         }
     }
@@ -191,6 +209,15 @@ impl<T: Query> Query for Vec<T> {
 impl<T: Query> Query for Box<T> {
     fn query<U: std::fmt::Debug + 'static>(&self) -> Vec<&U> {
         self.as_ref().query::<U>()
+    }
+}
+
+impl<T: Query> Query for Option<T> {
+    fn query<U: std::fmt::Debug + 'static>(&self) -> Vec<&U> {
+        match self {
+            Some(t) => t.query::<U>(),
+            None => vec![],
+        }
     }
 }
 
@@ -253,29 +280,60 @@ impl ExpressionEnum {
         match self {
             ExpressionEnum::Function(function) => {
                 let mut code = Vec::new();
-                code.push(format!("def {}():", function.name));
+                let mut args_code = String::new();
+                let mut ret_code = String::new();
+                for (arg, anno) in function.args.iter().zip(function.args_annotation.iter()) {
+                    if arg == "return" {
+                        ret_code.push_str(&format!(" -> {}", anno));
+                        continue;
+                    }
+                    if anno.is_empty() {
+                        args_code.push_str(&format!("{}, ", arg));
+                    } else {
+                        args_code.push_str(&format!("{}: {}, ", arg, anno));
+                    }
+                }
+                code.push(format!(
+                    "def {}({}){}:",
+                    function.name,
+                    args_code.trim_end_matches(", "),
+                    ret_code
+                ));
                 for expr in function.bodys.iter() {
-                    let mut sub_code = expr.build()?;
-                    code.append(&mut sub_code);
+                    let expr_code = expr.build()?;
+                    for line in expr_code.iter() {
+                        code.push(format!("    {}", line));
+                    }
                 }
                 Ok(code)
+            }
+            ExpressionEnum::Return(r) => {
+                let value_code = r.value.build()?.join("");
+                if value_code.is_empty() {
+                    Ok(vec![])
+                } else {
+                    Ok(vec![format!("return {}", value_code)])
+                }
             }
             ExpressionEnum::Assign(a) => {
                 let mut code = Vec::new();
                 let target_code = a.target.build()?;
                 let value_code = a.values.build()?;
-                if !value_code.first().unwrap().trim().starts_with("def") {
-                    code.push(format!(
-                        "{} = {}",
-                        target_code.join(""),
-                        value_code.join("")
-                    ));
-                } else {
-                    code.push(value_code.join(""));
-                }
+                code.push(format!(
+                    "{} {} {}",
+                    target_code.join(""),
+                    a.operator,
+                    value_code.join("")
+                ));
                 Ok(code)
             }
-            ExpressionEnum::BaseValue(base_value) => Ok(vec![base_value.value.clone()]),
+            ExpressionEnum::BaseValue(base_value) => {
+                if base_value.value == "None" {
+                    Ok(vec!["".to_string()])
+                } else {
+                    Ok(vec![base_value.value.clone()])
+                }
+            }
             ExpressionEnum::Call(call) => {
                 let func_code = call.func.build()?.join("");
                 let mut args_code = Vec::new();
@@ -323,6 +381,19 @@ impl ExpressionEnum {
                     }
                 }
                 Ok(code)
+            }
+            ExpressionEnum::Slice(slice) => {
+                let origin_code = slice.origin.build()?;
+                let slice_code = slice
+                    .slice
+                    .iter()
+                    .map(|s| Ok(s.build()?.join("")))
+                    .collect::<Result<Vec<String>>>()?;
+                Ok(vec![format!(
+                    "{}[{}]",
+                    origin_code.join(""),
+                    slice_code.join(":")
+                )])
             }
             ExpressionEnum::Attribute(attribute) => Ok(vec![format!(
                 "{}.{}",

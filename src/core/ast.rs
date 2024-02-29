@@ -40,10 +40,20 @@ impl ExprParser for Expr {
                         .clone();
                     let value = exprs_stack.pop().ok_or("[Store] Stack is empty")?;
 
-                    exprs_stack.push(ExpressionEnum::Assign(Assign {
-                        target: Box::new(ExpressionEnum::BaseValue(BaseValue { value: name })),
-                        values: Box::new(value),
-                    }));
+                    match value {
+                        ExpressionEnum::Function(_) => {
+                            exprs_stack.push(value);
+                        }
+                        _ => {
+                            exprs_stack.push(ExpressionEnum::Assign(Assign {
+                                target: Box::new(ExpressionEnum::BaseValue(BaseValue {
+                                    value: name,
+                                })),
+                                values: Box::new(value),
+                                operator: "=".to_string(),
+                            }));
+                        }
+                    }
                 }
                 Opcode::StoreAttr => {
                     let parent = exprs_stack.pop().ok_or("[StoreAttr] Stack is empty")?;
@@ -57,6 +67,7 @@ impl ExprParser for Expr {
                             })),
                         })),
                         values: Box::new(value),
+                        operator: "=".to_string(),
                     }));
                 }
                 Opcode::BuildTuple => {
@@ -68,6 +79,19 @@ impl ExprParser for Expr {
                     exprs_stack.push(ExpressionEnum::Container(Container {
                         values: tuple,
                         container_type: ContainerType::Tuple,
+                    }));
+                }
+                Opcode::BuildSlice => {
+                    let size = instruction.arg.ok_or("[BuildSlice] No arg")?;
+                    let mut slice = Vec::with_capacity(size);
+                    for _ in 0..size {
+                        slice.push(exprs_stack.pop().ok_or("[BuildSlice] Stack is empty")?);
+                    }
+                    slice.reverse();
+                    let origin = exprs_stack.pop().ok_or("[BuildSlice] Stack is empty")?;
+                    exprs_stack.push(ExpressionEnum::Slice(Slice {
+                        origin: Box::new(origin),
+                        slice,
                     }));
                 }
                 Opcode::MakeFunction => {
@@ -120,6 +144,7 @@ impl ExprParser for Expr {
                     if let ExpressionEnum::BaseValue(function_name) =
                         exprs_stack.pop().ok_or("[Call] Stack is empty")?
                     {
+                        //dbg!(&function_name);
                         let function_name = function_name.value.trim_start_matches("NULL + ");
                         exprs_stack.push(ExpressionEnum::Call(Call {
                             func: Box::new(ExpressionEnum::BaseValue(BaseValue {
@@ -128,18 +153,14 @@ impl ExprParser for Expr {
                             args,
                         }))
                     }
+                    //dbg!(&exprs_stack);
                 }
                 Opcode::ReturnValue => {
-                    let value = exprs_stack.pop();
-                    if let Some(value) = value {
-                        if let ExpressionEnum::BaseValue(value) = value {
-                            if value.value != "None" {
-                                exprs_stack.push(ExpressionEnum::BaseValue(BaseValue {
-                                    value: format!("return {}", value.value),
-                                }))
-                            }
-                        }
-                    }
+                    //dbg!(&exprs_stack);
+                    let value = exprs_stack.pop().ok_or("[ReturnValue] Stack is empty")?;
+                    exprs_stack.push(ExpressionEnum::Return(Return {
+                        value: Box::new(value),
+                    }));
                 }
                 _ => {}
             }
@@ -280,6 +301,7 @@ mod tests {
                         end_line: 1,
                         bodys: vec![],
                     },)),
+                    operator: "=".into(),
                 },),]
                 .into(),
             })
@@ -303,6 +325,7 @@ mod tests {
                     end_line: 1,
                     bodys: vec![],
                 })),
+                operator: "=".into(),
             })]
             .into(),
         });
@@ -331,6 +354,7 @@ mod tests {
                     end_line: 1,
                     bodys: vec![],
                 })),
+                operator: "=".into(),
             })]
             .into(),
         });
@@ -354,6 +378,7 @@ mod tests {
                     end_line: 1,
                     bodys: vec![],
                 },)),
+                operator: "=".into(),
             }]
         );
         assert_eq!(
@@ -380,6 +405,7 @@ mod tests {
             values: Box::new(ExpressionEnum::BaseValue(BaseValue {
                 value: "1".to_string(),
             })),
+            operator: "=".to_string(),
         };
         let any = expr.try_query::<Assign>();
 
@@ -394,6 +420,7 @@ mod tests {
                 values: Box::new(ExpressionEnum::BaseValue(BaseValue {
                     value: "1".to_string(),
                 })),
+                operator: "=".to_string(),
             })
         )
     }
