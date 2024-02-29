@@ -1,9 +1,3 @@
-// deprecated API
-// pub mod types;
-
-// deprecated API
-// pub mod utils;
-
 // new api
 // 包括了opcode和opcodeInstruction的定义
 pub mod opcode;
