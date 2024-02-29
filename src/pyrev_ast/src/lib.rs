@@ -305,6 +305,9 @@ impl ExpressionEnum {
                         code.push(format!("    {}", line));
                     }
                 }
+                if code.len() == 1 {
+                    code.push("    pass".to_string());
+                }
                 Ok(code)
             }
             ExpressionEnum::Return(r) => {

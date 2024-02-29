@@ -286,22 +286,15 @@ mod tests {
         assert_eq!(
             Expr::parse(&instructions).unwrap(),
             Box::new(Expr {
-                bodys: [ExpressionEnum::Assign(Assign {
-                    target: Box::new(ExpressionEnum::BaseValue(BaseValue {
-                        value: "test".into()
-                    })),
-                    values: Box::new(ExpressionEnum::Function(Function {
-                        mark:
-                            "<code object test at 0x00000279922BDB80, file \"test/def.py\", line 1>"
-                                .into(),
-                        name: "test".into(),
-                        args: ["a".into(), "return".into(),].into(),
-                        args_annotation: ["int".into(), "int".into(),].into(),
-                        start_line: 1,
-                        end_line: 1,
-                        bodys: vec![],
-                    },)),
-                    operator: "=".into(),
+                bodys: [ExpressionEnum::Function(Function {
+                    mark: "<code object test at 0x00000279922BDB80, file \"test/def.py\", line 1>"
+                        .into(),
+                    name: "test".into(),
+                    args: ["a".into(), "return".into(),].into(),
+                    args_annotation: ["int".into(), "int".into(),].into(),
+                    start_line: 1,
+                    end_line: 1,
+                    bodys: vec![],
                 },),]
                 .into(),
             })
@@ -311,11 +304,8 @@ mod tests {
     #[test]
     fn test_build_from_ast() {
         let input = Box::new(Expr {
-            bodys: [ExpressionEnum::Assign(Assign {
-                target: Box::new(ExpressionEnum::BaseValue(BaseValue {
-                    value: "test".into(),
-                })),
-                values: Box::new(ExpressionEnum::Function(Function {
+            bodys: [
+                ExpressionEnum::Function(Function {
                     mark: "<code object test at 0x00000279922BDB80, file \"test/def.py\", line 1>"
                         .into(),
                     name: "test".into(),
@@ -324,17 +314,27 @@ mod tests {
                     start_line: 1,
                     end_line: 1,
                     bodys: vec![],
-                })),
-                operator: "=".into(),
-            })]
+                }),
+                ExpressionEnum::Call(Call {
+                    func: Box::new(ExpressionEnum::BaseValue(BaseValue {
+                        value: "print".into(),
+                    })),
+                    args: vec![ExpressionEnum::BaseValue(BaseValue {
+                        value: "test".into(),
+                    })],
+                }),
+            ]
             .into(),
         });
         let mut res = Vec::new();
         for expr in input.bodys.iter() {
             res.append(&mut expr.build().unwrap());
         }
-        dbg!(res);
-        assert!(false);
+        //dbg!(res);
+        assert_eq!(
+            res,
+            vec!["def test(a: int) -> int:", "    pass", "print(test)",]
+        )
     }
 
     #[test]

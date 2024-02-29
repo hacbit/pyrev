@@ -72,17 +72,7 @@ impl Decompiler for CodeObjectMap {
     }
 }
 
-/// 弃用的API
-/* fn process_expression(expr: &mut ExpressionEnum, maps: HashMap<String, Expr>) {
-    match expr {
-        ExpressionEnum::Function(f) => {
-            f.bodys = maps.get(&f.mark).unwrap().bodys.clone();
-        }
-        _ => process_expression(expr, maps),
-    }
-} */
-
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct DecompiledCode {
     code: Vec<(LineNumber, String)>,
 }
@@ -135,7 +125,17 @@ mod tests {
         let code_objects = input.to_string().parse().unwrap();
         //dbg!(code_object);
         let expr = code_objects.decompile().unwrap();
-        dbg!(expr);
-        assert!(false);
+        //dbg!(expr);
+        //assert!(false);
+        assert_eq!(
+            expr,
+            DecompiledCode {
+                code: vec![
+                    (0, "def foo():".into(),),
+                    (1, "    return 1".into(),),
+                    (1, "print(foo())".into(),),
+                ],
+            }
+        )
     }
 }
