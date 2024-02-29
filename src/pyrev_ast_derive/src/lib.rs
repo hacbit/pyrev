@@ -44,12 +44,11 @@ pub fn derive_query(input: TokenStream) -> TokenStream {
                                 // if the type is T, return it
                                 if let Some(v) = self.try_query::<T>() {
                                     result.push(v);
-                                } else {
-                                    // if not, search for the type T in the fields
-                                    #(
-                                        result.extend(#field_names.query::<T>());
-                                    )*
                                 }
+                                // search for the type T in the fields
+                                #(
+                                    result.extend(#field_names.query::<T>());
+                                )*
                                 result
                             }
                         }

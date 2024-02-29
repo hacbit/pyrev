@@ -8,7 +8,7 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 pub trait Decompiler {
     fn decompile(&self) -> Result<DecompiledCode>;
-    fn merge(&self, mark: &str, maps: HashMap<String, Expr>) -> Result<Expr>;
+    fn merge(&self, mark: &str, maps: &HashMap<String, Expr>) -> Result<Expr>;
 }
 
 impl Decompiler for CodeObjectMap {
@@ -24,7 +24,7 @@ impl Decompiler for CodeObjectMap {
             }
             exprs_map.insert(mark.clone(), expr);
         }
-        let main_expr = self.merge("<main>", exprs_map)?;
+        let main_expr = self.merge("<main>", &exprs_map)?;
         dbg!(&main_expr);
 
         for (i, instruction) in main_expr.bodys.iter().enumerate() {
@@ -41,21 +41,28 @@ impl Decompiler for CodeObjectMap {
 
     /// 用来合并所有的Expr
     /// 比如<main>有一个函数foo, 就需要把foo的定义合并到<main>里面的foo Function的 bodys
-    fn merge(&self, mark: &str, maps: HashMap<String, Expr>) -> Result<Expr> {
+    fn merge(&self, mark: &str, maps: &HashMap<String, Expr>) -> Result<Expr> {
         let this_expr = maps.get(mark).ok_or(format!("No {} expr", &mark))?.clone();
-        let function_query = this_expr.query::<Function>();
-        for function in function_query {
-            if function.bodys.is_empty() {
-                let new_bodys = maps
-                    .get(&function.mark)
-                    .ok_or(format!("No {} expr", &function.mark))?
-                    .bodys
-                    .clone();
-                // 想不到怎么实现 query_mut, 先用unsafe
-                let func_ptr = function as *const Function as *mut Function;
-                unsafe {
-                    (*func_ptr).bodys = new_bodys;
+        loop {
+            let mut is_merged = true;
+            let function_query = this_expr.query::<Function>();
+            for function in function_query {
+                if function.bodys.is_empty() {
+                    let new_bodys = maps
+                        .get(&function.mark)
+                        .ok_or(format!("No {} expr", &function.mark))?
+                        .bodys
+                        .clone();
+                    // 想不到怎么实现 query_mut, 先用unsafe
+                    let func_ptr = function as *const Function as *mut Function;
+                    unsafe {
+                        (*func_ptr).bodys = new_bodys;
+                    }
+                    is_merged = false;
                 }
+            }
+            if is_merged {
+                break;
             }
         }
         Ok(this_expr)
