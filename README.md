@@ -3,13 +3,11 @@
 Reverse tools for bytecode of python
 
 
-
 ## Build
 
 ```shell
 /$path_to/pyrev> cargo build --release [--target your_target_os]
 ```
-
 
 
 ## Usage
@@ -28,12 +26,11 @@ Arguments:
   [name]  Optional name
 
 Options:
-  -f, --file <FILE>    specify a bytecode file
-  -o, --output <FILE>  specify an output file
+  -f, --file <FILE>    specify bytecode files
+  -o, --output <FILE>  set name of output file which contains the decompiled result
   -h, --help           Print help
   -V, --version        Print version
 ```
-
 
 
 ## Test
@@ -42,8 +39,10 @@ Options:
 /$path_to/pyrev> ls test/
 Mode                 LastWriteTime         Length Name
 ----                 -------------         ------ ----
--a---          2023/12/22     0:59             88 for.py
--a---          2023/12/22     0:59           1219 for.txt
+-a---           2024/2/24    16:24            220 def.py
+-a---           2024/2/24    16:24           4714 def.txt
+-a---          2023/12/22    12:28            188 for.py
+-a---          2023/12/22    12:28           1905 for.txt
 -a---          2023/12/21    20:34            112 import.py
 -a---          2023/12/21    20:35           1437 import.txt
 -a---          2023/12/20    10:58            355 op.py
@@ -59,30 +58,3 @@ Mode                 LastWriteTime         Length Name
  3|     line = i + 1
  4|     print(line, v)
 ```
-
-**Or run `cargo test` to compare the differences between all results generated from `*.txt` and the corresponding  `*.py`**
-
-```shell
-/$path_to/pyrev> cargo test
-
-running 3 tests
-test bytecode::utils::test::test_import ... ok
-test bytecode::utils::test::test_for ... ok
-test bytecode::utils::test::test_op ... ok
-
-test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.16s
-
-     Running unittests src\main.rs (target\debug\deps\pyrev-996dfc06f4b9f586.exe)
-
-running 0 tests
-
-test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
-
-   Doc-tests pyrev
-
-running 0 tests
-
-test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
-
-```
-
