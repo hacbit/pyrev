@@ -1,3 +1,5 @@
+#![feature(concat_idents)]
+
 mod query;
 mod querymutable;
 
@@ -9,6 +11,15 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 /// Expression trait is used to mark the struct as an expression
 pub trait Expression {}
+
+/// 导入
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+pub struct Import {
+    pub module: String,
+    pub alias: Option<String>,
+    pub submodules: Vec<String>,
+    pub submodules_alias: Vec<Option<String>>,
+}
 
 /// 函数
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
@@ -37,7 +48,7 @@ pub struct Assign {
 }
 
 /// 二元操作
-/// 包括 +, -, *, /, <<, %, **, is, in等
+/// 包括 +, -, *, /, <<, %, ==, >, is, in等
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
 pub struct BinaryOperation {
     pub left: Box<ExpressionEnum>,
@@ -80,9 +91,54 @@ pub struct BaseValue {
     pub value: String,
 }
 
+macro_rules! impl_expression_enum_query {
+    (
+        #[$meta:meta]
+        #[derive($($derive:ident),*)]
+        $vis:vis enum $name:ident {
+            $(
+                $variant:ident($ty:ty),
+            )*
+        }
+    ) => {
+        #[$meta]
+        #[derive($($derive),*)]
+        $vis enum $name {
+            $(
+                $variant($ty),
+            )*
+        }
+
+        impl Query for $name {
+            fn query<T: std::fmt::Debug + Expression + 'static>(&self) -> Vec<&T> {
+                match self {
+                    $(
+                        Self::$variant(v) => v.query(),
+                    )*
+                }
+            }
+        }
+    }
+}
+
 /// 为上面的表达式提供一个封装
-#[derive(Clone, Debug, PartialEq, Eq)]
+/// 用来实现不同Expression的嵌套
+/// 
+/// test is_*** function:
+/// ```
+/// use pyrev_ast::*;
+/// let expr = ExpressionEnum::BaseValue(BaseValue { value: "None".to_string() });
+/// assert!(expr.is_basevalue());
+/// let expr = ExpressionEnum::Assign(Assign {
+///     target: Box::new(ExpressionEnum::BaseValue(BaseValue { value: "a".to_string() })),
+///     values: Box::new(ExpressionEnum::BaseValue(BaseValue { value: "1".to_string() })),
+///     operator: "=".to_string(),
+/// });
+/// assert!(expr.is_assign());
+/// ```
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
 pub enum ExpressionEnum {
+    Import(Import),
     Function(Function),
     Return(Return),
     Assign(Assign),
@@ -93,22 +149,6 @@ pub enum ExpressionEnum {
     Slice(Slice),
     Attribute(Attribute),
     // ...
-}
-
-impl Query for ExpressionEnum {
-    fn query<T: std::fmt::Debug + Expression + 'static>(&self) -> Vec<&T> {
-        match self {
-            ExpressionEnum::Function(f) => f.query(),
-            ExpressionEnum::Return(r) => r.query(),
-            ExpressionEnum::Assign(a) => a.query(),
-            ExpressionEnum::BaseValue(b) => b.query(),
-            ExpressionEnum::BinaryOperation(b) => b.query(),
-            ExpressionEnum::Call(c) => c.query(),
-            ExpressionEnum::Container(c) => c.query(),
-            ExpressionEnum::Slice(s) => s.query(),
-            ExpressionEnum::Attribute(a) => a.query(),
-        }
-    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -182,6 +222,7 @@ impl Expr {
 impl ExpressionEnum {
     pub fn build(&self) -> Result<Vec<String>> {
         match self {
+            ExpressionEnum::Import(import) => Ok(vec![]),
             ExpressionEnum::Function(function) => {
                 let mut code = Vec::new();
                 let mut args_code = String::new();

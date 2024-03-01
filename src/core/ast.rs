@@ -193,6 +193,17 @@ impl ExprParser for Expr {
                         value: Box::new(value),
                     }));
                 }
+                Opcode::ImportName => {
+                    let module = instruction
+                        .argval
+                        .as_ref()
+                        .ok_or("[ImportName] No argval")?;
+
+                    /* exprs_stack.push(ExpressionEnum::Import(Import {
+                        module: module.clone(),
+                        ..
+                    })) */
+                }
                 _ => {}
             }
         }

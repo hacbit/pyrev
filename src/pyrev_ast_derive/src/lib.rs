@@ -1,16 +1,14 @@
 extern crate proc_macro;
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, Data, DeriveInput, Fields};
+use syn::{parse_macro_input, Data, DeriveInput, Fields, Ident};
 
 #[proc_macro_derive(Expression)]
 pub fn derive_expression(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
     let name = &ast.ident;
     let gen = quote! {
-        impl Expression for #name {
-
-        }
+        impl Expression for #name {}
     };
     gen.into()
 }
@@ -51,6 +49,44 @@ pub fn derive_query(input: TokenStream) -> TokenStream {
                             }
                         }
                     }
+                }
+            };
+            gen.into()
+        }
+        Data::Enum(data_enum) => {
+            let variants = data_enum.variants.iter().map(|varient| {
+                let varient_name = &varient.ident;
+                quote! {
+                    #name::#varient_name(inner) => inner.query::<T>(),
+                }
+            });
+            // implement the is_*** function for each variant
+            let functions = data_enum.variants.iter().map(|variant| {
+                let variant_name = &variant.ident;
+                let function_name = &Ident::new(
+                    &format!("is_{}", variant_name.to_string().to_lowercase()),
+                    variant_name.span(),
+                );
+                quote! {
+                    pub fn #function_name(&self) -> bool {
+                        matches!(self, #name::#variant_name(_))
+                    }
+                }
+            });
+            let gen = quote! {
+                impl Query for #name
+                where
+                    Self: std::fmt::Debug + Queryable + 'static,
+                {
+                    fn query<T: std::fmt::Debug + Expression +'static>(&self) -> Vec<&T> {
+                        match self {
+                            #(#variants)*
+                        }
+                    }
+                }
+
+                impl #name {
+                    #(#functions)*
                 }
             };
             gen.into()
