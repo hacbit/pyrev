@@ -58,7 +58,7 @@ impl Decompiler for CodeObjectMap {
 
                     function
                         .with_mut()
-                        .patch_by(|f| f.bodys.extend(new_bodys.clone()))?;
+                        .patch_by(|f| f.bodys.extend(new_bodys))?;
 
                     is_merged = false;
                 }

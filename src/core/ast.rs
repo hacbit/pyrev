@@ -122,7 +122,8 @@ impl ExprParser for Expr {
                     }
                     exprs_stack.push(ExpressionEnum::Function(function));
                 }
-                Opcode::BinaryOp => {
+                // BinaryOperation
+                Opcode::BinaryOp | Opcode::CompareOp => {
                     let right = exprs_stack.pop().ok_or("[BinaryOp] Stack is empty")?;
                     let left = exprs_stack.pop().ok_or("[BinaryOp] Stack is empty")?;
                     exprs_stack.push(ExpressionEnum::BinaryOperation(BinaryOperation {
@@ -133,6 +134,36 @@ impl ExprParser for Expr {
                             .as_ref()
                             .ok_or("[BinaryOp] No argval")?
                             .clone(),
+                    }))
+                }
+                // BinaryOperation
+                Opcode::IsOp => {
+                    let right = exprs_stack.pop().ok_or("[IsOp] Stack is empty")?;
+                    let left = exprs_stack.pop().ok_or("[IsOp] Stack is empty")?;
+                    let operator = match instruction.arg.as_ref() {
+                        Some(0) => "is",
+                        Some(1) => "is not",
+                        _ => return Err("[IsOp] No arg or Invalid arg".into()),
+                    };
+                    exprs_stack.push(ExpressionEnum::BinaryOperation(BinaryOperation {
+                        left: Box::new(left),
+                        right: Box::new(right),
+                        operator: operator.to_string(),
+                    }))
+                }
+                // BinaryOperation
+                Opcode::ContainsOp => {
+                    let right = exprs_stack.pop().ok_or("[ContainsOp] Stack is empty")?;
+                    let left = exprs_stack.pop().ok_or("[ContainsOp] Stack is empty")?;
+                    let operator = match instruction.arg.as_ref() {
+                        Some(0) => "in",
+                        Some(1) => "not in",
+                        _ => return Err("[ContainsOp] No arg or Invalid arg".into()),
+                    };
+                    exprs_stack.push(ExpressionEnum::BinaryOperation(BinaryOperation {
+                        left: Box::new(left),
+                        right: Box::new(right),
+                        operator: operator.to_string(),
                     }))
                 }
                 Opcode::Call => {

@@ -9,185 +9,223 @@
   3          10 PUSH_NULL
              12 LOAD_NAME                2 (print)
              14 LOAD_NAME                0 (a)
-             16 LOAD_NAME                1 (b)
-             18 COMPARE_OP              40 (==)
+             16 UNARY_INVERT
+             18 PRECALL                  1
              22 CALL                     1
-             30 POP_TOP
+             32 POP_TOP
 
-  4          32 PUSH_NULL
-             34 LOAD_NAME                2 (print)
-             36 LOAD_NAME                0 (a)
-             38 LOAD_NAME                1 (b)
-             40 COMPARE_OP              55 (!=)
-             44 CALL                     1
-             52 POP_TOP
+  4          34 PUSH_NULL
+             36 LOAD_NAME                2 (print)
+             38 LOAD_NAME                0 (a)
+             40 UNARY_NOT
+             42 PRECALL                  1
+             46 CALL                     1
+             56 POP_TOP
 
-  5          54 PUSH_NULL
-             56 LOAD_NAME                2 (print)
-             58 LOAD_NAME                0 (a)
-             60 LOAD_NAME                1 (b)
-             62 COMPARE_OP              68 (>)
-             66 CALL                     1
-             74 POP_TOP
+  5          58 PUSH_NULL
+             60 LOAD_NAME                2 (print)
+             62 LOAD_NAME                0 (a)
+             64 UNARY_NEGATIVE
+             66 PRECALL                  1
+             70 CALL                     1
+             80 POP_TOP
 
-  6          76 PUSH_NULL
-             78 LOAD_NAME                2 (print)
-             80 LOAD_NAME                0 (a)
-             82 LOAD_NAME                1 (b)
-             84 COMPARE_OP               2 (<)
-             88 CALL                     1
-             96 POP_TOP
+  6          82 PUSH_NULL
+             84 LOAD_NAME                2 (print)
+             86 LOAD_NAME                0 (a)
+             88 LOAD_NAME                1 (b)
+             90 COMPARE_OP               2 (==)
+             96 PRECALL                  1
+            100 CALL                     1
+            110 POP_TOP
 
-  7          98 PUSH_NULL
-            100 LOAD_NAME                2 (print)
-            102 LOAD_NAME                0 (a)
-            104 LOAD_NAME                1 (b)
-            106 COMPARE_OP              92 (>=)
-            110 CALL                     1
-            118 POP_TOP
-
-  8         120 PUSH_NULL
-            122 LOAD_NAME                2 (print)
-            124 LOAD_NAME                0 (a)
-            126 LOAD_NAME                1 (b)
-            128 COMPARE_OP              26 (<=)
-            132 CALL                     1
+  7         112 PUSH_NULL
+            114 LOAD_NAME                2 (print)
+            116 LOAD_NAME                0 (a)
+            118 LOAD_NAME                1 (b)
+            120 COMPARE_OP               3 (!=)
+            126 PRECALL                  1
+            130 CALL                     1
             140 POP_TOP
 
-  9         142 PUSH_NULL
+  8         142 PUSH_NULL
             144 LOAD_NAME                2 (print)
             146 LOAD_NAME                0 (a)
-            148 UNARY_INVERT
-            150 LOAD_NAME                1 (b)
-            152 UNARY_INVERT
-            154 CALL                     2
-            162 POP_TOP
+            148 LOAD_NAME                1 (b)
+            150 COMPARE_OP               4 (>)
+            156 PRECALL                  1
+            160 CALL                     1
+            170 POP_TOP
 
- 10         164 PUSH_NULL
-            166 LOAD_NAME                2 (print)
-            168 LOAD_NAME                0 (a)
-            170 LOAD_NAME                1 (b)
-            172 BINARY_OP                7 (|)
-            176 CALL                     1
-            184 POP_TOP
+  9         172 PUSH_NULL
+            174 LOAD_NAME                2 (print)
+            176 LOAD_NAME                0 (a)
+            178 LOAD_NAME                1 (b)
+            180 COMPARE_OP               0 (<)
+            186 PRECALL                  1
+            190 CALL                     1
+            200 POP_TOP
 
- 11         186 PUSH_NULL
-            188 LOAD_NAME                2 (print)
-            190 LOAD_NAME                0 (a)
-            192 LOAD_NAME                1 (b)
-            194 BINARY_OP               12 (^)
-            198 CALL                     1
-            206 POP_TOP
-
- 12         208 PUSH_NULL
-            210 LOAD_NAME                2 (print)
-            212 LOAD_NAME                0 (a)
-            214 LOAD_NAME                1 (b)
-            216 BINARY_OP                1 (&)
+ 10         202 PUSH_NULL
+            204 LOAD_NAME                2 (print)
+            206 LOAD_NAME                0 (a)
+            208 LOAD_NAME                1 (b)
+            210 COMPARE_OP               5 (>=)
+            216 PRECALL                  1
             220 CALL                     1
-            228 POP_TOP
+            230 POP_TOP
 
- 13         230 PUSH_NULL
-            232 LOAD_NAME                2 (print)
-            234 LOAD_NAME                0 (a)
-            236 LOAD_NAME                1 (b)
-            238 BINARY_OP                3 (<<)
-            242 CALL                     1
-            250 POP_TOP
+ 11         232 PUSH_NULL
+            234 LOAD_NAME                2 (print)
+            236 LOAD_NAME                0 (a)
+            238 LOAD_NAME                1 (b)
+            240 COMPARE_OP               1 (<=)
+            246 PRECALL                  1
+            250 CALL                     1
+            260 POP_TOP
 
- 14         252 PUSH_NULL
-            254 LOAD_NAME                2 (print)
-            256 LOAD_NAME                0 (a)
-            258 LOAD_NAME                1 (b)
-            260 BINARY_OP                9 (>>)
-            264 CALL                     1
-            272 POP_TOP
+ 12         262 PUSH_NULL
+            264 LOAD_NAME                2 (print)
+            266 LOAD_NAME                0 (a)
+            268 LOAD_NAME                1 (b)
+            270 BINARY_OP                7 (|)
+            274 PRECALL                  1
+            278 CALL                     1
+            288 POP_TOP
 
- 15         274 PUSH_NULL
-            276 LOAD_NAME                2 (print)
-            278 LOAD_NAME                0 (a)
-            280 LOAD_NAME                1 (b)
-            282 BINARY_OP                0 (+)
-            286 CALL                     1
-            294 POP_TOP
-
- 16         296 PUSH_NULL
-            298 LOAD_NAME                2 (print)
-            300 LOAD_NAME                0 (a)
-            302 LOAD_NAME                1 (b)
-            304 BINARY_OP               10 (-)
-            308 CALL                     1
+ 13         290 PUSH_NULL
+            292 LOAD_NAME                2 (print)
+            294 LOAD_NAME                0 (a)
+            296 LOAD_NAME                1 (b)
+            298 BINARY_OP               12 (^)
+            302 PRECALL                  1
+            306 CALL                     1
             316 POP_TOP
 
- 17         318 PUSH_NULL
+ 14         318 PUSH_NULL
             320 LOAD_NAME                2 (print)
             322 LOAD_NAME                0 (a)
             324 LOAD_NAME                1 (b)
-            326 BINARY_OP                5 (*)
-            330 CALL                     1
-            338 POP_TOP
+            326 BINARY_OP                1 (&)
+            330 PRECALL                  1
+            334 CALL                     1
+            344 POP_TOP
 
- 18         340 PUSH_NULL
-            342 LOAD_NAME                2 (print)
-            344 LOAD_NAME                0 (a)
-            346 LOAD_NAME                1 (b)
-            348 BINARY_OP               11 (/)
-            352 CALL                     1
-            360 POP_TOP
+ 15         346 PUSH_NULL
+            348 LOAD_NAME                2 (print)
+            350 LOAD_NAME                0 (a)
+            352 LOAD_NAME                1 (b)
+            354 BINARY_OP                3 (<<)
+            358 PRECALL                  1
+            362 CALL                     1
+            372 POP_TOP
 
- 19         362 PUSH_NULL
-            364 LOAD_NAME                2 (print)
-            366 LOAD_NAME                0 (a)
-            368 LOAD_NAME                1 (b)
-            370 BINARY_OP                2 (//)
-            374 CALL                     1
-            382 POP_TOP
+ 16         374 PUSH_NULL
+            376 LOAD_NAME                2 (print)
+            378 LOAD_NAME                0 (a)
+            380 LOAD_NAME                1 (b)
+            382 BINARY_OP                9 (>>)
+            386 PRECALL                  1
+            390 CALL                     1
+            400 POP_TOP
 
- 20         384 PUSH_NULL
-            386 LOAD_NAME                2 (print)
-            388 LOAD_NAME                0 (a)
-            390 LOAD_NAME                1 (b)
-            392 BINARY_OP                6 (%)
-            396 CALL                     1
-            404 POP_TOP
-
- 21         406 PUSH_NULL
-            408 LOAD_NAME                2 (print)
-            410 LOAD_NAME                0 (a)
-            412 LOAD_NAME                1 (b)
-            414 BINARY_OP                8 (**)
+ 17         402 PUSH_NULL
+            404 LOAD_NAME                2 (print)
+            406 LOAD_NAME                0 (a)
+            408 LOAD_NAME                1 (b)
+            410 BINARY_OP                0 (+)
+            414 PRECALL                  1
             418 CALL                     1
-            426 POP_TOP
+            428 POP_TOP
 
- 22         428 PUSH_NULL
-            430 LOAD_NAME                2 (print)
-            432 LOAD_NAME                0 (a)
-            434 LOAD_NAME                1 (b)
-            436 IS_OP                    0
-            438 CALL                     1
-            446 POP_TOP
+ 18         430 PUSH_NULL
+            432 LOAD_NAME                2 (print)
+            434 LOAD_NAME                0 (a)
+            436 LOAD_NAME                1 (b)
+            438 BINARY_OP               10 (-)
+            442 PRECALL                  1
+            446 CALL                     1
+            456 POP_TOP
 
- 23         448 PUSH_NULL
-            450 LOAD_NAME                2 (print)
-            452 LOAD_NAME                0 (a)
-            454 LOAD_NAME                1 (b)
-            456 IS_OP                    1
-            458 CALL                     1
-            466 POP_TOP
+ 19         458 PUSH_NULL
+            460 LOAD_NAME                2 (print)
+            462 LOAD_NAME                0 (a)
+            464 LOAD_NAME                1 (b)
+            466 BINARY_OP                5 (*)
+            470 PRECALL                  1
+            474 CALL                     1
+            484 POP_TOP
 
- 24         468 PUSH_NULL
-            470 LOAD_NAME                2 (print)
-            472 LOAD_NAME                0 (a)
-            474 LOAD_NAME                1 (b)
-            476 CONTAINS_OP              0
-            478 CALL                     1
-            486 POP_TOP
+ 20         486 PUSH_NULL
+            488 LOAD_NAME                2 (print)
+            490 LOAD_NAME                0 (a)
+            492 LOAD_NAME                1 (b)
+            494 BINARY_OP               11 (/)
+            498 PRECALL                  1
+            502 CALL                     1
+            512 POP_TOP
 
- 25         488 PUSH_NULL
-            490 LOAD_NAME                2 (print)
-            492 LOAD_NAME                0 (a)
-            494 LOAD_NAME                1 (b)
-            496 CONTAINS_OP              1
-            498 CALL                     1
-            506 POP_TOP
-            508 RETURN_CONST             2 (None)
+ 21         514 PUSH_NULL
+            516 LOAD_NAME                2 (print)
+            518 LOAD_NAME                0 (a)
+            520 LOAD_NAME                1 (b)
+            522 BINARY_OP                2 (//)
+            526 PRECALL                  1
+            530 CALL                     1
+            540 POP_TOP
+
+ 22         542 PUSH_NULL
+            544 LOAD_NAME                2 (print)
+            546 LOAD_NAME                0 (a)
+            548 LOAD_NAME                1 (b)
+            550 BINARY_OP                6 (%)
+            554 PRECALL                  1
+            558 CALL                     1
+            568 POP_TOP
+
+ 23         570 PUSH_NULL
+            572 LOAD_NAME                2 (print)
+            574 LOAD_NAME                0 (a)
+            576 LOAD_NAME                1 (b)
+            578 BINARY_OP                8 (**)
+            582 PRECALL                  1
+            586 CALL                     1
+            596 POP_TOP
+
+ 24         598 PUSH_NULL
+            600 LOAD_NAME                2 (print)
+            602 LOAD_NAME                0 (a)
+            604 LOAD_NAME                1 (b)
+            606 IS_OP                    0
+            608 PRECALL                  1
+            612 CALL                     1
+            622 POP_TOP
+
+ 25         624 PUSH_NULL
+            626 LOAD_NAME                2 (print)
+            628 LOAD_NAME                0 (a)
+            630 LOAD_NAME                1 (b)
+            632 IS_OP                    1
+            634 PRECALL                  1
+            638 CALL                     1
+            648 POP_TOP
+
+ 26         650 PUSH_NULL
+            652 LOAD_NAME                2 (print)
+            654 LOAD_NAME                0 (a)
+            656 LOAD_NAME                1 (b)
+            658 CONTAINS_OP              0
+            660 PRECALL                  1
+            664 CALL                     1
+            674 POP_TOP
+
+ 27         676 PUSH_NULL
+            678 LOAD_NAME                2 (print)
+            680 LOAD_NAME                0 (a)
+            682 LOAD_NAME                1 (b)
+            684 CONTAINS_OP              1
+            686 PRECALL                  1
+            690 CALL                     1
+            700 POP_TOP
+            702 LOAD_CONST               2 (None)
+            704 RETURN_VALUE

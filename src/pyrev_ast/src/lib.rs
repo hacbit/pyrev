@@ -37,6 +37,7 @@ pub struct Assign {
 }
 
 /// 二元操作
+/// 包括 +, -, *, /, <<, %, **, is, in等
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
 pub struct BinaryOperation {
     pub left: Box<ExpressionEnum>,
