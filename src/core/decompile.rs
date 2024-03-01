@@ -55,11 +55,11 @@ impl Decompiler for CodeObjectMap {
                         .ok_or(format!("No {} expr", &function.mark))?
                         .bodys
                         .clone();
-                    // 想不到怎么实现 query_mut, 先用unsafe
-                    let func_ptr = function as *const Function as *mut Function;
-                    unsafe {
-                        (*func_ptr).bodys.extend(new_bodys);
-                    }
+
+                    function
+                        .with_mut()
+                        .patch_by(|f| f.bodys.extend(new_bodys.clone()))?;
+
                     is_merged = false;
                 }
             }

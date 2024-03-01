@@ -9,9 +9,7 @@ pub fn derive_expression(input: TokenStream) -> TokenStream {
     let name = &ast.ident;
     let gen = quote! {
         impl Expression for #name {
-            fn build_code(&self) -> Vec<(usize, String)> {
-                [(0, "".to_string())].into()
-            }
+
         }
     };
     gen.into()
@@ -37,7 +35,7 @@ pub fn derive_query(input: TokenStream) -> TokenStream {
                 where
                     Self: std::fmt::Debug + Queryable + 'static,
                 {
-                    fn query<T: std::fmt::Debug +'static>(&self) -> Vec<&T> {
+                    fn query<T: std::fmt::Debug + Expression +'static>(&self) -> Vec<&T> {
                         match self {
                             #name { #(#field_names),* } => {
                                 let mut result = Vec::new();

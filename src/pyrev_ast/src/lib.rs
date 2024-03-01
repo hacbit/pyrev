@@ -1,74 +1,14 @@
-use std::any::{Any, TypeId};
+mod query;
+mod querymutable;
 
 pub use pyrev_ast_derive::*;
+pub use query::*;
+pub use querymutable::*;
 use regex::Regex;
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-pub trait Expression
-where
-    Self: Clone + std::fmt::Debug + PartialEq + Eq,
-{
-    fn build_code(&self) -> Vec<(usize, String)>;
-}
-
-/// Queryable trait is used to convert the struct to dyn Any
-/// It is used to search for the type T in the Struct
-pub trait Queryable {
-    fn as_any(&self) -> &dyn Any;
-    fn try_query<T: 'static>(&self) -> Option<&T> {
-        if TypeId::of::<T>() == self.as_any().type_id() {
-            unsafe { Some(&*(self.as_any() as *const dyn Any as *const T)) }
-        } else {
-            None
-        }
-    }
-}
-
-impl<T: 'static> Queryable for T {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-}
-
-/// example:
-/// ```
-/// use pyrev_ast::*;
-/// use pyrev_ast_derive::*;
-/// #[derive(Query, Debug)]
-/// struct A {
-///     b: B,
-///     c: C,
-/// }
-/// #[derive(Query, Debug)]
-/// struct B {
-///     d: String,
-/// }
-/// #[derive(Query, Debug, PartialEq)]
-/// struct C {
-///     e: usize,
-/// }
-///     let a = A {
-///         b: B {
-///             d: "hello".to_string(),
-///         },
-///         c: C {
-///             e: 1,
-///         },
-///     };
-///     let result = a.query::<C>();
-///     assert_eq!(
-///         result,
-///         vec![&C {
-///             e: 1,
-///         }]
-///     );
-/// ```
-pub trait Query
-where
-    Self: std::fmt::Debug + Queryable + 'static,
-{
-    fn query<T: std::fmt::Debug + 'static>(&self) -> Vec<&T>;
-}
+/// Expression trait is used to mark the struct as an expression
+pub trait Expression {}
 
 /// 函数
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
@@ -155,7 +95,7 @@ pub enum ExpressionEnum {
 }
 
 impl Query for ExpressionEnum {
-    fn query<T: std::fmt::Debug + 'static>(&self) -> Vec<&T> {
+    fn query<T: std::fmt::Debug + Expression + 'static>(&self) -> Vec<&T> {
         match self {
             ExpressionEnum::Function(f) => f.query(),
             ExpressionEnum::Return(r) => r.query(),
@@ -181,43 +121,6 @@ pub enum ContainerType {
 impl Query for ContainerType {
     fn query<T: 'static>(&self) -> Vec<&T> {
         vec![]
-    }
-}
-
-impl Query for String {
-    fn query<U: 'static>(&self) -> Vec<&U> {
-        vec![]
-    }
-}
-
-impl Query for usize {
-    fn query<U: 'static>(&self) -> Vec<&U> {
-        vec![]
-    }
-}
-
-impl<T: Query> Query for Vec<T> {
-    fn query<U: std::fmt::Debug + 'static>(&self) -> Vec<&U> {
-        let mut result = Vec::new();
-        for item in self.iter() {
-            result.extend(item.query::<U>());
-        }
-        result
-    }
-}
-
-impl<T: Query> Query for Box<T> {
-    fn query<U: std::fmt::Debug + 'static>(&self) -> Vec<&U> {
-        self.as_ref().query::<U>()
-    }
-}
-
-impl<T: Query> Query for Option<T> {
-    fn query<U: std::fmt::Debug + 'static>(&self) -> Vec<&U> {
-        match self {
-            Some(t) => t.query::<U>(),
-            None => vec![],
-        }
     }
 }
 
