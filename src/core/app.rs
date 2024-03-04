@@ -3,7 +3,6 @@ use super::decompile::*;
 use super::parse_opcode::*;
 use colored::Colorize;
 use std::collections::HashMap;
-use std::fs;
 use std::path::PathBuf;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -34,7 +33,7 @@ impl App {
     pub fn insert_resource<P: Into<PathBuf>>(&mut self, path: P) -> &mut Self {
         let path = path.into();
         if path.is_file() {
-            let resource = fs::read_to_string(&path).unwrap();
+            let resource = &path.read().unwrap();
             let code_object_map = resource.parse().unwrap();
             if self
                 .resources

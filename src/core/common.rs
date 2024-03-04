@@ -8,7 +8,7 @@ use std::path::Path;
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 pub trait IStream {
-    fn read(self) -> Result<String>;
+    fn read(&self) -> Result<String>;
 }
 
 pub trait OStream {
@@ -21,8 +21,8 @@ where
     T: AsRef<std::path::Path>,
 {
     /// 读取文件内容
-    fn read(self) -> Result<String> {
-        let file = std::fs::OpenOptions::new().read(true).open(self.as_ref())?;
+    fn read(&self) -> Result<String> {
+        let file = std::fs::OpenOptions::new().read(true).open(self)?;
         let reader = std::io::BufReader::new(file);
         let content = reader
             .lines()
