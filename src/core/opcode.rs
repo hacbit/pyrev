@@ -76,6 +76,7 @@ impl OpcodeInstruction {
             "LOAD_NAME" => Opcode::LoadName,
             "LOAD_LOCALS" => Opcode::LoadLocals,
             "LOAD_FROM_DICT_OR_GLOBALS" => Opcode::LoadFromDictOrGlobals,
+            "LOAD_METHOD" => Opcode::LoadMethod,
             "BUILD_TUPLE" => Opcode::BuildTuple,
             "BUILD_LIST" => Opcode::BuildList,
             "BUILD_SET" => Opcode::BuildSet,
@@ -243,6 +244,7 @@ pub enum Opcode {
     LoadLocals,
     // 3.12 added
     LoadFromDictOrGlobals,
+    LoadMethod,
     BuildTuple,
     BuildList,
     BuildSet,

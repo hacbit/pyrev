@@ -32,6 +32,19 @@ impl ExprParser for Expr {
                         })),
                     }));
                 }
+                Opcode::LoadMethod => {
+                    let parent = exprs_stack.pop().ok_or("[LoadMethod] Stack is empty")?;
+                    let method = instruction
+                        .argval
+                        .as_ref()
+                        .ok_or("[LoadMethod] No argval")?;
+                    exprs_stack.push(ExpressionEnum::Attribute(Attribute {
+                        parent: Box::new(parent),
+                        attr: Box::new(ExpressionEnum::BaseValue(BaseValue {
+                            value: method.clone(),
+                        })),
+                    }));
+                }
                 Opcode::StoreName | Opcode::StoreFast | Opcode::StoreGlobal => {
                     let name = instruction
                         .argval
@@ -76,10 +89,128 @@ impl ExprParser for Expr {
                     for _ in 0..size {
                         tuple.push(exprs_stack.pop().ok_or("[BuildTuple] Stack is empty")?);
                     }
+                    tuple.reverse();
                     exprs_stack.push(ExpressionEnum::Container(Container {
                         values: tuple,
                         container_type: ContainerType::Tuple,
                     }));
+                }
+                Opcode::BuildList => {
+                    let size = instruction.arg.ok_or("[BuildList] No arg")?;
+                    if size == 0 {
+                        exprs_stack.push(ExpressionEnum::Container(Container {
+                            values: vec![],
+                            container_type: ContainerType::List,
+                        }));
+                    } else {
+                        let mut list = Vec::with_capacity(size);
+                        for _ in 0..size {
+                            list.push(exprs_stack.pop().ok_or("[BuildList] Stack is empty")?);
+                        }
+                        list.reverse();
+                        exprs_stack.push(ExpressionEnum::Container(Container {
+                            values: list,
+                            container_type: ContainerType::List,
+                        }));
+                    }
+                }
+                Opcode::ListExtend => {
+                    let size = instruction.arg.ok_or("[ListExtend] No arg")?;
+                    let mut extend = Vec::with_capacity(size);
+                    for _ in 0..size {
+                        extend.push(exprs_stack.pop().ok_or("[ListExtend] Stack is empty")?);
+                    }
+                    extend.reverse();
+                    let list = exprs_stack.pop().ok_or("[ListExtend] Stack is empty")?;
+                    if let ExpressionEnum::Container(Container {
+                        values: mut list,
+                        container_type: ContainerType::List,
+                    }) = list
+                    {
+                        extend.iter_mut().for_each(|x| {
+                            if let ExpressionEnum::BaseValue(value) = x {
+                                value.value = value
+                                    .value
+                                    .trim_start_matches('(')
+                                    .trim_end_matches(')')
+                                    .to_string();
+                            }
+                        });
+                        list.append(&mut extend);
+                        exprs_stack.push(ExpressionEnum::Container(Container {
+                            values: list,
+                            container_type: ContainerType::List,
+                        }));
+                    } else {
+                        return Err("[ListExtend] Invalid list".into());
+                    }
+                }
+                Opcode::BuildSet => {
+                    let size = instruction.arg.ok_or("[BuildSet] No arg")?;
+                    let mut set = Vec::with_capacity(size);
+                    for _ in 0..size {
+                        set.push(exprs_stack.pop().ok_or("[BuildSet] Stack is empty")?);
+                    }
+                    set.reverse();
+                    exprs_stack.push(ExpressionEnum::Container(Container {
+                        values: set,
+                        container_type: ContainerType::Set,
+                    }));
+                }
+                Opcode::BuildMap => {
+                    let size = instruction.arg.ok_or("[BuildMap] No arg")?;
+                    if size == 0 {
+                        exprs_stack.push(ExpressionEnum::Container(Container {
+                            values: vec![],
+                            container_type: ContainerType::Dict,
+                        }));
+                    } else {
+                        let mut map = Vec::with_capacity(size * 2);
+                        for _ in 0..size {
+                            let value = exprs_stack.pop().ok_or("[BuildMap] Stack is empty")?;
+                            let key = exprs_stack.pop().ok_or("[BuildMap] Stack is empty")?;
+                            map.push(value);
+                            map.push(key);
+                        }
+                        map.reverse();
+                        exprs_stack.push(ExpressionEnum::Container(Container {
+                            values: map,
+                            container_type: ContainerType::Dict,
+                        }));
+                    }
+                }
+                Opcode::BuildConstKeyMap => {
+                    let size = instruction.arg.ok_or("[BuildConstKeyMap] No arg")?;
+                    let keys = exprs_stack
+                        .pop()
+                        .ok_or("[BuildConstKeyMap] Stack is empty")?;
+                    let mut values = Vec::with_capacity(size);
+                    for _ in 0..size {
+                        values.push(
+                            exprs_stack
+                                .pop()
+                                .ok_or("[BuildConstKeyMap] Stack is empty")?,
+                        );
+                    }
+                    values.reverse();
+                    let mut map = Vec::with_capacity(size * 2);
+                    if let ExpressionEnum::BaseValue(BaseValue { value: key }) = keys {
+                        for (k, v) in key
+                            .trim_start_matches('(')
+                            .trim_end_matches(')')
+                            .split(", ")
+                            .zip(values)
+                        {
+                            map.push(ExpressionEnum::BaseValue(BaseValue {
+                                value: k.to_string(),
+                            }));
+                            map.push(v);
+                        }
+                    }
+                    exprs_stack.push(ExpressionEnum::Container(Container {
+                        values: map,
+                        container_type: ContainerType::Dict,
+                    }))
                 }
                 Opcode::BuildSlice => {
                     let size = instruction.arg.ok_or("[BuildSlice] No arg")?;
@@ -193,19 +324,26 @@ impl ExprParser for Expr {
                     for _ in 0..count {
                         args.push(exprs_stack.pop().ok_or("[Call] Stack is empty")?);
                     }
-                    if let ExpressionEnum::BaseValue(function_name) =
-                        exprs_stack.pop().ok_or("[Call] Stack is empty")?
-                    {
-                        //dbg!(&function_name);
-                        let function_name = function_name.value.trim_start_matches("NULL + ");
-                        exprs_stack.push(ExpressionEnum::Call(Call {
-                            func: Box::new(ExpressionEnum::BaseValue(BaseValue {
-                                value: function_name.to_string(),
-                            })),
-                            args,
-                        }))
+                    args.reverse();
+                    match exprs_stack.pop() {
+                        Some(ExpressionEnum::BaseValue(function_name)) => {
+                            //dbg!(&function_name);
+                            let function_name = function_name.value.trim_start_matches("NULL + ");
+                            exprs_stack.push(ExpressionEnum::Call(Call {
+                                func: Box::new(ExpressionEnum::BaseValue(BaseValue {
+                                    value: function_name.to_string(),
+                                })),
+                                args,
+                            }))
+                        }
+                        Some(function) => {
+                            exprs_stack.push(ExpressionEnum::Call(Call {
+                                func: Box::new(function),
+                                args,
+                            }))
+                        }
+                        None => return Err("[Call] Stack is empty".into()),
                     }
-                    //dbg!(&exprs_stack);
                 }
                 Opcode::ReturnValue => {
                     //dbg!(&exprs_stack);

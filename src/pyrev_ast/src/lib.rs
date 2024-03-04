@@ -140,7 +140,6 @@ impl Query for UnaryType {
     }
 }
 
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ContainerType {
     List,
@@ -293,7 +292,7 @@ impl ExpressionEnum {
             )]),
             ExpressionEnum::UnaryOperation(unary_operation) => Ok(vec![format!(
                 "{}{}",
-                match unary_operation.unary_type{
+                match unary_operation.unary_type {
                     UnaryType::Negative => "-",
                     UnaryType::Invert => "~",
                     UnaryType::Not => "not ",
@@ -307,6 +306,11 @@ impl ExpressionEnum {
                     let mut value_code = value.build()?;
                     values_code.append(&mut value_code);
                 }
+                values_code.iter_mut().for_each(|s| {
+                    if s.is_empty() {
+                        *s = "None".to_string();
+                    }
+                });
                 match container.container_type {
                     ContainerType::List => {
                         code.push(format!("[{}]", values_code.join(", ")));

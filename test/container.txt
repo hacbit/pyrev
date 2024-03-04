@@ -1,0 +1,50 @@
+  0           0 RESUME                   0
+
+  1           2 BUILD_LIST               0
+              4 LOAD_CONST               0 ((1, 'hello', 114.514))
+              6 LIST_EXTEND              1
+              8 STORE_NAME               0 (a)
+
+  2          10 LOAD_CONST               1 (1)
+             12 LOAD_NAME                0 (a)
+             14 LOAD_CONST               2 ('world')
+             16 BUILD_TUPLE              3
+             18 STORE_NAME               1 (b)
+
+  3          20 LOAD_CONST               1 (1)
+             22 LOAD_CONST               3 (b'bb')
+             24 LOAD_CONST               4 ('ccc')
+             26 LOAD_NAME                2 (print)
+             28 LOAD_CONST               5 ((1, 'b', 'c', 'p'))
+             30 BUILD_CONST_KEY_MAP      4
+             32 STORE_NAME               3 (c)
+
+  4          34 LOAD_NAME                0 (a)
+             36 LOAD_CONST               6 (97)
+             38 LOAD_CONST               7 ('b')
+             40 LOAD_CONST               8 (None)
+             42 BUILD_MAP                2
+             44 STORE_NAME               4 (d)
+
+  5          46 LOAD_CONST               9 (1232)
+             48 LOAD_CONST              10 (0)
+             50 LOAD_CONST               8 (None)
+             52 LOAD_NAME                2 (print)
+             54 BUILD_SET                4
+             56 STORE_NAME               5 (e)
+
+  6          58 PUSH_NULL
+             60 LOAD_NAME                3 (c)
+             62 LOAD_METHOD              6 (get)
+             84 LOAD_CONST              11 ('p')
+             86 PRECALL                  1
+             90 CALL                     1
+            100 LOAD_NAME                0 (a)
+            102 LOAD_NAME                1 (b)
+            104 LOAD_NAME                3 (c)
+            106 LOAD_NAME                4 (d)
+            108 PRECALL                  4
+            112 CALL                     4
+            122 POP_TOP
+            124 LOAD_CONST               8 (None)
+            126 RETURN_VALUE
