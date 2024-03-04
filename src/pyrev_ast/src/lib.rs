@@ -56,6 +56,11 @@ pub struct BinaryOperation {
     pub operator: String,
 }
 
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+pub struct UnaryOperation {
+    pub target: Box<ExpressionEnum>,
+    pub unary_type: UnaryType,
+}
 /// 函数调用
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
 pub struct Call {
@@ -114,12 +119,27 @@ pub enum ExpressionEnum {
     Assign(Assign),
     BaseValue(BaseValue),
     BinaryOperation(BinaryOperation),
+    UnaryOperation(UnaryOperation),
     Call(Call),
     Container(Container),
     Slice(Slice),
     Attribute(Attribute),
     // ...
 }
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum UnaryType {
+    Negative,
+    Invert,
+    Not,
+}
+
+impl Query for UnaryType {
+    fn query<T: 'static>(&self) -> Vec<&T> {
+        vec![]
+    }
+}
+
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ContainerType {
@@ -270,6 +290,15 @@ impl ExpressionEnum {
                 binary_operation.left.build()?.join(""),
                 binary_operation.operator,
                 binary_operation.right.build()?.join("")
+            )]),
+            ExpressionEnum::UnaryOperation(unary_operation) => Ok(vec![format!(
+                "{}{}",
+                match unary_operation.unary_type{
+                    UnaryType::Negative => "-",
+                    UnaryType::Invert => "~",
+                    UnaryType::Not => "not ",
+                },
+                unary_operation.target.build()?.join("")
             )]),
             ExpressionEnum::Container(container) => {
                 let mut code = Vec::new();
