@@ -166,6 +166,27 @@ impl ExprParser for Expr {
                         operator: operator.to_string(),
                     }))
                 }
+                Opcode::UnaryInvert => {
+                    let target = exprs_stack.pop().ok_or("[UnaryInvert] Stack is empty")?;
+                    exprs_stack.push(ExpressionEnum::UnaryOperation(UnaryOperation {
+                        target: Box::new(target),
+                        unary_type: UnaryType::Invert,
+                    }))
+                }
+                Opcode::UnaryNegative => {
+                    let target = exprs_stack.pop().ok_or("[UnaryNegative] Stack is empty")?;
+                    exprs_stack.push(ExpressionEnum::UnaryOperation(UnaryOperation {
+                        target: Box::new(target),
+                        unary_type: UnaryType::Negative,
+                    }))
+                }
+                Opcode::UnaryNot => {
+                    let target = exprs_stack.pop().ok_or("[UnaryNot] Stack is empty")?;
+                    exprs_stack.push(ExpressionEnum::UnaryOperation(UnaryOperation {
+                        target: Box::new(target),
+                        unary_type: UnaryType::Not,
+                    }))
+                }
                 Opcode::Call => {
                     let count = instruction.arg.ok_or("[Call] No arg")?;
                     let mut args = Vec::with_capacity(count);
