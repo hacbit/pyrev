@@ -91,44 +91,14 @@ pub struct BaseValue {
     pub value: String,
 }
 
-macro_rules! impl_expression_enum_query {
-    (
-        #[$meta:meta]
-        #[derive($($derive:ident),*)]
-        $vis:vis enum $name:ident {
-            $(
-                $variant:ident($ty:ty),
-            )*
-        }
-    ) => {
-        #[$meta]
-        #[derive($($derive),*)]
-        $vis enum $name {
-            $(
-                $variant($ty),
-            )*
-        }
-
-        impl Query for $name {
-            fn query<T: std::fmt::Debug + Expression + 'static>(&self) -> Vec<&T> {
-                match self {
-                    $(
-                        Self::$variant(v) => v.query(),
-                    )*
-                }
-            }
-        }
-    }
-}
-
 /// 为上面的表达式提供一个封装
 /// 用来实现不同Expression的嵌套
-/// 
+///
 /// test is_*** function:
 /// ```
 /// use pyrev_ast::*;
 /// let expr = ExpressionEnum::BaseValue(BaseValue { value: "None".to_string() });
-/// assert!(expr.is_basevalue());
+/// assert!(expr.is_base_value());
 /// let expr = ExpressionEnum::Assign(Assign {
 ///     target: Box::new(ExpressionEnum::BaseValue(BaseValue { value: "a".to_string() })),
 ///     values: Box::new(ExpressionEnum::BaseValue(BaseValue { value: "1".to_string() })),

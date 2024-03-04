@@ -64,7 +64,7 @@ pub fn derive_query(input: TokenStream) -> TokenStream {
             let functions = data_enum.variants.iter().map(|variant| {
                 let variant_name = &variant.ident;
                 let function_name = &Ident::new(
-                    &format!("is_{}", variant_name.to_string().to_lowercase()),
+                    &format!("is_{}", camel_case_to_snake_case(&variant_name.to_string())),
                     variant_name.span(),
                 );
                 quote! {
@@ -93,4 +93,15 @@ pub fn derive_query(input: TokenStream) -> TokenStream {
         }
         _ => panic!("only support struct"),
     }
+}
+
+fn camel_case_to_snake_case(s: &str) -> String {
+    let mut result = String::new();
+    for (i, c) in s.chars().enumerate() {
+        if c.is_uppercase() && i != 0 {
+            result.push('_');
+        }
+        result.push(c.to_lowercase().next().unwrap());
+    }
+    result
 }

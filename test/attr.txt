@@ -1,0 +1,44 @@
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 (1234)
+              4 STORE_NAME               0 (a)
+
+  2           6 LOAD_NAME                0 (a)
+              8 LOAD_METHOD              1 (to_bytes)
+             30 LOAD_CONST               1 (2)
+             32 LOAD_CONST               2 ('big')
+             34 PRECALL                  2
+             38 CALL                     2
+             48 STORE_NAME               2 (b)
+
+  3          50 PUSH_NULL
+             52 LOAD_NAME                3 (print)
+             54 LOAD_NAME                2 (b)
+             56 PRECALL                  1
+             60 CALL                     1
+             70 POP_TOP
+
+  4          72 PUSH_NULL
+             74 LOAD_NAME                3 (print)
+             76 LOAD_CONST               3 ('abcd')
+             78 LOAD_METHOD              4 (encode)
+            100 LOAD_CONST               4 ('utf-8')
+            102 PRECALL                  1
+            106 CALL                     1
+            116 LOAD_METHOD              5 (hex)
+            138 PRECALL                  0
+            142 CALL                     0
+            152 PRECALL                  1
+            156 CALL                     1
+            166 POP_TOP
+
+  5         168 PUSH_NULL
+            170 LOAD_NAME                3 (print)
+            172 LOAD_NAME                0 (a)
+            174 LOAD_ATTR                6 (__class__)
+            184 LOAD_ATTR                7 (__base__)
+            194 PRECALL                  1
+            198 CALL                     1
+            208 POP_TOP
+            210 LOAD_CONST               5 (None)
+            212 RETURN_VALUE

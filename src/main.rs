@@ -49,8 +49,8 @@ fn main() -> Result<()> {
     App::new()
         .insert_resources(ifiles)
         .with_files(ofiles)
-        .run()?
-        .output()?;
+        .run()
+        .output();
 
     Ok(())
 }

@@ -89,42 +89,49 @@ impl App {
         self
     }
 
-    pub fn run(&mut self) -> Result<&mut Self> {
+    pub fn run(&mut self) -> &mut Self {
         for (path, code_object_map) in &self.resources {
             println!("{}", format!("Try to decompile {}", path.display()).green());
             let decompiled_result = code_object_map.decompile();
             self.output.push(decompiled_result);
         }
-        Ok(self)
+        self
     }
 
     /// 会按照输入文件路径和输出文件路径的插入顺序导出
     /// 如果没有匹配到输出文件路径, 则会输出到控制台
-    pub fn output(&mut self) -> Result<()> {
+    pub fn output(&mut self) {
         self.output
             .iter_mut()
             .enumerate()
             .for_each(|(i, decompiled_result)| {
                 if let Some(file) = self.output_files.get(i) {
-                    if let Ok(decompiled_code) = decompiled_result {
-                        decompiled_code.iter().write_file(file).unwrap();
-                    } else {
-                        eprintln!(
+                    match decompiled_result {
+                        Ok(decompiled_code) => decompiled_code.iter().write_file(file).unwrap(),
+                        Err(err) => eprintln!(
                             "{}",
-                            format!("The file {} decompiled failed", self.files[i].display())
-                                .bright_red()
-                        );
-                    }
-                } else if let Ok(decompiled_code) = decompiled_result {
-                    decompiled_code.iter().write_console().unwrap();
-                } else {
-                    eprintln!(
-                        "{}",
-                        format!("The file {} decompiled failed", self.files[i].display())
+                            format!(
+                                "The file {} decompiled failed: {}",
+                                self.files[i].display(),
+                                err
+                            )
                             .bright_red()
-                    );
+                        ),
+                    }
+                } else {
+                    match decompiled_result {
+                        Ok(decompiled_code) => decompiled_code.iter().write_console().unwrap(),
+                        Err(err) => eprintln!(
+                            "{}",
+                            format!(
+                                "The file {} decompiled failed: {}",
+                                self.files[i].display(),
+                                err
+                            )
+                            .bright_red()
+                        ),
+                    }
                 }
             });
-        Ok(())
     }
 }
