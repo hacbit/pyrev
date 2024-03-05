@@ -1,6 +1,6 @@
-use super::common::*;
-use super::decompile::*;
-use super::parse_opcode::*;
+use crate::core::common::*;
+use crate::core::decompile::*;
+use crate::core::parse_opcode::*;
 use colored::Colorize;
 use std::collections::HashMap;
 use std::path::PathBuf;

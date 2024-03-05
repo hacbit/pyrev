@@ -58,3 +58,7 @@ Mode                 LastWriteTime         Length Name
  3|     line = i + 1
  4|     print(line, v)
 ```
+
+## Example
+
+**Run the command `cargo run [--release] --example run-all` to test all the test files in test/ dict**
