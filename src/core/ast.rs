@@ -231,16 +231,19 @@ impl ExprParser for Expr {
                     if instruction.argval == Some("annotations".to_string()) {
                         let values = exprs_stack.pop().ok_or("[MakeFunction] Stack is empty")?;
                         if let ExpressionEnum::Container(container) = values {
-                            assert_eq!(container.container_type, ContainerType::Tuple);
-                            for (i, value) in container.values.iter().rev().enumerate() {
-                                if let ExpressionEnum::BaseValue(value) = value {
+                            #[cfg(debug_assertions)]
+                            {
+                                assert_eq!(container.container_type, ContainerType::Tuple);
+                            }
+                            for (i, value) in container.values.iter().enumerate() {
+                                if let ExpressionEnum::BaseValue(base_value) = value {
                                     // 比如 ('a', int, 'return', int)
                                     // 需要把单引号去掉
                                     if i % 2 == 1 {
-                                        function.args_annotation.push(value.value.clone());
+                                        function.args_annotation.push(base_value.value.clone());
                                     } else {
                                         function.args.push(
-                                            value
+                                            base_value
                                                 .value
                                                 .trim_start_matches('\'')
                                                 .trim_end_matches('\'')
@@ -336,12 +339,10 @@ impl ExprParser for Expr {
                                 args,
                             }))
                         }
-                        Some(function) => {
-                            exprs_stack.push(ExpressionEnum::Call(Call {
-                                func: Box::new(function),
-                                args,
-                            }))
-                        }
+                        Some(function) => exprs_stack.push(ExpressionEnum::Call(Call {
+                            func: Box::new(function),
+                            args,
+                        })),
                         None => return Err("[Call] Stack is empty".into()),
                     }
                 }
