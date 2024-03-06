@@ -97,10 +97,18 @@ impl OpcodeInstruction {
             "JUMP_FORWARD" => Opcode::JumpForward,
             "JUMP_BACKWARD" => Opcode::JumpBackward,
             "JUMP_BACKWARD_NO_INTERRUPT" => Opcode::JumpBackwardNoInterrupt,
-            "POP_JUMP_IF_TRUE" => Opcode::PopJumpIfTrue,
-            "POP_JUMP_IF_FALSE" => Opcode::PopJumpIfFalse,
-            "POP_JUMP_IF_NOT_NONE" => Opcode::PopJumpIfNotNone,
-            "POP_JUMP_IF_NONE" => Opcode::PopJumpIfNone,
+            "POP_JUMP_IF_TRUE" | "POP_JUMP_FORWARD_IF_TRUE" | "POP_JUMP_BACKWARD_IF_TRUE" => {
+                Opcode::PopJumpIfTrue
+            }
+            "POP_JUMP_IF_FALSE" | "POP_JUMP_FORWARD_IF_FALSE" | "POP_JUMP_BACKWARD_IF_FALSE" => {
+                Opcode::PopJumpIfFalse
+            }
+            "POP_JUMP_IF_NOT_NONE"
+            | "POP_JUMP_FORWARD_IF_NOT_NONE"
+            | "POP_JUMP_BACKWARD_IF_NOT_NONE" => Opcode::PopJumpIfNotNone,
+            "POP_JUMP_IF_NONE" | "POP_JUMP_FORWARD_IF_NONE" | "POP_JUMP_BACKAWARD_IF_NONE" => {
+                Opcode::PopJumpIfNone
+            }
             "FOR_ITER" => Opcode::ForIter,
             "LOAD_GLOBAL" => Opcode::LoadGlobal,
             "LOAD_FAST" => Opcode::LoadFast,

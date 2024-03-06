@@ -47,6 +47,19 @@ pub struct Assign {
     pub operator: String,
 }
 
+/// 断言
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+pub struct Assert {
+    pub test: Box<ExpressionEnum>,
+    pub msg: Option<Box<ExpressionEnum>>,
+}
+
+/// 抛出异常
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+pub struct Raise {
+    pub exception: Box<ExpressionEnum>,
+}
+
 /// 二元操作
 /// 包括 +, -, *, /, <<, %, ==, >, is, in等
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
@@ -66,6 +79,21 @@ pub struct UnaryOperation {
 pub struct Call {
     pub func: Box<ExpressionEnum>,
     pub args: Vec<ExpressionEnum>,
+}
+
+/// If expression
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+pub struct If {
+    pub test: Box<ExpressionEnum>,
+    pub body: Vec<ExpressionEnum>,
+    pub or_else: Vec<ExpressionEnum>,
+}
+
+/// Jump
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+pub struct Jump {
+    pub target: usize,
+    pub body: Vec<ExpressionEnum>,
 }
 
 /// 容器(包括list, tuple, set, dict等)
@@ -117,10 +145,14 @@ pub enum ExpressionEnum {
     Function(Function),
     Return(Return),
     Assign(Assign),
+    Assert(Assert),
+    Raise(Raise),
     BaseValue(BaseValue),
     BinaryOperation(BinaryOperation),
     UnaryOperation(UnaryOperation),
     Call(Call),
+    If(If),
+    Jump(Jump),
     Container(Container),
     Slice(Slice),
     Attribute(Attribute),
@@ -211,7 +243,6 @@ impl Expr {
 impl ExpressionEnum {
     pub fn build(&self) -> Result<Vec<String>> {
         match self {
-            ExpressionEnum::Import(import) => Ok(vec![]),
             ExpressionEnum::Function(function) => {
                 let mut code = Vec::new();
                 let mut args_code = String::new();
@@ -263,6 +294,20 @@ impl ExpressionEnum {
                     value_code.join("")
                 ));
                 Ok(code)
+            }
+            ExpressionEnum::Assert(assert) => {
+                let test_code = assert.test.build()?.join("");
+                match &assert.msg {
+                    Some(msg) => {
+                        let msg_code = msg.build()?.join("");
+                        Ok(vec![format!("assert {}, {}", test_code, msg_code)])
+                    }
+                    None => Ok(vec![test_code]),
+                }
+            }
+            ExpressionEnum::Raise(raise) => {
+                let exception_code = raise.exception.build()?.join("");
+                Ok(vec![format!("raise {}", exception_code)])
             }
             ExpressionEnum::BaseValue(base_value) => {
                 if base_value.value == "None" {
@@ -351,6 +396,7 @@ impl ExpressionEnum {
                 attribute.parent.build()?.join(""),
                 attribute.attr.build()?.join("")
             )]),
+            _ => Ok(vec![]),
         }
     }
 }

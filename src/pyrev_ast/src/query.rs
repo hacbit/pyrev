@@ -1,6 +1,8 @@
 use crate::Expression;
 use std::any::{Any, TypeId};
 
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+
 /// Queryable trait is used to convert the struct to dyn Any
 /// It is used to search for the type T in the Struct
 pub trait Queryable {
@@ -55,6 +57,14 @@ impl<T: 'static> Queryable for T {
 /// ```
 pub trait Query {
     fn query<T: std::fmt::Debug + Expression + 'static>(&self) -> Vec<&T>;
+    fn query_singleton<T: std::fmt::Debug + Expression + 'static>(&self) -> Result<&T> {
+        let result = self.query::<T>();
+        if result.len() == 1 {
+            Ok(result[0])
+        } else {
+            Err("Query error: Not singleton".into())
+        }
+    }
 }
 
 /// The following implementations are used to search for the type T in the Struct

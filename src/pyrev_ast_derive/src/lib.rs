@@ -1,8 +1,8 @@
 extern crate proc_macro;
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, Data, DeriveInput, Fields, Ident};
 use regex::Regex;
+use syn::{parse_macro_input, Data, DeriveInput, Fields, Ident};
 
 #[proc_macro_derive(Expression)]
 pub fn derive_expression(input: TokenStream) -> TokenStream {

@@ -323,6 +323,9 @@ impl ExprParser for Expr {
                 }
                 Opcode::Call => {
                     let count = instruction.arg.ok_or("[Call] No arg")?;
+                    if count == 0 {
+                        continue;
+                    }
                     let mut args = Vec::with_capacity(count);
                     for _ in 0..count {
                         args.push(exprs_stack.pop().ok_or("[Call] Stack is empty")?);
@@ -364,6 +367,79 @@ impl ExprParser for Expr {
                         ..
                     })) */
                 }
+                Opcode::PopJumpIfTrue => {
+                    let test = exprs_stack.pop().ok_or("[PopJumpIfTrue] Stack is empty")?;
+                    let test = ExpressionEnum::UnaryOperation(UnaryOperation {
+                        target: Box::new(test),
+                        unary_type: UnaryType::Not,
+                    });
+                    let jump_target = instruction
+                        .argval
+                        .as_ref()
+                        .ok_or("[PopJumpIfTrue] No argval")?
+                        .trim_start_matches("to ")
+                        .parse::<usize>()?;
+                    exprs_stack.push(ExpressionEnum::If(If {
+                        test: Box::new(test),
+                        body: vec![],
+                        or_else: vec![ExpressionEnum::Jump(Jump {
+                            target: jump_target,
+                            body: vec![],
+                        })],
+                    }));
+
+                    #[cfg(debug_assertions)]
+                    {
+                        dbg!(&exprs_stack);
+                    }
+                }
+                Opcode::PopJumpIfFalse => {
+                    let test = exprs_stack.pop().ok_or("[PopJumpIfFalse] Stack is empty")?;
+                    let jump_target = instruction
+                        .argval
+                        .as_ref()
+                        .ok_or("[PopJumpIfFalse] No argval")?
+                        .trim_start_matches("to ")
+                        .parse::<usize>()?;
+                    exprs_stack.push(ExpressionEnum::If(If {
+                        test: Box::new(test),
+                        body: vec![],
+                        or_else: vec![ExpressionEnum::Jump(Jump {
+                            target: jump_target,
+                            body: vec![],
+                        })],
+                    }));
+                }
+                Opcode::LoadAssertionError => {
+                    let test = exprs_stack
+                        .pop()
+                        .ok_or("[LoadAssertionError] Stack is empty")?;
+                    exprs_stack.push(ExpressionEnum::Assert(Assert {
+                        test: Box::new(test),
+                        msg: None,
+                    }))
+                }
+                Opcode::RaiseVarargs => {
+                    let exception = exprs_stack.pop().ok_or("[RaiseVarargs] Stack is empty")?;
+                    if let Some(expr) = exprs_stack.pop() {
+                        if let Ok(assert) = expr.query_singleton::<Assert>() {
+                            assert
+                                .with_mut()
+                                .patch_by(|a| a.msg = Some(Box::new(exception)))?;
+                        }
+                        exprs_stack.push(expr);
+                    } else {
+                        exprs_stack.push(ExpressionEnum::Raise(Raise {
+                            exception: Box::new(exception),
+                        }))
+                    }
+
+                    #[cfg(debug_assertions)]
+                    {
+                        dbg!(&exprs_stack);
+                    }
+                }
+
                 _ => {}
             }
         }
