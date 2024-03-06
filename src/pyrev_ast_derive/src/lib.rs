@@ -2,6 +2,7 @@ extern crate proc_macro;
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse_macro_input, Data, DeriveInput, Fields, Ident};
+use regex::Regex;
 
 #[proc_macro_derive(Expression)]
 pub fn derive_expression(input: TokenStream) -> TokenStream {
@@ -64,7 +65,7 @@ pub fn derive_query(input: TokenStream) -> TokenStream {
             let functions = data_enum.variants.iter().map(|variant| {
                 let variant_name = &variant.ident;
                 let function_name = &Ident::new(
-                    &format!("is_{}", camel_case_to_snake_case(&variant_name.to_string())),
+                    &format!("is_{}", camel_to_snake(variant_name.to_string())),
                     variant_name.span(),
                 );
                 quote! {
@@ -95,13 +96,9 @@ pub fn derive_query(input: TokenStream) -> TokenStream {
     }
 }
 
-fn camel_case_to_snake_case(s: &str) -> String {
-    let mut result = String::new();
-    for (i, c) in s.chars().enumerate() {
-        if c.is_uppercase() && i != 0 {
-            result.push('_');
-        }
-        result.push(c.to_lowercase().next().unwrap());
-    }
-    result
+fn camel_to_snake<S: AsRef<str>>(s: S) -> String {
+    Regex::new(r"(?P<lower>[a-z])(?P<upper>[A-Z])")
+        .unwrap()
+        .replace_all(s.as_ref(), "${lower}_${upper}")
+        .to_lowercase()
 }
