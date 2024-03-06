@@ -59,6 +59,14 @@ Mode                 LastWriteTime         Length Name
  4|     print(line, v)
 ```
 
-## Example
+**You can also run the `run-all` command to run all .txt files in test/ dict**
 
-**Run the command `cargo run [--release] --example run-all` to test all the test files in test/ dict**
+**Windows:**
+```cmd
+PS D:\path\to\pyrev> .\run-all.bat [--release]
+```
+
+**Linux:**
+```shell
+/path/to/pyrev> ./run-all.sh [--release]
+```
