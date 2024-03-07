@@ -1,0 +1,3 @@
+(function() {var implementors = {
+"pyrev_ast":[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/default/trait.Default.html\" title=\"trait core::default::Default\">Default</a> for <a class=\"struct\" href=\"pyrev_ast/struct.Expr.html\" title=\"struct pyrev_ast::Expr\">Expr</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

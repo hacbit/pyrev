@@ -1,0 +1,1 @@
+window.ALL_CRATES = ["pyrev","pyrev_ast","pyrev_ast_derive"];

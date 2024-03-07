@@ -426,6 +426,12 @@ impl ExprParser for Expr {
                             assert
                                 .with_mut()
                                 .patch_by(|a| a.msg = Some(Box::new(exception)))?;
+                        } else if let Ok(if_expr) = expr.query_singleton::<If>() {
+                            if_expr
+                                .with_mut()
+                                .patch_by(|i| i.or_else.push(ExpressionEnum::Raise(Raise {
+                                    exception: Box::new(exception),
+                                })))?;
                         }
                         exprs_stack.push(expr);
                     } else {

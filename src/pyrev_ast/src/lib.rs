@@ -127,7 +127,7 @@ pub struct BaseValue {
 /// 为上面的表达式提供一个封装
 /// 用来实现不同Expression的嵌套
 ///
-/// test is_*** function:
+/// is_xxx function example:
 /// ```
 /// use pyrev_ast::*;
 /// let expr = ExpressionEnum::BaseValue(BaseValue { value: "None".to_string() });
@@ -186,7 +186,7 @@ impl Query for ContainerType {
     }
 }
 
-/// 只是对外提供一个ExpressionEnum的封装 (单纯不想使用Vec<ExpressionEnum>而已 )
+/// 只是对外提供一个ExpressionEnum的封装 (单纯不想使用`Vec<ExpressionEnum>`而已 )
 #[derive(Clone, Debug, PartialEq, Eq, Query)]
 pub struct Expr {
     pub bodys: Vec<ExpressionEnum>,

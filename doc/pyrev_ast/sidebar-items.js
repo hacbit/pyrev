@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"derive":["Expression","Query"],"enum":["ContainerType","ExpressionEnum","UnaryType"],"struct":["Assert","Assign","Attribute","BaseValue","BinaryOperation","Call","Container","Expr","Function","If","Import","Jump","QueryResMut","Raise","Return","Slice","UnaryOperation"],"trait":["Expression","Query","QueryMutable","Queryable"]};

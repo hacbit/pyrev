@@ -42,7 +42,7 @@ impl Decompiler for CodeObjectMap {
     }
 
     /// 用来合并所有的Expr
-    /// 比如<main>有一个函数foo, 就需要把foo的定义合并到<main>里面的foo Function的 bodys
+    /// 比如`<main>`有一个函数foo, 就需要把foo的定义合并到`<main>`里面的foo Function的 bodys
     fn merge(&self, mark: &str, maps: &HashMap<String, Expr>) -> Result<Expr> {
         let this_expr = maps.get(mark).ok_or(format!("No {} expr", &mark))?.clone();
         loop {
