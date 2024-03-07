@@ -10,20 +10,24 @@ for %%a in (%*) do (
 )
 
 if %IS_RELEASE% equ 1 (
-    echo "Building in release mode"
+    echo Building in release mode
     cargo build --release
 ) else (
-    echo "Building in debug mode"
+    echo Building in debug mode
     cargo build
 )
 
 for %%f in (test\*.txt) do (
-    echo "Running test %%f"
+    echo Running test %%f
     if %IS_RELEASE% equ 1 (
         cargo run --release -- --file %%f
     ) else (
         cargo run -- --file %%f
     )
 )
+
+echo Press any key to continue...
+
+pause > nul
 
 endlocal

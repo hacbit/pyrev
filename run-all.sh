@@ -27,3 +27,7 @@ do
         cargo run -- --file $file
     fi
 done
+
+echo "Press any key to continue..."
+
+read -n 1 -s
