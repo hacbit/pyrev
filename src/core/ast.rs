@@ -16,7 +16,9 @@ impl ExprParser for Expr {
             if offset == opcode_instructions.len() {
                 break;
             }
-            let instruction = opcode_instructions.get(offset).ok_or("[Parse] No instruction")?;
+            let instruction = opcode_instructions
+                .get(offset)
+                .ok_or("[Parse] No instruction")?;
             #[cfg(debug_assertions)]
             {
                 dbg!(&instruction);
@@ -432,6 +434,18 @@ impl ExprParser for Expr {
                         })],
                     }));
                 }
+                Opcode::JumpForward => {
+                    let jump_target = instruction
+                        .argval
+                        .as_ref()
+                        .ok_or("[JumpForward] No argval")?
+                        .trim_start_matches("to ")
+                        .parse::<usize>()?;
+                    exprs_stack.push(ExpressionEnum::Jump(Jump {
+                        target: jump_target,
+                        body: vec![],
+                    }));
+                }
                 Opcode::LoadAssertionError => {
                     let test = exprs_stack
                         .pop()
@@ -443,23 +457,53 @@ impl ExprParser for Expr {
                     }))
                 }
                 Opcode::RaiseVarargs => {
-                    let exception = exprs_stack.pop().ok_or("[RaiseVarargs] Stack is empty")?;
-                    if let Some(expr) = exprs_stack.pop() {
-                        if let Ok(assert) = expr.query_singleton::<Assert>() {
-                            assert
-                                .with_mut()
-                                .patch_by(|a| a.msg = Some(Box::new(exception)))?;
+                    let expr = exprs_stack.pop().ok_or("[RaiseVarargs] Stack is empty")?;
+                    if expr.is_base_value() {
+                        let exception = expr;
+                        if let Some(expr) = exprs_stack.pop() {
+                            if let Ok(assert) = expr.query_singleton::<Assert>() {
+                                assert
+                                    .with_mut()
+                                    .patch_by(|a| a.msg = Some(Box::new(exception)))?;
+                            }
+                            exprs_stack.push(expr);
+                        } else {
+                            exprs_stack.push(ExpressionEnum::Raise(Raise {
+                                exception: Box::new(exception),
+                            }))
                         }
-                        exprs_stack.push(expr);
                     } else {
-                        exprs_stack.push(ExpressionEnum::Raise(Raise {
-                            exception: Box::new(exception),
-                        }))
-                    }
+                        #[cfg(debug_assertions)]
+                        assert!(expr.is_assert());
 
-                    #[cfg(debug_assertions)]
+                        //
+                    }
+                }
+                Opcode::CheckExcMatch => {
+                    let err = exprs_stack.pop().ok_or("[CheckExcMatch] Stack is empty")?;
+                    if let Some(store_name_instruction) = opcode_instructions[offset..]
+                        .iter()
+                        .find(|x| x.opcode == Opcode::StoreName)
                     {
-                        dbg!(&exprs_stack);
+                        let alias = store_name_instruction
+                            .argval
+                            .as_ref()
+                            .ok_or("[CheckExcMatch] No argval")?;
+
+                        exprs_stack.push(ExpressionEnum::Except(Except {
+                            exception: Box::new(ExpressionEnum::Alias(Alias {
+                                target: Box::new(err),
+                                alias: Box::new(ExpressionEnum::BaseValue(BaseValue {
+                                    value: alias.clone(),
+                                })),
+                            })),
+                            body: vec![],
+                        }));
+                    } else {
+                        exprs_stack.push(ExpressionEnum::Except(Except {
+                            exception: Box::new(err),
+                            body: vec![],
+                        }))
                     }
                 }
 

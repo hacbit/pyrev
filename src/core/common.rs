@@ -72,6 +72,7 @@ where
         let mut file = std::fs::OpenOptions::new()
             .write(true)
             .create(true)
+            .truncate(true)
             .open(file)?;
         for (_, s) in self {
             writeln!(file, "{}", s)?;
@@ -106,28 +107,28 @@ where
         self.values.push(code_object);
     }
 
-    pub fn get<Q: ?Sized>(&self, mark: &Q) -> Option<&V>
+    pub fn get<Q>(&self, mark: &Q) -> Option<&V>
     where
         K: std::borrow::Borrow<Q>,
-        Q: Ord,
+        Q: Ord + ?Sized,
     {
         self.values
             .get(self.keys.iter().position(|m| m.borrow() == mark)?)
     }
 
-    pub fn get_mut<Q: ?Sized>(&mut self, mark: &Q) -> Option<&mut V>
+    pub fn get_mut<Q>(&mut self, mark: &Q) -> Option<&mut V>
     where
         K: std::borrow::Borrow<Q>,
-        Q: Ord,
+        Q: Ord + ?Sized,
     {
         self.values
             .get_mut(self.keys.iter().position(|m| m.borrow() == mark)?)
     }
 
-    pub fn contains_key<Q: ?Sized>(&self, mark: &Q) -> bool
+    pub fn contains_key<Q>(&self, mark: &Q) -> bool
     where
         K: std::borrow::Borrow<Q>,
-        Q: Ord,
+        Q: Ord + ?Sized,
     {
         self.keys.iter().any(|m| m.borrow() == mark)
     }

@@ -19,70 +19,97 @@
 
   3     >>   56 NOP
 
-  4          58 PUSH_NULL
-             60 LOAD_NAME                1 (bool)
-             62 LOAD_NAME                0 (a)
-             64 PRECALL                  1
-             68 CALL                     1
-             78 LOAD_CONST               3 (False)
-             80 COMPARE_OP               2 (==)
-             86 POP_JUMP_FORWARD_IF_TRUE     2 (to 92)
-             88 LOAD_ASSERTION_ERROR
-             90 RAISE_VARARGS            1
-        >>   92 JUMP_FORWARD            29 (to 152)
-        >>   94 PUSH_EXC_INFO
+  5          58 LOAD_CONST               0 (1)
+             60 LOAD_CONST               3 ('a')
+             62 BINARY_OP                0 (+)
+             66 STORE_NAME               0 (a)
+             68 JUMP_FORWARD            66 (to 202)
+        >>   70 PUSH_EXC_INFO
 
-  5          96 LOAD_NAME                2 (AssertionError)
-             98 CHECK_EXC_MATCH
-            100 POP_JUMP_FORWARD_IF_FALSE    21 (to 144)
-            102 STORE_NAME               3 (e)
+  6          72 LOAD_NAME                2 (AssertionError)
+             74 CHECK_EXC_MATCH
+             76 POP_JUMP_FORWARD_IF_FALSE    21 (to 120)
+             78 STORE_NAME               3 (e)
 
-  6         104 PUSH_NULL
-            106 LOAD_NAME                4 (print)
-            108 LOAD_CONST               4 ('AssertionError: bool(a) == False')
-            110 PRECALL                  1
-            114 CALL                     1
-            124 POP_TOP
-            126 POP_EXCEPT
-            128 LOAD_CONST               5 (None)
-            130 STORE_NAME               3 (e)
-            132 DELETE_NAME              3 (e)
-            134 JUMP_FORWARD             8 (to 152)
-        >>  136 LOAD_CONST               5 (None)
-            138 STORE_NAME               3 (e)
-            140 DELETE_NAME              3 (e)
-            142 RERAISE                  1
+  7          80 PUSH_NULL
+             82 LOAD_NAME                4 (print)
+             84 LOAD_CONST               4 ('AssertionError: bool(a) == False')
+             86 PRECALL                  1
+             90 CALL                     1
+            100 POP_TOP
+            102 POP_EXCEPT
+            104 LOAD_CONST               5 (None)
+            106 STORE_NAME               3 (e)
+            108 DELETE_NAME              3 (e)
+            110 JUMP_FORWARD            45 (to 202)
+        >>  112 LOAD_CONST               5 (None)
+            114 STORE_NAME               3 (e)
+            116 DELETE_NAME              3 (e)
+            118 RERAISE                  1
 
-  5     >>  144 RERAISE                  0
-        >>  146 COPY                     3
-            148 POP_EXCEPT
-            150 RERAISE                  1
+  8     >>  120 LOAD_NAME                5 (TypeError)
+            122 CHECK_EXC_MATCH
+            124 POP_JUMP_FORWARD_IF_FALSE    21 (to 168)
+            126 STORE_NAME               3 (e)
 
-  8     >>  152 PUSH_NULL
-            154 LOAD_NAME                4 (print)
-            156 LOAD_CONST               6 ('Done')
-            158 PRECALL                  1
-            162 CALL                     1
-            172 POP_TOP
-            174 LOAD_CONST               5 (None)
-            176 RETURN_VALUE
-        >>  178 PUSH_EXC_INFO
-            180 PUSH_NULL
-            182 LOAD_NAME                4 (print)
-            184 LOAD_CONST               6 ('Done')
-            186 PRECALL                  1
-            190 CALL                     1
-            200 POP_TOP
-            202 RERAISE                  0
-        >>  204 COPY                     3
-            206 POP_EXCEPT
-            208 RERAISE                  1
+  9         128 PUSH_NULL
+            130 LOAD_NAME                4 (print)
+            132 LOAD_CONST               6 ('TypeError: a = 1 + "a"')
+            134 PRECALL                  1
+            138 CALL                     1
+            148 POP_TOP
+            150 POP_EXCEPT
+            152 LOAD_CONST               5 (None)
+            154 STORE_NAME               3 (e)
+            156 DELETE_NAME              3 (e)
+            158 JUMP_FORWARD            21 (to 202)
+        >>  160 LOAD_CONST               5 (None)
+            162 STORE_NAME               3 (e)
+            164 DELETE_NAME              3 (e)
+            166 RERAISE                  1
+
+ 10     >>  168 POP_TOP
+
+ 11         170 PUSH_NULL
+            172 LOAD_NAME                4 (print)
+            174 LOAD_CONST               7 ('Unexpected error')
+            176 PRECALL                  1
+            180 CALL                     1
+            190 POP_TOP
+            192 POP_EXCEPT
+            194 JUMP_FORWARD             3 (to 202)
+        >>  196 COPY                     3
+            198 POP_EXCEPT
+            200 RERAISE                  1
+
+ 13     >>  202 PUSH_NULL
+            204 LOAD_NAME                4 (print)
+            206 LOAD_CONST               8 ('Done')
+            208 PRECALL                  1
+            212 CALL                     1
+            222 POP_TOP
+            224 LOAD_CONST               5 (None)
+            226 RETURN_VALUE
+        >>  228 PUSH_EXC_INFO
+            230 PUSH_NULL
+            232 LOAD_NAME                4 (print)
+            234 LOAD_CONST               8 ('Done')
+            236 PRECALL                  1
+            240 CALL                     1
+            250 POP_TOP
+            252 RERAISE                  0
+        >>  254 COPY                     3
+            256 POP_EXCEPT
+            258 RERAISE                  1
 ExceptionTable:
-  58 to 90 -> 94 [0]
-  92 to 92 -> 178 [0]
-  94 to 102 -> 146 [1] lasti
-  104 to 124 -> 136 [1] lasti
-  126 to 134 -> 178 [0]
-  136 to 144 -> 146 [1] lasti
-  146 to 150 -> 178 [0]
-  178 to 202 -> 204 [1] lasti
+  58 to 66 -> 70 [0]
+  68 to 68 -> 228 [0]
+  70 to 78 -> 196 [1] lasti
+  80 to 100 -> 112 [1] lasti
+  102 to 110 -> 228 [0]
+  112 to 126 -> 196 [1] lasti
+  128 to 148 -> 160 [1] lasti
+  150 to 158 -> 228 [0]
+  160 to 190 -> 196 [1] lasti
+  192 to 200 -> 228 [0]
+  228 to 252 -> 254 [1] lasti

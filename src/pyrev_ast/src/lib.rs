@@ -47,12 +47,33 @@ pub struct Assign {
     pub operator: String,
 }
 
+/// Alias, like Assign but only for `as`
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+pub struct Alias {
+    pub target: Box<ExpressionEnum>,
+    pub alias: Box<ExpressionEnum>,
+}
+
 /// Try
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
 pub struct Try {
     pub body: Vec<ExpressionEnum>,
+    /// this is the exception which will be caught
     pub except: Vec<ExpressionEnum>,
-    pub finally: Vec<ExpressionEnum>,
+    pub finally: Box<ExpressionEnum>,
+}
+
+/// Except
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+pub struct Except {
+    pub exception: Box<ExpressionEnum>,
+    pub body: Vec<ExpressionEnum>,
+}
+
+/// finally
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+pub struct Finally {
+    pub body: Vec<ExpressionEnum>,
 }
 
 /// 断言
@@ -153,6 +174,10 @@ pub enum ExpressionEnum {
     Function(Function),
     Return(Return),
     Assign(Assign),
+    Alias(Alias),
+    Try(Try),
+    Except(Except),
+    Finally(Finally),
     Assert(Assert),
     Raise(Raise),
     BaseValue(BaseValue),
@@ -301,6 +326,53 @@ impl ExpressionEnum {
                     a.operator,
                     value_code.join("")
                 ));
+                Ok(code)
+            }
+            ExpressionEnum::Alias(alias) => {
+                let target_code = alias.target.build()?.join("");
+                let alias_code = alias.alias.build()?.join("");
+                Ok(vec![format!("{} as {}", target_code, alias_code)])
+            }
+            ExpressionEnum::Try(try_expr) => {
+                let mut code = Vec::new();
+                for expr in try_expr.body.iter() {
+                    let expr_code = expr.build()?;
+                    for line in expr_code.iter() {
+                        code.push(format!("    {}", line));
+                    }
+                }
+                for expr in try_expr.except.iter() {
+                    let expr_code = expr.build()?;
+                    code.extend(expr_code);
+                }
+                code.extend(try_expr.finally.build()?);
+                Ok(code)
+            }
+            ExpressionEnum::Except(except) => {
+                let exception_code = except.exception.build()?.join("");
+                let mut code = Vec::new();
+                if exception_code.is_empty() {
+                    code.push("except:".to_string());
+                } else {
+                    code.push(format!("except {}:", exception_code));
+                }
+                for expr in except.body.iter() {
+                    let expr_code = expr.build()?;
+                    for line in expr_code.iter() {
+                        code.push(format!("    {}", line));
+                    }
+                }
+                Ok(code)
+            }
+            ExpressionEnum::Finally(finally) => {
+                let mut code = Vec::new();
+                code.push("finally:".to_string());
+                for expr in finally.body.iter() {
+                    let expr_code = expr.build()?;
+                    for line in expr_code.iter() {
+                        code.push(format!("    {}", line));
+                    }
+                }
                 Ok(code)
             }
             ExpressionEnum::Assert(assert) => {
