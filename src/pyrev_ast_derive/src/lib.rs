@@ -6,8 +6,8 @@ use syn::{parse_macro_input, Data, DeriveInput, Fields, Ident};
 
 #[proc_macro_derive(Expression)]
 pub fn derive_expression(input: TokenStream) -> TokenStream {
-    let ast = parse_macro_input!(input as DeriveInput);
-    let name = &ast.ident;
+    let input = parse_macro_input!(input as DeriveInput);
+    let name = &input.ident;
     let gen = quote! {
         impl Expression for #name {}
     };
@@ -55,25 +55,13 @@ pub fn derive_query(input: TokenStream) -> TokenStream {
             gen.into()
         }
         Data::Enum(data_enum) => {
-            let variants = data_enum.variants.iter().map(|varient| {
-                let varient_name = &varient.ident;
-                quote! {
-                    #name::#varient_name(inner) => inner.query::<T>(),
-                }
-            });
-            // implement the is_*** function for each variant
-            let functions = data_enum.variants.iter().map(|variant| {
+            let variants = data_enum.variants.iter().map(|variant| {
                 let variant_name = &variant.ident;
-                let function_name = &Ident::new(
-                    &format!("is_{}", camel_to_snake(variant_name.to_string())),
-                    variant_name.span(),
-                );
                 quote! {
-                    pub fn #function_name(&self) -> bool {
-                        matches!(self, #name::#variant_name(_))
-                    }
+                    #name::#variant_name(inner) => inner.query::<T>(),
                 }
             });
+
             let gen = quote! {
                 impl Query for #name
                 where
@@ -84,10 +72,6 @@ pub fn derive_query(input: TokenStream) -> TokenStream {
                             #(#variants)*
                         }
                     }
-                }
-
-                impl #name {
-                    #(#functions)*
                 }
             };
             gen.into()
@@ -101,4 +85,45 @@ fn camel_to_snake<S: AsRef<str>>(s: S) -> String {
         .unwrap()
         .replace_all(s.as_ref(), "${lower}_${upper}")
         .to_lowercase()
+}
+
+#[proc_macro_derive(Common)]
+pub fn derive_common(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    let name = &input.ident;
+    if let Data::Enum(data_enum) = input.data {
+        // implement the is_xxx function for each variant
+        let functions = data_enum.variants.iter().map(|variant| {
+            let variant_name = &variant.ident;
+            let is_function_name = &Ident::new(
+                &format!("is_{}", camel_to_snake(variant_name.to_string())),
+                variant_name.span(),
+            );
+            let unwrap_function_name = &Ident::new(
+                &format!("unwrap_{}", camel_to_snake(variant_name.to_string())),
+                variant_name.span(),
+            );
+            quote! {
+                pub fn #is_function_name(&self) -> bool {
+                    matches!(self, #name::#variant_name(_))
+                }
+
+                pub fn #unwrap_function_name(&self) -> #variant_name {
+                    match self {
+                        #name::#variant_name(inner) => inner.clone(),
+                        _ => panic!("unwrap_{} failed", stringify!(#variant_name)),
+                    }
+                }
+            }
+        });
+
+        let gen = quote! {
+            impl #name {
+                #(#functions)*
+            }
+        };
+        gen.into()
+    } else {
+        panic!("only support enum");
+    }
 }

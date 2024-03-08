@@ -11,7 +11,17 @@ impl ExprParser for Expr {
     /// 用于解析一段字节码指令为AST
     fn parse(opcode_instructions: &[OpcodeInstruction]) -> Result<Box<Self>> {
         let mut exprs_stack = Vec::<ExpressionEnum>::new();
-        for instruction in opcode_instructions {
+        let mut offset = 0;
+        loop {
+            if offset == opcode_instructions.len() {
+                break;
+            }
+            let instruction = opcode_instructions.get(offset).ok_or("[Parse] No instruction")?;
+            #[cfg(debug_assertions)]
+            {
+                dbg!(&instruction);
+            }
+
             match instruction.opcode {
                 Opcode::LoadConst | Opcode::LoadName | Opcode::LoadFast | Opcode::LoadGlobal => {
                     exprs_stack.push(ExpressionEnum::BaseValue(BaseValue {
@@ -324,6 +334,7 @@ impl ExprParser for Expr {
                 Opcode::Call => {
                     let count = instruction.arg.ok_or("[Call] No arg")?;
                     if count == 0 {
+                        offset += 1;
                         continue;
                     }
                     let mut args = Vec::with_capacity(count);
@@ -368,6 +379,14 @@ impl ExprParser for Expr {
                     })) */
                 }
                 Opcode::PopJumpIfTrue => {
+                    if let Some(next_instruction) = opcode_instructions.get(offset + 1) {
+                        // if next instruction is LoadAssertionError, then it's an assert
+                        if next_instruction.opcode == Opcode::LoadAssertionError {
+                            offset += 1;
+                            continue;
+                        }
+                    }
+
                     let test = exprs_stack.pop().ok_or("[PopJumpIfTrue] Stack is empty")?;
                     let test = ExpressionEnum::UnaryOperation(UnaryOperation {
                         target: Box::new(test),
@@ -387,13 +406,16 @@ impl ExprParser for Expr {
                             body: vec![],
                         })],
                     }));
-
-                    #[cfg(debug_assertions)]
-                    {
-                        dbg!(&exprs_stack);
-                    }
                 }
                 Opcode::PopJumpIfFalse => {
+                    if let Some(next_instruction) = opcode_instructions.get(offset + 1) {
+                        // if next instruction is LoadAssertionError, then it's an assert
+                        if next_instruction.opcode == Opcode::LoadAssertionError {
+                            offset += 1;
+                            continue;
+                        }
+                    }
+
                     let test = exprs_stack.pop().ok_or("[PopJumpIfFalse] Stack is empty")?;
                     let jump_target = instruction
                         .argval
@@ -414,6 +436,7 @@ impl ExprParser for Expr {
                     let test = exprs_stack
                         .pop()
                         .ok_or("[LoadAssertionError] Stack is empty")?;
+
                     exprs_stack.push(ExpressionEnum::Assert(Assert {
                         test: Box::new(test),
                         msg: None,
@@ -426,12 +449,6 @@ impl ExprParser for Expr {
                             assert
                                 .with_mut()
                                 .patch_by(|a| a.msg = Some(Box::new(exception)))?;
-                        } else if let Ok(if_expr) = expr.query_singleton::<If>() {
-                            if_expr
-                                .with_mut()
-                                .patch_by(|i| i.or_else.push(ExpressionEnum::Raise(Raise {
-                                    exception: Box::new(exception),
-                                })))?;
                         }
                         exprs_stack.push(expr);
                     } else {
@@ -448,6 +465,8 @@ impl ExprParser for Expr {
 
                 _ => {}
             }
+
+            offset += 1;
         }
 
         Ok(Box::new(Self { bodys: exprs_stack }))

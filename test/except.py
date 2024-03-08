@@ -4,4 +4,5 @@ try:
     assert bool(a) == False
 except AssertionError as e:
     print('AssertionError: bool(a) == False')
-    pass
+finally:
+    print('Done')

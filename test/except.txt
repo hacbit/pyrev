@@ -1,0 +1,88 @@
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 (1)
+              4 STORE_NAME               0 (a)
+
+  2           6 PUSH_NULL
+              8 LOAD_NAME                1 (bool)
+             10 LOAD_NAME                0 (a)
+             12 PRECALL                  1
+             16 CALL                     1
+             26 LOAD_CONST               1 (True)
+             28 COMPARE_OP               2 (==)
+             34 POP_JUMP_FORWARD_IF_TRUE    10 (to 56)
+             36 LOAD_ASSERTION_ERROR
+             38 LOAD_CONST               2 ('bool(a) == True')
+             40 PRECALL                  0
+             44 CALL                     0
+             54 RAISE_VARARGS            1
+
+  3     >>   56 NOP
+
+  4          58 PUSH_NULL
+             60 LOAD_NAME                1 (bool)
+             62 LOAD_NAME                0 (a)
+             64 PRECALL                  1
+             68 CALL                     1
+             78 LOAD_CONST               3 (False)
+             80 COMPARE_OP               2 (==)
+             86 POP_JUMP_FORWARD_IF_TRUE     2 (to 92)
+             88 LOAD_ASSERTION_ERROR
+             90 RAISE_VARARGS            1
+        >>   92 JUMP_FORWARD            29 (to 152)
+        >>   94 PUSH_EXC_INFO
+
+  5          96 LOAD_NAME                2 (AssertionError)
+             98 CHECK_EXC_MATCH
+            100 POP_JUMP_FORWARD_IF_FALSE    21 (to 144)
+            102 STORE_NAME               3 (e)
+
+  6         104 PUSH_NULL
+            106 LOAD_NAME                4 (print)
+            108 LOAD_CONST               4 ('AssertionError: bool(a) == False')
+            110 PRECALL                  1
+            114 CALL                     1
+            124 POP_TOP
+            126 POP_EXCEPT
+            128 LOAD_CONST               5 (None)
+            130 STORE_NAME               3 (e)
+            132 DELETE_NAME              3 (e)
+            134 JUMP_FORWARD             8 (to 152)
+        >>  136 LOAD_CONST               5 (None)
+            138 STORE_NAME               3 (e)
+            140 DELETE_NAME              3 (e)
+            142 RERAISE                  1
+
+  5     >>  144 RERAISE                  0
+        >>  146 COPY                     3
+            148 POP_EXCEPT
+            150 RERAISE                  1
+
+  8     >>  152 PUSH_NULL
+            154 LOAD_NAME                4 (print)
+            156 LOAD_CONST               6 ('Done')
+            158 PRECALL                  1
+            162 CALL                     1
+            172 POP_TOP
+            174 LOAD_CONST               5 (None)
+            176 RETURN_VALUE
+        >>  178 PUSH_EXC_INFO
+            180 PUSH_NULL
+            182 LOAD_NAME                4 (print)
+            184 LOAD_CONST               6 ('Done')
+            186 PRECALL                  1
+            190 CALL                     1
+            200 POP_TOP
+            202 RERAISE                  0
+        >>  204 COPY                     3
+            206 POP_EXCEPT
+            208 RERAISE                  1
+ExceptionTable:
+  58 to 90 -> 94 [0]
+  92 to 92 -> 178 [0]
+  94 to 102 -> 146 [1] lasti
+  104 to 124 -> 136 [1] lasti
+  126 to 134 -> 178 [0]
+  136 to 144 -> 146 [1] lasti
+  146 to 150 -> 178 [0]
+  178 to 202 -> 204 [1] lasti

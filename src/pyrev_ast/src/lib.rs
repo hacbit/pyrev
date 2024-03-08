@@ -47,6 +47,14 @@ pub struct Assign {
     pub operator: String,
 }
 
+/// Try
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+pub struct Try {
+    pub body: Vec<ExpressionEnum>,
+    pub except: Vec<ExpressionEnum>,
+    pub finally: Vec<ExpressionEnum>,
+}
+
 /// 断言
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
 pub struct Assert {
@@ -139,7 +147,7 @@ pub struct BaseValue {
 /// });
 /// assert!(expr.is_assign());
 /// ```
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Common)]
 pub enum ExpressionEnum {
     Import(Import),
     Function(Function),
