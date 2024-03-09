@@ -1,34 +1,34 @@
   0           0 RESUME                   0
 
-  1           2 LOAD_CONST               0 (0)
+  2           2 LOAD_CONST               0 (0)
               4 LOAD_CONST               1 (None)
               6 IMPORT_NAME              0 (sys)
               8 STORE_NAME               0 (sys)
 
-  2          10 LOAD_CONST               0 (0)
+  3          10 LOAD_CONST               0 (0)
              12 LOAD_CONST               2 (('*',))
              14 IMPORT_NAME              1 (pwn)
-             16 CALL_INTRINSIC_1         2 (INTRINSIC_IMPORT_STAR)
-             18 POP_TOP
+             16 IMPORT_STAR
 
-  3          20 LOAD_CONST               0 (0)
-             22 LOAD_CONST               1 (None)
-             24 IMPORT_NAME              2 (numpy)
-             26 STORE_NAME               3 (np)
+  4          18 LOAD_CONST               0 (0)
+             20 LOAD_CONST               1 (None)
+             22 IMPORT_NAME              2 (numpy)
+             24 STORE_NAME               3 (np)
 
-  4          28 LOAD_CONST               0 (0)
-             30 LOAD_CONST               1 (None)
-             32 IMPORT_NAME              4 (matplotlib.pyplot)
-             34 IMPORT_FROM              5 (pyplot)
-             36 STORE_NAME               6 (plt)
-             38 POP_TOP
+  5          26 LOAD_CONST               0 (0)
+             28 LOAD_CONST               1 (None)
+             30 IMPORT_NAME              4 (matplotlib.pyplot)
+             32 IMPORT_FROM              5 (pyplot)
+             34 STORE_NAME               6 (plt)
+             36 POP_TOP
 
-  5          40 LOAD_CONST               0 (0)
-             42 LOAD_CONST               3 (('system', 'popen'))
-             44 IMPORT_NAME              7 (os)
-             46 IMPORT_FROM              8 (system)
-             48 STORE_NAME               8 (system)
-             50 IMPORT_FROM              9 (popen)
-             52 STORE_NAME               9 (popen)
-             54 POP_TOP
-             56 RETURN_CONST             1 (None)
+  6          38 LOAD_CONST               0 (0)
+             40 LOAD_CONST               3 (('system', 'popen'))
+             42 IMPORT_NAME              7 (os)
+             44 IMPORT_FROM              8 (system)
+             46 STORE_NAME               0 (sys)
+             48 IMPORT_FROM              9 (popen)
+             50 STORE_NAME               9 (popen)
+             52 POP_TOP
+             54 LOAD_CONST               1 (None)
+             56 RETURN_VALUE
