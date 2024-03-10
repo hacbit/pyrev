@@ -16,9 +16,11 @@ pub trait Expression {}
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
 pub struct Import {
     pub module: String,
+    pub bk_module: Option<String>,
+    pub fragment: Option<String>,
     pub alias: Option<String>,
-    pub submodules: Vec<String>,
-    pub submodules_alias: Vec<Option<String>>,
+    //pub submodules: Vec<String>,
+    //pub submodules_alias: Vec<Option<String>>,
 }
 
 /// 函数
@@ -392,6 +394,8 @@ impl ExpressionEnum {
             ExpressionEnum::BaseValue(base_value) => {
                 if base_value.value == "None" {
                     Ok(vec!["".to_string()])
+                } else if base_value.value == "0" {
+                    Ok(vec![])
                 } else {
                     Ok(vec![base_value.value.clone()])
                 }
@@ -424,6 +428,36 @@ impl ExpressionEnum {
                 },
                 unary_operation.target.build()?.join("")
             )]),
+            ExpressionEnum::Import(import) => {
+                if import.bk_module == None {
+                    //没from
+                    if import.alias == None {
+                        //没from，没as
+                        Ok(vec![format!("import {}", import.module)])
+                    } else {
+                        //没from，有as
+                        Ok(vec![format!(
+                            "import {} as {}",
+                            import.module,
+                            import
+                                .alias
+                                .as_ref()
+                                .expect("[No from Have as] Alias missed")
+                        )])
+                    }
+                } else {
+                    //有from
+
+                    Ok(vec![format!(
+                        "from {} import {}",
+                        import.module,
+                        import
+                            .bk_module
+                            .as_ref()
+                            .expect("[Have from No as] Bk_module missed")
+                    )])
+                }
+            }
             ExpressionEnum::Container(container) => {
                 let mut code = Vec::new();
                 let mut values_code = Vec::new();
