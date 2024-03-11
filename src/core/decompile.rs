@@ -56,13 +56,36 @@ impl Decompiler for CodeObjectMap {
                         .bodys
                         .clone();
 
-                    function
-                        .with_mut()
-                        .patch_by(|f| f.bodys.extend(new_bodys))?;
+                    let fast_query = new_bodys.query::<FastVariable>();
+                    let assign_query = new_bodys.query::<Assign>();
+                    let mut args = Vec::new();
+                    for fast in fast_query {
+                        for assign in assign_query.iter() {
+                            if assign.target.is_base_value()
+                                && assign.target.unwrap_base_value().value == fast.name
+                            {
+                                // not an argument
+                            } else {
+                                args.push(fast.clone());
+                            }
+                        }
+                    }
+
+                    function.with_mut().patch_by(|f| {
+                        f.bodys.extend(new_bodys);
+                        if f.args.is_empty() {
+                            f.args = args;
+                        } else if f.args.last().unwrap().name == "return" {
+                            let ret = f.args.pop().unwrap();
+                            f.args = args;
+                            f.args.push(ret);
+                        }
+                    })?;
 
                     is_merged = false;
                 }
             }
+
             //dbg!(&this_expr);
             if is_merged {
                 break;

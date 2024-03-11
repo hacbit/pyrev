@@ -23,13 +23,21 @@ pub struct Import {
     //pub submodules_alias: Vec<Option<String>>,
 }
 
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+pub struct FastVariable {
+    pub index: usize,
+    pub name: String,
+    pub annotation: Option<String>,
+    /// 标记是函数参数还是局部变量
+    pub kind: FastVariableKind,
+}
+
 /// 函数
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
 pub struct Function {
     pub mark: String,
     pub name: String,
-    pub args: Vec<String>,
-    pub args_annotation: Vec<String>,
+    pub args: Vec<FastVariable>,
     pub start_line: usize,
     pub end_line: usize,
     pub bodys: Vec<ExpressionEnum>,
@@ -173,6 +181,7 @@ pub struct BaseValue {
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Common)]
 pub enum ExpressionEnum {
     Import(Import),
+    FastVariable(FastVariable),
     Function(Function),
     Return(Return),
     Assign(Assign),
@@ -221,6 +230,18 @@ impl Query for ContainerType {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum FastVariableKind {
+    Argument,
+    Local,
+}
+
+impl Query for FastVariableKind {
+    fn query<T: 'static>(&self) -> Vec<&T> {
+        vec![]
+    }
+}
+
 /// 只是对外提供一个ExpressionEnum的封装 (单纯不想使用`Vec<ExpressionEnum>`而已 )
 #[derive(Clone, Debug, PartialEq, Eq, Query)]
 pub struct Expr {
@@ -238,7 +259,6 @@ impl Function {
             mark: object_mark.as_ref().to_string(),
             name,
             args: Vec::new(),
-            args_annotation: Vec::new(),
             start_line,
             end_line: start_line,
             bodys: Vec::new(),
@@ -251,6 +271,16 @@ impl Function {
         } else {
             Err("Function name must be a string".into())
         }
+    }
+
+    pub fn args_iter(&self) -> impl Iterator<Item = (&String, &Option<String>)> {
+        let mut iter = self
+            .args
+            .iter()
+            .map(|arg| (&arg.index, &arg.name, &arg.annotation))
+            .collect::<Vec<_>>();
+        iter.sort_by(|i, j| i.0.cmp(j.0));
+        iter.into_iter().map(|(_, name, anno)| (name, anno))
     }
 }
 
@@ -282,15 +312,18 @@ impl ExpressionEnum {
                 let mut code = Vec::new();
                 let mut args_code = String::new();
                 let mut ret_code = String::new();
-                for (arg, anno) in function.args.iter().zip(function.args_annotation.iter()) {
+                for (arg, anno) in function.args_iter() {
                     if arg == "return" {
-                        ret_code.push_str(&format!(" -> {}", anno));
+                        ret_code.push_str(&format!(
+                            " -> {}",
+                            anno.as_ref().unwrap_or(&"None".to_string())
+                        ));
                         continue;
                     }
-                    if anno.is_empty() {
+                    if anno.is_none() {
                         args_code.push_str(&format!("{}, ", arg));
                     } else {
-                        args_code.push_str(&format!("{}: {}, ", arg, anno));
+                        args_code.push_str(&format!("{}: {}, ", arg, anno.as_ref().unwrap()));
                     }
                 }
                 code.push(format!(
@@ -309,6 +342,15 @@ impl ExpressionEnum {
                     code.push("    pass".to_string());
                 }
                 Ok(code)
+            }
+            ExpressionEnum::FastVariable(fast_var) => {
+                if fast_var.name == "None" {
+                    Ok(vec!["".to_string()])
+                } else if fast_var.name == "0" {
+                    Ok(vec![])
+                } else {
+                    Ok(vec![fast_var.name.clone()])
+                }
             }
             ExpressionEnum::Return(r) => {
                 let value_code = r.value.build()?.join("");
