@@ -176,7 +176,7 @@ dependencies = [
 
 [[package]]
 name = "pyrev"
-version = "1.0.2"
+version = "1.0.3"
 dependencies = [
  "atty",
  "clap",
@@ -189,7 +189,7 @@ dependencies = [
 
 [[package]]
 name = "pyrev_ast"
-version = "1.0.2"
+version = "1.0.3"
 dependencies = [
  "pyrev_ast_derive",
  "regex",
@@ -197,7 +197,7 @@ dependencies = [
 
 [[package]]
 name = "pyrev_ast_derive"
-version = "1.0.2"
+version = "1.0.3"
 dependencies = [
  "quote",
  "regex",
