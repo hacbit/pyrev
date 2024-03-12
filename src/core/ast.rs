@@ -88,8 +88,21 @@ impl ExprParser for Expr {
                     let value = exprs_stack.pop().ok_or("[Store] Stack is empty")?;
 
                     match value {
-                        ExpressionEnum::Function(_) => {
-                            exprs_stack.push(value);
+                        ExpressionEnum::Function(function) => {
+                            if function.name.as_str() == "<lambda>"
+                                || function.name.as_str() == "<genexpr>"
+                                || function.name.as_str() == "<listcomp>"
+                            {
+                                exprs_stack.push(ExpressionEnum::Assign(Assign {
+                                    target: Box::new(ExpressionEnum::BaseValue(BaseValue {
+                                        value: name,
+                                    })),
+                                    values: Box::new(ExpressionEnum::Function(function)),
+                                    operator: "=".to_string(),
+                                }));
+                            } else {
+                                exprs_stack.push(ExpressionEnum::Function(function));
+                            }
                         }
                         ExpressionEnum::Import(import) => {
                             if import.bk_module == None {
@@ -168,13 +181,11 @@ impl ExprParser for Expr {
                         ExpressionEnum::Function(_) => {
                             exprs_stack.push(value);
                         }
-                        _ => {
-                            exprs_stack.push(ExpressionEnum::Assign(Assign {
-                                target: Box::new(ExpressionEnum::BaseValue(BaseValue { value: name })),
-                                values: Box::new(value),
-                                operator: "=".to_string(),
-                            }))
-                        }
+                        _ => exprs_stack.push(ExpressionEnum::Assign(Assign {
+                            target: Box::new(ExpressionEnum::BaseValue(BaseValue { value: name })),
+                            values: Box::new(value),
+                            operator: "=".to_string(),
+                        })),
                     }
                 }
                 Opcode::StoreAttr => {

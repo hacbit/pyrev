@@ -33,15 +33,11 @@ where
     E: Expression + 'static,
 {
     pub fn get_mut(&self) -> &mut E {
-        unsafe {
-            &mut *self.value
-        }
+        unsafe { &mut *self.value }
     }
 
     pub fn get(&self) -> &E {
-        unsafe {
-            &*self.value
-        }
+        unsafe { &*self.value }
     }
 
     pub fn patch<T: 'static>(&self, value: T) -> Result<()> {

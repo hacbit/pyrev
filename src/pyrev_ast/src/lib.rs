@@ -312,20 +312,42 @@ impl ExpressionEnum {
                         args_code.push_str(&format!("{}: {}, ", arg, anno.as_ref().unwrap()));
                     }
                 }
-                code.push(format!(
-                    "def {}({}){}:",
-                    function.name,
-                    args_code.trim_end_matches(", "),
-                    ret_code
-                ));
-                for expr in function.bodys.iter() {
-                    let expr_code = expr.build()?;
-                    for line in expr_code.iter() {
-                        code.push(format!("    {}", line));
+                match function.name.as_str() {
+                    "<lambda>" => {
+                        code.push(format!(
+                            "lambda {}: {}",
+                            args_code.trim_end_matches(", "),
+                            function.bodys[0]
+                                .build()?
+                                .join("")
+                                .trim_start_matches("return "),
+                        ));
                     }
-                }
-                if code.len() == 1 {
-                    code.push("    pass".to_string());
+                    "<listcomp>" => {
+                        code.push(format!(
+                            "[{} for {} in {}]",
+                            function.bodys[0].build()?.join(""),
+                            args_code.trim_end_matches(", "),
+                            function.bodys[1].build()?.join(""),
+                        ));
+                    }
+                    _ => {
+                        code.push(format!(
+                            "def {}({}){}:",
+                            function.name,
+                            args_code.trim_end_matches(", "),
+                            ret_code
+                        ));
+                        for expr in function.bodys.iter() {
+                            let expr_code = expr.build()?;
+                            for line in expr_code.iter() {
+                                code.push(format!("    {}", line));
+                            }
+                        }
+                        if code.len() == 1 {
+                            code.push("    pass".to_string());
+                        }
+                    }
                 }
                 Ok(code)
             }
