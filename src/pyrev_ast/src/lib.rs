@@ -28,8 +28,6 @@ pub struct FastVariable {
     pub index: usize,
     pub name: String,
     pub annotation: Option<String>,
-    /// 标记是函数参数还是局部变量
-    pub kind: FastVariableKind,
 }
 
 /// 函数
@@ -225,18 +223,6 @@ pub enum ContainerType {
 }
 
 impl Query for ContainerType {
-    fn query<T: 'static>(&self) -> Vec<&T> {
-        vec![]
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum FastVariableKind {
-    Argument,
-    Local,
-}
-
-impl Query for FastVariableKind {
     fn query<T: 'static>(&self) -> Vec<&T> {
         vec![]
     }

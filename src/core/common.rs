@@ -5,7 +5,7 @@ use std::io::BufRead;
 use std::io::Write;
 use std::path::Path;
 
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 pub trait IStream {
     fn read(&self) -> Result<String>;
@@ -92,7 +92,7 @@ pub struct OrderMap<K, V> {
 #[allow(unused)]
 impl<K, V> OrderMap<K, V>
 where
-    K: PartialEq + Eq + Clone,
+    K: PartialEq + Eq + Clone + Ord,
     V: Clone,
 {
     pub fn new() -> Self {
@@ -105,6 +105,14 @@ where
     pub fn insert(&mut self, mark: K, code_object: V) {
         self.keys.push(mark);
         self.values.push(code_object);
+    }
+
+    pub fn extend(&mut self, map: Self) {
+        for (k, v) in map.iter() {
+            if !self.contains_key(k) {
+                self.insert(k.clone(), v.clone());
+            }
+        }
     }
 
     pub fn get<Q>(&self, mark: &Q) -> Option<&V>
@@ -139,6 +147,28 @@ where
 
     pub fn keys(&self) -> impl Iterator<Item = &K> {
         self.keys.iter()
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct TraceBack {
+    pub locals: OrderMap<usize, (String, bool)>,
+}
+
+#[allow(unused)]
+impl TraceBack {
+    pub fn new() -> Self {
+        Self {
+            locals: OrderMap::new(),
+        }
+    }
+
+    pub fn insert_local(&mut self, arg: usize, argval: String, is_store: bool) {
+        self.locals.insert(arg, (argval, is_store));
+    }
+
+    pub fn extend(&mut self, tb: Self) {
+        self.locals.extend(tb.locals);
     }
 }
 

@@ -1,7 +1,5 @@
-use super::{common::OrderMap, opcode::OpcodeInstruction};
+use super::{common::*, opcode::OpcodeInstruction};
 use regex::Regex;
-
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 pub type ObjectMark = String;
 pub type LineNumber = usize;

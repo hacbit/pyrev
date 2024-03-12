@@ -1,16 +1,16 @@
+use super::common::*;
 use super::opcode::{Opcode, OpcodeInstruction};
 use pyrev_ast::*;
 
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
-
 pub trait ExprParser {
-    fn parse(opcode_instructions: &[OpcodeInstruction]) -> Result<Box<Self>>;
+    fn parse(opcode_instructions: &[OpcodeInstruction]) -> Result<(Box<Self>, TraceBack)>;
 }
 
 impl ExprParser for Expr {
     /// 用于解析一段字节码指令为AST
-    fn parse(opcode_instructions: &[OpcodeInstruction]) -> Result<Box<Self>> {
+    fn parse(opcode_instructions: &[OpcodeInstruction]) -> Result<(Box<Self>, TraceBack)> {
         let mut exprs_stack = Vec::<ExpressionEnum>::new();
+        let mut traceback = TraceBack::new();
         let mut offset = 0;
         loop {
             if offset == opcode_instructions.len() {
@@ -21,7 +21,7 @@ impl ExprParser for Expr {
                 .ok_or("[Parse] No instruction")?;
             #[cfg(debug_assertions)]
             {
-                dbg!(&instruction);
+                //dbg!(&instruction);
             }
 
             match instruction.opcode {
@@ -42,12 +42,14 @@ impl ExprParser for Expr {
                         .as_ref()
                         .ok_or("[LoadFast] No argval")?
                         .clone();
-                    exprs_stack.push(ExpressionEnum::FastVariable(FastVariable {
-                        index,
-                        name,
-                        annotation: None,
-                        kind: FastVariableKind::Argument,
-                    }));
+                    // 如果先storefast再loadfast, 那么就不认为是函数参数
+                    if traceback.locals.contains_key(&index) {
+                        traceback.locals.get_mut(&index).unwrap().1 = false;
+                    } else {
+                        traceback.insert_local(index, name.clone(), false);
+                    }
+
+                    exprs_stack.push(ExpressionEnum::BaseValue(BaseValue { value: name }));
                 }
                 Opcode::LoadAttr => {
                     let parent = exprs_stack.pop().ok_or("[LoadAttr] Stack is empty")?;
@@ -72,14 +74,16 @@ impl ExprParser for Expr {
                         })),
                     }));
                 }
-                Opcode::StoreName | Opcode::StoreFast | Opcode::StoreGlobal => {
+                Opcode::StoreName | Opcode::StoreGlobal => {
                     let name = instruction
                         .argval
                         .as_ref()
                         .ok_or("[Store] No argval")?
                         .clone();
                     #[cfg(debug_assertions)]
-                    println!("StoreName argval is {}", name);
+                    {
+                        //println!("StoreName argval is {}", name);
+                    }
 
                     let value = exprs_stack.pop().ok_or("[Store] Stack is empty")?;
 
@@ -148,6 +152,28 @@ impl ExprParser for Expr {
                                 values: Box::new(value),
                                 operator: "=".to_string(),
                             }));
+                        }
+                    }
+                }
+                Opcode::StoreFast => {
+                    let name = instruction
+                        .argval
+                        .as_ref()
+                        .ok_or("[StoreFast] No argval")?
+                        .clone();
+                    let value = exprs_stack.pop().ok_or("[StoreFast] Stack is empty")?;
+                    let index = instruction.arg.ok_or("[StoreFast] No arg")?;
+                    traceback.insert_local(index, name.clone(), true);
+                    match value {
+                        ExpressionEnum::Function(_) => {
+                            exprs_stack.push(value);
+                        }
+                        _ => {
+                            exprs_stack.push(ExpressionEnum::Assign(Assign {
+                                target: Box::new(ExpressionEnum::BaseValue(BaseValue { value: name })),
+                                values: Box::new(value),
+                                operator: "=".to_string(),
+                            }))
                         }
                     }
                 }
@@ -340,7 +366,6 @@ impl ExprParser for Expr {
                                                 .unwrap_base_value()
                                                 .value,
                                         ),
-                                        kind: FastVariableKind::Argument,
                                     };
                                     function.args.push(arg);
                                 }
@@ -416,7 +441,9 @@ impl ExprParser for Expr {
                 }
                 Opcode::Call => {
                     #[cfg(debug_assertions)]
-                    //dbg!(&exprs_stack);
+                    {
+                        //dbg!(&exprs_stack);
+                    }
 
                     let count = instruction.arg.ok_or("[Call] No arg")?;
                     if count == 0 {
@@ -679,7 +706,7 @@ impl ExprParser for Expr {
             offset += 1;
         }
 
-        Ok(Box::new(Self { bodys: exprs_stack }))
+        Ok((Box::new(Self { bodys: exprs_stack }), traceback))
     }
 }
 

@@ -32,19 +32,15 @@ impl<E> QueryResMut<E>
 where
     E: Expression + 'static,
 {
-    pub fn try_get_mut<T: 'static>(&self) -> Option<&mut T> {
-        if TypeId::of::<T>() == self.value.type_id() {
-            unsafe { Some(&mut *(self.value as *mut T)) }
-        } else {
-            None
+    pub fn get_mut(&self) -> &mut E {
+        unsafe {
+            &mut *self.value
         }
     }
 
-    pub fn try_get<T: 'static>(&self) -> Option<&T> {
-        if TypeId::of::<T>() == self.value.type_id() {
-            unsafe { Some(&*(self.value as *const T)) }
-        } else {
-            None
+    pub fn get(&self) -> &E {
+        unsafe {
+            &*self.value
         }
     }
 
