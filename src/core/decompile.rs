@@ -1,14 +1,13 @@
 use std::collections::HashMap;
 
 use super::ast::*;
+use super::common::*;
 use super::parse_opcode::*;
 use pyrev_ast::*;
 
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
-
 pub trait Decompiler {
     fn decompile(&self) -> Result<DecompiledCode>;
-    fn merge(&self, mark: &str, maps: &HashMap<String, Expr>) -> Result<Expr>;
+    fn merge(&self, mark: &str, maps: &HashMap<String, (Expr, TraceBack)>) -> Result<Expr>;
 }
 
 impl Decompiler for CodeObjectMap {
@@ -18,12 +17,20 @@ impl Decompiler for CodeObjectMap {
         let mut exprs_map = HashMap::new();
         for (mark, code_object) in self.iter() {
             let mut expr = Expr::new();
+            let mut trace = TraceBack::new();
             for (_, instruction) in code_object.iter() {
-                let e = Expr::parse(instruction)?;
+                let (e, t) = Expr::parse(instruction)?;
                 //dbg!(&e);
                 expr.extend(*e);
+                trace.extend(t);
             }
-            exprs_map.insert(mark.clone(), expr);
+
+            #[cfg(debug_assertions)]
+            {
+                println!("{:?}", &trace);
+            }
+
+            exprs_map.insert(mark.clone(), (expr, trace));
         }
         //dbg!(&exprs_map);
         let main_expr = self.merge("<main>", &exprs_map)?;
@@ -43,8 +50,8 @@ impl Decompiler for CodeObjectMap {
 
     /// 用来合并所有的Expr
     /// 比如`<main>`有一个函数foo, 就需要把foo的定义合并到`<main>`里面的foo Function的 bodys
-    fn merge(&self, mark: &str, maps: &HashMap<String, Expr>) -> Result<Expr> {
-        let this_expr = maps.get(mark).ok_or(format!("No {} expr", &mark))?.clone();
+    fn merge(&self, mark: &str, maps: &HashMap<String, (Expr, TraceBack)>) -> Result<Expr> {
+        let (this_expr, traceback) = maps.get(mark).ok_or(format!("No {} expr", &mark))?;
         loop {
             let mut is_merged = true;
             let function_query = this_expr.query::<Function>();
@@ -53,22 +60,76 @@ impl Decompiler for CodeObjectMap {
                     let new_bodys = maps
                         .get(&function.mark)
                         .ok_or(format!("No {} expr", &function.mark))?
+                        .0
                         .bodys
                         .clone();
 
-                    function
-                        .with_mut()
-                        .patch_by(|f| f.bodys.extend(new_bodys))?;
+                    function.with_mut().patch_by(|f| {
+                        f.bodys.extend(new_bodys);
+                        traceback.locals.iter().for_each(|(k, (v, b))| {
+                            if !b {
+                                f.args.push(FastVariable {
+                                    index: *k,
+                                    name: v.to_string(),
+                                    annotation: None,
+                                })
+                            }
+                        })
+                    })?;
 
                     is_merged = false;
                 }
+
+                // update the function arguments
+                let function_locals = maps
+                    .get(&function.mark)
+                    .ok_or(format!("No {} expr", &function.mark))?
+                    .1
+                    .locals
+                    .clone();
+                let args = function.args.clone();
+                let mut function_args = HashMap::new();
+                for (k, (v, b)) in function_locals.iter() {
+                    if !b {
+                        function_args.insert(v, (k, None));
+                    }
+                }
+                for fv in args.iter() {
+                    if function_args.contains_key(&fv.name) {
+                        function_args.get_mut(&fv.name).unwrap().1 = fv.annotation.clone();
+                    } else {
+                        function_args.insert(&fv.name, (&fv.index, fv.annotation.clone()));
+                    }
+                }
+
+                function.with_mut().patch_by(|f| {
+                    f.args.clear();
+                    for (arg, (idx, anno)) in function_args.iter() {
+                        f.args.push(FastVariable {
+                            index: **idx,
+                            name: arg.to_string(),
+                            annotation: anno.clone(),
+                        })
+                    }
+                })?;
+                function
+                    .with_mut()
+                    .get_mut()
+                    .args
+                    .sort_by(|a, b| a.index.cmp(&b.index));
+
+                #[cfg(debug_assertions)]
+                {
+                    println!("{:?}", &function);
+                }
             }
+
             //dbg!(&this_expr);
             if is_merged {
                 break;
             }
         }
-        Ok(this_expr)
+        Ok(this_expr.to_owned())
     }
 }
 

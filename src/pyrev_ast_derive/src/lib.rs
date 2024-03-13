@@ -16,7 +16,6 @@ pub fn derive_expression(input: TokenStream) -> TokenStream {
 
 /// Query trait is depend on Queryable trait
 /// It searches for the type T recursively in the struct
-/// It will return immediately when if finds one, even if the return structures contains the target type T
 #[proc_macro_derive(Query)]
 pub fn derive_query(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);

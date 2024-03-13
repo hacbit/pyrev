@@ -21,13 +21,19 @@ pub struct Import {
     pub alias: Option<String>,
 }
 
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+pub struct FastVariable {
+    pub index: usize,
+    pub name: String,
+    pub annotation: Option<String>,
+}
+
 /// 函数
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
 pub struct Function {
     pub mark: String,
     pub name: String,
-    pub args: Vec<String>,
-    pub args_annotation: Vec<String>,
+    pub args: Vec<FastVariable>,
     pub start_line: usize,
     pub end_line: usize,
     pub bodys: Vec<ExpressionEnum>,
@@ -171,6 +177,7 @@ pub struct BaseValue {
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Common)]
 pub enum ExpressionEnum {
     Import(Import),
+    FastVariable(FastVariable),
     Function(Function),
     Return(Return),
     Assign(Assign),
@@ -236,7 +243,6 @@ impl Function {
             mark: object_mark.as_ref().to_string(),
             name,
             args: Vec::new(),
-            args_annotation: Vec::new(),
             start_line,
             end_line: start_line,
             bodys: Vec::new(),
@@ -249,6 +255,16 @@ impl Function {
         } else {
             Err("Function name must be a string".into())
         }
+    }
+
+    pub fn args_iter(&self) -> impl Iterator<Item = (&String, &Option<String>)> {
+        let mut iter = self
+            .args
+            .iter()
+            .map(|arg| (&arg.index, &arg.name, &arg.annotation))
+            .collect::<Vec<_>>();
+        iter.sort_by(|i, j| i.0.cmp(j.0));
+        iter.into_iter().map(|(_, name, anno)| (name, anno))
     }
 }
 
@@ -280,33 +296,67 @@ impl ExpressionEnum {
                 let mut code = Vec::new();
                 let mut args_code = String::new();
                 let mut ret_code = String::new();
-                for (arg, anno) in function.args.iter().zip(function.args_annotation.iter()) {
+                for (arg, anno) in function.args_iter() {
                     if arg == "return" {
-                        ret_code.push_str(&format!(" -> {}", anno));
+                        ret_code.push_str(&format!(
+                            " -> {}",
+                            anno.as_ref().unwrap_or(&"None".to_string())
+                        ));
                         continue;
                     }
-                    if anno.is_empty() {
+                    if anno.is_none() {
                         args_code.push_str(&format!("{}, ", arg));
                     } else {
-                        args_code.push_str(&format!("{}: {}, ", arg, anno));
+                        args_code.push_str(&format!("{}: {}, ", arg, anno.as_ref().unwrap()));
                     }
                 }
-                code.push(format!(
-                    "def {}({}){}:",
-                    function.name,
-                    args_code.trim_end_matches(", "),
-                    ret_code
-                ));
-                for expr in function.bodys.iter() {
-                    let expr_code = expr.build()?;
-                    for line in expr_code.iter() {
-                        code.push(format!("    {}", line));
+                match function.name.as_str() {
+                    "<lambda>" => {
+                        code.push(format!(
+                            "lambda {}: {}",
+                            args_code.trim_end_matches(", "),
+                            function.bodys[0]
+                                .build()?
+                                .join("")
+                                .trim_start_matches("return "),
+                        ));
                     }
-                }
-                if code.len() == 1 {
-                    code.push("    pass".to_string());
+                    "<listcomp>" => {
+                        code.push(format!(
+                            "[{} for {} in {}]",
+                            function.bodys[0].build()?.join(""),
+                            args_code.trim_end_matches(", "),
+                            function.bodys[1].build()?.join(""),
+                        ));
+                    }
+                    _ => {
+                        code.push(format!(
+                            "def {}({}){}:",
+                            function.name,
+                            args_code.trim_end_matches(", "),
+                            ret_code
+                        ));
+                        for expr in function.bodys.iter() {
+                            let expr_code = expr.build()?;
+                            for line in expr_code.iter() {
+                                code.push(format!("    {}", line));
+                            }
+                        }
+                        if code.len() == 1 {
+                            code.push("    pass".to_string());
+                        }
+                    }
                 }
                 Ok(code)
+            }
+            ExpressionEnum::FastVariable(fast_var) => {
+                if fast_var.name == "None" {
+                    Ok(vec!["".to_string()])
+                } else if fast_var.name == "0" {
+                    Ok(vec![])
+                } else {
+                    Ok(vec![fast_var.name.clone()])
+                }
             }
             ExpressionEnum::Return(r) => {
                 let value_code = r.value.build()?.join("");

@@ -1,4 +1,4 @@
-def test(a: int, b) -> int:
+def test(a, b: int) -> int:
     def aaa():
         return 1
     return len(bin(a + b + aaa())[2:])
