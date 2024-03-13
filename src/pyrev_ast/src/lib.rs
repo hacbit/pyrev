@@ -44,6 +44,7 @@ pub struct Function {
     pub mark: String,
     pub name: String,
     pub args: Vec<FastVariable>,
+    pub defaults: Vec<String>,
     pub start_line: usize,
     pub end_line: usize,
     pub bodys: Vec<ExpressionEnum>,
@@ -276,6 +277,7 @@ impl Function {
             mark: object_mark.as_ref().to_string(),
             name,
             args: Vec::new(),
+            defaults: Vec::new(),
             start_line,
             end_line: start_line,
             bodys: Vec::new(),
@@ -340,6 +342,8 @@ impl ExpressionEnum {
                 let mut code = Vec::new();
                 let mut args_code = String::new();
                 let mut ret_code = String::new();
+                let mut defaults_iter = function.defaults.iter();
+                let mut default_offset = function.args.len() - function.defaults.len();
                 for (arg, anno) in function.args_iter() {
                     if arg == "return" {
                         ret_code.push_str(&format!(
@@ -349,10 +353,21 @@ impl ExpressionEnum {
                         continue;
                     }
                     if anno.is_none() {
-                        args_code.push_str(&format!("{}, ", arg));
+                        args_code.push_str(&format!("{}", arg));
                     } else {
-                        args_code.push_str(&format!("{}: {}, ", arg, anno.as_ref().unwrap()));
+                        args_code.push_str(&format!("{}: {}", arg, anno.as_ref().unwrap()));
                     }
+
+                    if default_offset <= 0 {
+                        args_code.push_str(&format!(
+                            " = {}",
+                            defaults_iter.next().ok_or("No default! Iter error")?
+                        ));
+                    } else {
+                        // 还不是有默认值的参数
+                        default_offset -= 1;
+                    }
+                    args_code.push_str(", ")
                 }
                 match function.name.as_str() {
                     "<lambda>" => {
@@ -374,6 +389,10 @@ impl ExpressionEnum {
                         ));
                     }
                     _ => {
+                        #[cfg(debug_assertions)]
+                        {
+                            dbg!(&args_code);
+                        }
                         code.push(format!(
                             "def {}({}){}:",
                             function.name,

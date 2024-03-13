@@ -25,9 +25,6 @@ impl ExprParser for Expr {
             }
 
             match instruction.opcode {
-                Opcode::Resume => {
-                    break;
-                }
                 Opcode::LoadConst | Opcode::LoadName | Opcode::LoadGlobal => {
                     exprs_stack.push(ExpressionEnum::BaseValue(BaseValue {
                         value: instruction
@@ -363,38 +360,55 @@ impl ExprParser for Expr {
                 Opcode::MakeFunction => {
                     let mark = exprs_stack.pop().ok_or("[MakeFunction] Stack is empty")?;
                     let mut function = Function::from(mark)?;
-                    if instruction.argval == Some("annotations".to_string()) {
-                        let values = exprs_stack.pop().ok_or("[MakeFunction] Stack is empty")?;
-                        if let ExpressionEnum::Container(container) = values {
-                            #[cfg(debug_assertions)]
-                            {
-                                assert_eq!(container.container_type, ContainerType::Tuple);
-                            }
+                    if let Some(argval) = instruction.argval.as_ref() {
+                        if argval.contains("annotations") {
+                            let values =
+                                exprs_stack.pop().ok_or("[MakeFunction] Stack is empty")?;
+                            if let ExpressionEnum::Container(container) = values {
+                                #[cfg(debug_assertions)]
+                                {
+                                    assert_eq!(container.container_type, ContainerType::Tuple);
+                                }
 
-                            for (idx, exprs) in container.values.chunks(2).enumerate() {
-                                if exprs.iter().all(|e| e.is_base_value()) {
-                                    let arg = FastVariable {
-                                        index: idx,
-                                        name: exprs
-                                            .get(0)
-                                            .as_ref()
-                                            .unwrap()
-                                            .unwrap_base_value()
-                                            .value
-                                            .trim_start_matches('\'')
-                                            .trim_end_matches('\'')
-                                            .to_string(),
-                                        annotation: Some(
-                                            exprs
-                                                .get(1)
+                                for (idx, exprs) in container.values.chunks(2).enumerate() {
+                                    if exprs.iter().all(|e| e.is_base_value()) {
+                                        let arg = FastVariable {
+                                            index: idx,
+                                            name: exprs
+                                                .get(0)
                                                 .as_ref()
                                                 .unwrap()
                                                 .unwrap_base_value()
-                                                .value,
-                                        ),
-                                    };
-                                    function.args.push(arg);
+                                                .value
+                                                .trim_start_matches('\'')
+                                                .trim_end_matches('\'')
+                                                .to_string(),
+                                            annotation: Some(
+                                                exprs
+                                                    .get(1)
+                                                    .as_ref()
+                                                    .unwrap()
+                                                    .unwrap_base_value()
+                                                    .value,
+                                            ),
+                                        };
+                                        function.args.push(arg);
+                                    }
                                 }
+                            }
+                        }
+                        if argval.contains("defaults") {
+                            let defaults =
+                                exprs_stack.pop().ok_or("[MakeFunction] Stack is empty")?;
+                            if let ExpressionEnum::BaseValue(BaseValue { value }) = defaults {
+                                let defaults = value
+                                    .trim_start_matches('(')
+                                    .trim_end_matches(')')
+                                    .trim_end_matches(',')
+                                    .split(", ")
+                                    .map(|x| x.to_string())
+                                    .collect::<Vec<_>>();
+                                function.defaults = defaults;
                             }
                         }
                     }
@@ -843,6 +857,7 @@ mod tests {
                         },
                     ]
                     .into(),
+                    defaults: vec![],
                     start_line: 1,
                     end_line: 1,
                     bodys: vec![],
@@ -864,6 +879,7 @@ mod tests {
                         .into(),
                     name: "test".into(),
                     args: vec![],
+                    defaults: vec![],
                     start_line: 1,
                     end_line: 1,
                     bodys: vec![],
@@ -887,6 +903,7 @@ mod tests {
                         .into(),
                     name: "test".into(),
                     args: vec![],
+                    defaults: vec![],
                     start_line: 1,
                     end_line: 1,
                     bodys: vec![],
@@ -901,6 +918,7 @@ mod tests {
                     .into(),
                 name: "test".into(),
                 args: vec![],
+                defaults: vec![],
                 start_line: 1,
                 end_line: 1,
                 bodys: vec![],

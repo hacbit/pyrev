@@ -116,13 +116,11 @@ impl Decompiler for CodeObjectMap {
                 })?;
                 function
                     .with_mut()
-                    .get_mut()
-                    .args
-                    .sort_by(|a, b| a.index.cmp(&b.index));
+                    .patch_by(|f| f.args.sort_by(|a, b| a.index.cmp(&b.index)))?;
 
                 #[cfg(debug_assertions)]
                 {
-                    println!("{:?}", &function);
+                    //dbg!(&function);
                 }
             }
 

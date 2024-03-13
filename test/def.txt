@@ -5,50 +5,56 @@
               6 LOAD_CONST               1 ('return')
               8 LOAD_NAME                0 (int)
              10 BUILD_TUPLE              4
-             12 LOAD_CONST               2 (<code object test at 0x0000025C36EDDB80, file "test/def.py", line 1>)
+             12 LOAD_CONST               2 (<code object test at 0x000001B16A38DB80, file "test/def.py", line 1>)
              14 MAKE_FUNCTION            4 (annotations)
              16 STORE_NAME               1 (test)
 
-  5          18 LOAD_CONST               3 (<code object foo at 0x0000025C36E50D50, file "test/def.py", line 5>)
-             20 MAKE_FUNCTION            0
-             22 STORE_NAME               2 (foo)
+  5          18 LOAD_CONST              12 ((2, 3))
+             20 LOAD_CONST               5 ('a')
+             22 LOAD_NAME                0 (int)
+             24 LOAD_CONST               0 ('b')
+             26 LOAD_NAME                0 (int)
+             28 BUILD_TUPLE              4
+             30 LOAD_CONST               6 (<code object foo at 0x000001B16A3972D0, file "test/def.py", line 5>)
+             32 MAKE_FUNCTION            5 (defaults, annotations)
+             34 STORE_NAME               2 (foo)
 
-  8          24 LOAD_CONST               4 (<code object <lambda> at 0x0000025C370CA660, file "test/def.py", line 8>)
-             26 MAKE_FUNCTION            0
-             28 STORE_NAME               3 (b)
+  8          36 LOAD_CONST               7 (<code object <lambda> at 0x000001B16A57A660, file "test/def.py", line 8>)
+             38 MAKE_FUNCTION            0
+             40 STORE_NAME               3 (b)
 
-  9          30 LOAD_CONST               5 (<code object <listcomp> at 0x0000025C370CA730, file "test/def.py", line 9>)
-             32 MAKE_FUNCTION            0
-             34 PUSH_NULL
-             36 LOAD_NAME                4 (range)
-             38 LOAD_CONST               6 (10)
-             40 PRECALL                  1
-             44 CALL                     1
-             54 GET_ITER
-             56 PRECALL                  0
-             60 CALL                     0
-             70 POP_TOP
+  9          42 LOAD_CONST               8 (<code object <listcomp> at 0x000001B16A57A730, file "test/def.py", line 9>)
+             44 MAKE_FUNCTION            0
+             46 PUSH_NULL
+             48 LOAD_NAME                4 (range)
+             50 LOAD_CONST               9 (10)
+             52 PRECALL                  1
+             56 CALL                     1
+             66 GET_ITER
+             68 PRECALL                  0
+             72 CALL                     0
+             82 POP_TOP
 
- 10          72 LOAD_CONST               7 (1)
-             74 STORE_NAME               5 (a)
+ 10          84 LOAD_CONST              10 (1)
+             86 STORE_NAME               5 (a)
 
- 11          76 PUSH_NULL
-             78 LOAD_NAME                2 (foo)
-             80 PUSH_NULL
-             82 LOAD_NAME                1 (test)
-             84 LOAD_NAME                5 (a)
-             86 PRECALL                  1
-             90 CALL                     1
-            100 PRECALL                  1
-            104 CALL                     1
-            114 POP_TOP
-            116 LOAD_CONST               8 (None)
-            118 RETURN_VALUE
+ 11          88 PUSH_NULL
+             90 LOAD_NAME                2 (foo)
+             92 PUSH_NULL
+             94 LOAD_NAME                1 (test)
+             96 LOAD_NAME                5 (a)
+             98 PRECALL                  1
+            102 CALL                     1
+            112 PRECALL                  1
+            116 CALL                     1
+            126 POP_TOP
+            128 LOAD_CONST              11 (None)
+            130 RETURN_VALUE
 
-Disassembly of <code object test at 0x0000025C36EDDB80, file "test/def.py", line 1>:
+Disassembly of <code object test at 0x000001B16A38DB80, file "test/def.py", line 1>:
   1           0 RESUME                   0
 
-  2           2 LOAD_CONST               1 (<code object aaa at 0x0000025C37098DB0, file "test/def.py", line 2>)
+  2           2 LOAD_CONST               1 (<code object aaa at 0x000001B16A548DB0, file "test/def.py", line 2>)
               4 MAKE_FUNCTION            0
               6 STORE_FAST               2 (aaa)
 
@@ -72,13 +78,13 @@ Disassembly of <code object test at 0x0000025C36EDDB80, file "test/def.py", line
              96 CALL                     1
             106 RETURN_VALUE
 
-Disassembly of <code object aaa at 0x0000025C37098DB0, file "test/def.py", line 2>:
+Disassembly of <code object aaa at 0x000001B16A548DB0, file "test/def.py", line 2>:
   2           0 RESUME                   0
 
   3           2 LOAD_CONST               1 (1)
               4 RETURN_VALUE
 
-Disassembly of <code object foo at 0x0000025C36E50D50, file "test/def.py", line 5>:
+Disassembly of <code object foo at 0x000001B16A3972D0, file "test/def.py", line 5>:
   5           0 RESUME                   0
 
   6           2 LOAD_GLOBAL              1 (NULL + print)
@@ -88,16 +94,19 @@ Disassembly of <code object foo at 0x0000025C36E50D50, file "test/def.py", line 
              30 POP_TOP
 
   7          32 LOAD_FAST                0 (a)
-             34 RETURN_VALUE
+             34 LOAD_FAST                1 (b)
+             36 LOAD_FAST                2 (c)
+             38 BUILD_TUPLE              3
+             40 RETURN_VALUE
 
-Disassembly of <code object <lambda> at 0x0000025C370CA660, file "test/def.py", line 8>:
+Disassembly of <code object <lambda> at 0x000001B16A57A660, file "test/def.py", line 8>:
   8           0 RESUME                   0
               2 LOAD_FAST                0 (a)
               4 LOAD_CONST               1 (1)
               6 BINARY_OP                0 (+)
              10 RETURN_VALUE
 
-Disassembly of <code object <listcomp> at 0x0000025C370CA730, file "test/def.py", line 9>:
+Disassembly of <code object <listcomp> at 0x000001B16A57A730, file "test/def.py", line 9>:
   9           0 RESUME                   0
               2 BUILD_LIST               0
               4 LOAD_FAST                0 (.0)
