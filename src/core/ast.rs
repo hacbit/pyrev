@@ -80,6 +80,7 @@ impl ExprParser for Expr {
                         .as_ref()
                         .ok_or("[Store] No argval")?
                         .clone();
+
                     #[cfg(debug_assertions)]
                     {
                         //println!("StoreName argval is {}", name);
@@ -132,7 +133,7 @@ impl ExprParser for Expr {
                                     exprs_stack.push(ExpressionEnum::Import(Import {
                                         module: import.module,
                                         bk_module: Some(
-                                            import.bk_module.expect("") + &name.clone() + ",",
+                                            import.bk_module.expect("") + &name.clone() + ", ",
                                         ),
                                         alias: None,
                                         fragment: None,
@@ -149,7 +150,7 @@ impl ExprParser for Expr {
                                                     .ok_or("[StoreName-import]")?
                                                 + " as "
                                                 + &name.clone()
-                                                + ",",
+                                                + ", ",
                                         ),
                                         alias: None,
                                         fragment: None,
@@ -510,32 +511,28 @@ impl ExprParser for Expr {
                     if let ExpressionEnum::Import(import) = value {
                         if import.bk_module == None {
                             //没from
-                            exprs_stack.push(ExpressionEnum::Import(Import {
-                                module: import.module,
-                                bk_module: import.bk_module,
-                                fragment: None,
-                                alias: import.alias,
-                            }))
+                            import.with_mut().patch_by(|i| i.fragment = None).unwrap();
+                            exprs_stack.push(ExpressionEnum::Import(import))
                         } else {
                             //有from
-                            exprs_stack.push(ExpressionEnum::Import(Import {
-                                module: import.module,
-                                bk_module: import.bk_module,
-                                fragment: Some(
-                                    instruction
-                                        .argval
-                                        .as_ref()
-                                        .ok_or("[ImportName] No argval")?
-                                        .clone(),
-                                ),
-                                alias: import.alias,
-                            }))
+                            let new_fragment = Some(
+                                instruction
+                                    .argval
+                                    .as_ref()
+                                    .ok_or("[ImportName] No argval")?
+                                    .clone(),
+                            );
+                            import
+                                .with_mut()
+                                .patch_by(|i| i.fragment = new_fragment)
+                                .unwrap();
+                            exprs_stack.push(ExpressionEnum::Import(import))
                         }
                     }
                 }
                 Opcode::ImportName => {
                     let module = exprs_stack.pop().ok_or("[ImportName] Stack is empty")?;
-                    println!("module is {}", module.build()?.join(""));
+
                     if module.build()?.join("").len() != 0 {
                         //需要from
                         let origin_len = module.build()?.join("").len();

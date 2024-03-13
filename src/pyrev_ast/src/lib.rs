@@ -19,8 +19,6 @@ pub struct Import {
     pub bk_module: Option<String>,
     pub fragment: Option<String>,
     pub alias: Option<String>,
-    //pub submodules: Vec<String>,
-    //pub submodules_alias: Vec<Option<String>>,
 }
 
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
