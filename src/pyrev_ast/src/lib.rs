@@ -491,6 +491,7 @@ impl ExpressionEnum {
                                 .alias
                                 .as_ref()
                                 .expect("[No from Have as] Alias missed")
+                                .trim_end_matches(", ")
                         )])
                     }
                 } else {
@@ -503,6 +504,7 @@ impl ExpressionEnum {
                             .bk_module
                             .as_ref()
                             .expect("[Have from No as] Bk_module missed")
+                            .trim_end_matches(", ")
                     )])
                 }
             }
