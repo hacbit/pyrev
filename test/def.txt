@@ -5,19 +5,19 @@
               6 LOAD_CONST               1 ('return')
               8 LOAD_NAME                0 (int)
              10 BUILD_TUPLE              4
-             12 LOAD_CONST               2 (<code object test at 0x00000240C1ABDB80, file "test/def.py", line 1>)
+             12 LOAD_CONST               2 (<code object test at 0x0000025C36EDDB80, file "test/def.py", line 1>)
              14 MAKE_FUNCTION            4 (annotations)
              16 STORE_NAME               1 (test)
 
-  5          18 LOAD_CONST               3 (<code object foo at 0x00000240C1A30D50, file "test/def.py", line 5>)
+  5          18 LOAD_CONST               3 (<code object foo at 0x0000025C36E50D50, file "test/def.py", line 5>)
              20 MAKE_FUNCTION            0
              22 STORE_NAME               2 (foo)
 
-  8          24 LOAD_CONST               4 (<code object <lambda> at 0x00000240C1C78CF0, file "test/def.py", line 8>)
+  8          24 LOAD_CONST               4 (<code object <lambda> at 0x0000025C370CA660, file "test/def.py", line 8>)
              26 MAKE_FUNCTION            0
              28 STORE_NAME               3 (b)
 
-  9          30 LOAD_CONST               5 (<code object <listcomp> at 0x00000240C1CAA660, file "test/def.py", line 9>)
+  9          30 LOAD_CONST               5 (<code object <listcomp> at 0x0000025C370CA730, file "test/def.py", line 9>)
              32 MAKE_FUNCTION            0
              34 PUSH_NULL
              36 LOAD_NAME                4 (range)
@@ -45,10 +45,10 @@
             116 LOAD_CONST               8 (None)
             118 RETURN_VALUE
 
-Disassembly of <code object test at 0x00000240C1ABDB80, file "test/def.py", line 1>:
+Disassembly of <code object test at 0x0000025C36EDDB80, file "test/def.py", line 1>:
   1           0 RESUME                   0
 
-  2           2 LOAD_CONST               1 (<code object aaa at 0x00000240C1C78DB0, file "test/def.py", line 2>)
+  2           2 LOAD_CONST               1 (<code object aaa at 0x0000025C37098DB0, file "test/def.py", line 2>)
               4 MAKE_FUNCTION            0
               6 STORE_FAST               2 (aaa)
 
@@ -72,13 +72,13 @@ Disassembly of <code object test at 0x00000240C1ABDB80, file "test/def.py", line
              96 CALL                     1
             106 RETURN_VALUE
 
-Disassembly of <code object aaa at 0x00000240C1C78DB0, file "test/def.py", line 2>:
+Disassembly of <code object aaa at 0x0000025C37098DB0, file "test/def.py", line 2>:
   2           0 RESUME                   0
 
   3           2 LOAD_CONST               1 (1)
               4 RETURN_VALUE
 
-Disassembly of <code object foo at 0x00000240C1A30D50, file "test/def.py", line 5>:
+Disassembly of <code object foo at 0x0000025C36E50D50, file "test/def.py", line 5>:
   5           0 RESUME                   0
 
   6           2 LOAD_GLOBAL              1 (NULL + print)
@@ -90,12 +90,14 @@ Disassembly of <code object foo at 0x00000240C1A30D50, file "test/def.py", line 
   7          32 LOAD_FAST                0 (a)
              34 RETURN_VALUE
 
-Disassembly of <code object <lambda> at 0x00000240C1C78CF0, file "test/def.py", line 8>:
+Disassembly of <code object <lambda> at 0x0000025C370CA660, file "test/def.py", line 8>:
   8           0 RESUME                   0
               2 LOAD_FAST                0 (a)
-              4 RETURN_VALUE
+              4 LOAD_CONST               1 (1)
+              6 BINARY_OP                0 (+)
+             10 RETURN_VALUE
 
-Disassembly of <code object <listcomp> at 0x00000240C1CAA660, file "test/def.py", line 9>:
+Disassembly of <code object <listcomp> at 0x0000025C370CA730, file "test/def.py", line 9>:
   9           0 RESUME                   0
               2 BUILD_LIST               0
               4 LOAD_FAST                0 (.0)

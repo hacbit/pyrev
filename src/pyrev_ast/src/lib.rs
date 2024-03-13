@@ -21,6 +21,16 @@ pub struct Import {
     pub alias: Option<String>,
 }
 
+/// 类
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+pub struct Class {
+    pub mark: String,
+    pub name: String,
+    pub members: Vec<ExpressionEnum>,
+    pub start_line: usize,
+}
+
+/// 局部变量
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
 pub struct FastVariable {
     pub index: usize,
@@ -177,6 +187,7 @@ pub struct BaseValue {
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Common)]
 pub enum ExpressionEnum {
     Import(Import),
+    Class(Class),
     FastVariable(FastVariable),
     Function(Function),
     Return(Return),
@@ -232,11 +243,33 @@ pub struct Expr {
     pub bodys: Vec<ExpressionEnum>,
 }
 
+impl Class {
+    pub fn new<S: AsRef<str>>(object_mark: S) -> Result<Self> {
+        let reg = Regex::new(
+            r#"(?x)<code\ object\ (?P<name>\S+)\ at[\S\ ]+\ line\ (?P<start_line>\d+)>"#,
+        )?;
+        let cap = reg
+            .captures(object_mark.as_ref())
+            .ok_or(format!("Invalid function mark: {}", object_mark.as_ref()))?;
+        let name = cap.name("name").unwrap().as_str().to_string();
+        let start_line = cap.name("start_line").unwrap().as_str().parse::<usize>()?;
+        Ok(Self {
+            mark: object_mark.as_ref().to_string(),
+            name,
+            members: Vec::new(),
+            start_line,
+        })
+    }
+}
+
 impl Function {
     pub fn new<S: AsRef<str>>(object_mark: S) -> Result<Self> {
-        let reg =
-            Regex::new(r"(?x)code\ object\ (?P<name>\S+)\ at[\S\ ]+\ line\ (?P<start_line>\d+)>")?;
-        let cap = reg.captures(object_mark.as_ref()).unwrap();
+        let reg = Regex::new(
+            r#"(?x)<code\ object\ (?P<name>\S+)\ at[\S\ ]+\ line\ (?P<start_line>\d+)>"#,
+        )?;
+        let cap = reg
+            .captures(object_mark.as_ref())
+            .ok_or(format!("Invalid function mark: {}", object_mark.as_ref()))?;
         let name = cap.name("name").unwrap().as_str().to_string();
         let start_line = cap.name("start_line").unwrap().as_str().parse::<usize>()?;
         Ok(Self {
@@ -292,6 +325,17 @@ impl Expr {
 impl ExpressionEnum {
     pub fn build(&self) -> Result<Vec<String>> {
         match self {
+            ExpressionEnum::Class(class) => {
+                let mut code = Vec::new();
+                code.push(format!("class {}:", class.name));
+                for expr in class.members.iter() {
+                    let expr_code = expr.build()?;
+                    for line in expr_code.iter() {
+                        code.push(format!("    {}", line));
+                    }
+                }
+                Ok(code)
+            }
             ExpressionEnum::Function(function) => {
                 let mut code = Vec::new();
                 let mut args_code = String::new();

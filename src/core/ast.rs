@@ -25,6 +25,9 @@ impl ExprParser for Expr {
             }
 
             match instruction.opcode {
+                Opcode::Resume => {
+                    break;
+                }
                 Opcode::LoadConst | Opcode::LoadName | Opcode::LoadGlobal => {
                     exprs_stack.push(ExpressionEnum::BaseValue(BaseValue {
                         value: instruction
@@ -203,6 +206,17 @@ impl ExprParser for Expr {
                         values: Box::new(value),
                         operator: "=".to_string(),
                     }));
+                }
+                Opcode::LoadBuildClass => {
+                    let mark = opcode_instructions
+                        .get(offset + 1)
+                        .cloned()
+                        .ok_or("[LoadBuildClass] No mark")?
+                        .argval
+                        .ok_or("[LoadBuildClass] No argval")?;
+                    exprs_stack.push(ExpressionEnum::Class(Class::new(mark)?));
+
+                    break;
                 }
                 Opcode::BuildTuple => {
                     let size = instruction.arg.ok_or("[BuildTuple] No arg")?;

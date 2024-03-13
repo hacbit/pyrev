@@ -54,6 +54,8 @@ impl Decompiler for CodeObjectMap {
         let (this_expr, traceback) = maps.get(mark).ok_or(format!("No {} expr", &mark))?;
         loop {
             let mut is_merged = true;
+
+            // merge the function
             let function_query = this_expr.query::<Function>();
             for function in function_query {
                 if function.bodys.is_empty() {
@@ -65,7 +67,7 @@ impl Decompiler for CodeObjectMap {
                         .clone();
 
                     function.with_mut().patch_by(|f| {
-                        f.bodys.extend(new_bodys);
+                        f.bodys = new_bodys;
                         traceback.locals.iter().for_each(|(k, (v, b))| {
                             if !b {
                                 f.args.push(FastVariable {
@@ -121,6 +123,25 @@ impl Decompiler for CodeObjectMap {
                 #[cfg(debug_assertions)]
                 {
                     println!("{:?}", &function);
+                }
+            }
+
+            // merge the class
+            let class_query = this_expr.query::<Class>();
+            for class in class_query {
+                if class.members.is_empty() {
+                    let new_members = maps
+                        .get(&class.mark)
+                        .ok_or(format!("No {} expr", &class.mark))?
+                        .0
+                        .bodys
+                        .clone();
+
+                    class.with_mut().patch_by(|c| {
+                        c.members = new_members;
+                    })?;
+
+                    is_merged = false;
                 }
             }
 

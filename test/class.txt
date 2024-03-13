@@ -1,0 +1,45 @@
+  0           0 RESUME                   0
+
+  1           2 PUSH_NULL
+              4 LOAD_BUILD_CLASS
+              6 LOAD_CONST               0 (<code object Test at 0x00000208B919A590, file "test/class.py", line 1>)
+              8 MAKE_FUNCTION            0
+             10 LOAD_CONST               1 ('Test')
+             12 PRECALL                  2
+             16 CALL                     2
+             26 STORE_NAME               0 (Test)
+
+  7          28 PUSH_NULL
+             30 LOAD_NAME                0 (Test)
+             32 PRECALL                  0
+             36 CALL                     0
+             46 STORE_NAME               1 (t)
+             48 LOAD_CONST               2 (None)
+             50 RETURN_VALUE
+
+Disassembly of <code object Test at 0x00000208B919A590, file "test/class.py", line 1>:
+  1           0 RESUME                   0
+              2 LOAD_NAME                0 (__name__)
+              4 STORE_NAME               1 (__module__)
+              6 LOAD_CONST               0 ('Test')
+              8 STORE_NAME               2 (__qualname__)
+
+  2          10 LOAD_CONST               1 ('This is Foo')
+             12 STORE_NAME               3 (Foo)
+
+  4          14 LOAD_CONST               2 (<code object __init__ at 0x00000208B8F20D50, file "test/class.py", line 4>)
+             16 MAKE_FUNCTION            0
+             18 STORE_NAME               4 (__init__)
+             20 LOAD_CONST               3 (None)
+             22 RETURN_VALUE
+
+Disassembly of <code object __init__ at 0x00000208B8F20D50, file "test/class.py", line 4>:
+  4           0 RESUME                   0
+
+  5           2 LOAD_GLOBAL              1 (NULL + print)
+             14 LOAD_CONST               1 ('Test class is initialized')
+             16 PRECALL                  1
+             20 CALL                     1
+             30 POP_TOP
+             32 LOAD_CONST               0 (None)
+             34 RETURN_VALUE

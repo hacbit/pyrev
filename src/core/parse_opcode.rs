@@ -90,11 +90,17 @@ where
 mod tests {
     use super::super::opcode::Opcode;
     use super::*;
-    use std::fs;
 
     #[test]
     fn test_parse_opcode() {
-        let bytecode = fs::read_to_string("test/def.txt").unwrap();
+        let bytecode = r#"  1           2 LOAD_CONST               0 ('b')
+        4 LOAD_NAME                0 (int)
+        6 LOAD_CONST               1 ('return')
+        8 LOAD_NAME                0 (int)
+       10 BUILD_TUPLE              4
+       12 LOAD_CONST               2 (<code object test at 0x0000025C36EDDB80, file "test/def.py", line 1>)
+       14 MAKE_FUNCTION            4 (annotations)
+       16 STORE_NAME               1 (test)"#.to_string();
         let parsed = bytecode.parse().unwrap();
         //dbg!(parsed);
         //assert!(false);
@@ -156,7 +162,7 @@ mod tests {
                     opname: "LOAD_CONST".to_string(),
                     arg: Some(2,),
                     argval: Some(
-                        r#"<code object test at 0x00000240C1ABDB80, file "test/def.py", line 1>"#
+                        r#"<code object test at 0x0000025C36EDDB80, file "test/def.py", line 1>"#
                             .to_string(),
                     ),
                     offset: 12,
