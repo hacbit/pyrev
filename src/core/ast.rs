@@ -809,20 +809,20 @@ mod tests {
             },
         ];
 
-        /* assert_eq!(
-            Expr::parse(&instructions).unwrap(),
+        assert_eq!(
+            Expr::parse(&instructions).unwrap().0,
             Box::new(Expr {
                 bodys: [ExpressionEnum::Function(Function {
                     mark: "<code object test at 0x00000279922BDB80, file \"test/def.py\", line 1>"
                         .into(),
                     name: "test".into(),
                     args: [
-                        FunctionArgument {
+                        FastVariable {
                             index: 0,
                             name: "a".into(),
                             annotation: Some("int".into()),
                         },
-                        FunctionArgument {
+                        FastVariable {
                             index: 1,
                             name: "return".into(),
                             annotation: Some("int".into()),
@@ -835,7 +835,7 @@ mod tests {
                 },),]
                 .into(),
             })
-        ) */
+        )
     }
 
     #[test]

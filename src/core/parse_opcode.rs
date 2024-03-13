@@ -105,7 +105,7 @@ mod tests {
                     opcode: Opcode::LoadConst,
                     opname: "LOAD_CONST".to_string(),
                     arg: Some(0,),
-                    argval: Some("'a'".to_string(),),
+                    argval: Some("'b'".to_string(),),
                     offset: 2,
                     starts_line: Some(1,),
                     is_jump_target: false,
@@ -156,7 +156,7 @@ mod tests {
                     opname: "LOAD_CONST".to_string(),
                     arg: Some(2,),
                     argval: Some(
-                        r#"<code object test at 0x00000279922BDB80, file "test/def.py", line 1>"#
+                        r#"<code object test at 0x00000240C1ABDB80, file "test/def.py", line 1>"#
                             .to_string(),
                     ),
                     offset: 12,

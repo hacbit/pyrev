@@ -186,7 +186,7 @@ mod tests {
 from pwn import *
 import numpy as np
 import matplotlib.pyplot as plt
-from os import system, popen"#;
+from os import system as sys, popen"#;
         assert_eq!(file.read().unwrap(), target);
     }
 
