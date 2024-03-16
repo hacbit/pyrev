@@ -43,6 +43,7 @@ where
     fn write_console(&mut self) -> Result<()> {
         // 判断是否重定向
         // 如果被重定向(else分支), 则不着色(因为重定向到文件不需要行号和颜色信息)
+        let mut line:usize = 1;
         if atty::is(Stream::Stdout) {
             let max_wide = self
                 .clone()
@@ -51,13 +52,14 @@ where
                 .0
                 .to_string()
                 .len();
-            for (i, s) in self {
+            for (_, s) in self {
                 print!(
                     "{}{} ",
-                    lazy_format!("{:>max$}", i.to_string().green(), max = max_wide + 2),
+                    lazy_format!("{:>max$}", line.to_string().green(), max = max_wide + 2),
                     "|".bright_blue(),
                 );
                 println!("{}", s);
+                line = line + 1;
             }
         } else {
             for (_, s) in self {
