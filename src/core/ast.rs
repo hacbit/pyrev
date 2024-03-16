@@ -30,17 +30,17 @@ impl ExprParser for Expr {
                         value: instruction
                             .argval
                             .as_ref()
-                            .ok_or("[Load] No argval")?
+                            .ok_or(format!("[Load] No argval, deviation is {}",instruction.offset))?
                             .clone(),
                     }));
                 }
                 Opcode::LoadFast => {
                     // local variable in function
-                    let index = instruction.arg.ok_or("[LoadFast] No arg")?;
+                    let index = instruction.arg.ok_or(format!("[LoadFast] No arg, deviation is {}",instruction.offset))?;
                     let name = instruction
                         .argval
                         .as_ref()
-                        .ok_or("[LoadFast] No argval")?
+                        .ok_or(format!("[LoadFast] No argval, deviation is {}",instruction.offset))?
                         .clone();
                     // 如果先storefast再loadfast, 那么就不认为是函数参数
                     if traceback.locals.contains_key(&index) {
@@ -52,8 +52,8 @@ impl ExprParser for Expr {
                     exprs_stack.push(ExpressionEnum::BaseValue(BaseValue { value: name }));
                 }
                 Opcode::LoadAttr => {
-                    let parent = exprs_stack.pop().ok_or("[LoadAttr] Stack is empty")?;
-                    let attr = instruction.argval.as_ref().ok_or("[LoadAttr] No argval")?;
+                    let parent = exprs_stack.pop().ok_or(format!("[LoadAttr] Stack is empty, deviation is {}",instruction.offset))?;
+                    let attr = instruction.argval.as_ref().ok_or(format!("[LoadAttr] No argval, deviation is {}",instruction.offset))?;
                     exprs_stack.push(ExpressionEnum::Attribute(Attribute {
                         parent: Box::new(parent),
                         attr: Box::new(ExpressionEnum::BaseValue(BaseValue {
@@ -62,11 +62,11 @@ impl ExprParser for Expr {
                     }));
                 }
                 Opcode::LoadMethod => {
-                    let parent = exprs_stack.pop().ok_or("[LoadMethod] Stack is empty")?;
+                    let parent = exprs_stack.pop().ok_or(format!("[LoadMethod] Stack is empty, deviation is {}",instruction.offset))?;
                     let method = instruction
                         .argval
                         .as_ref()
-                        .ok_or("[LoadMethod] No argval")?;
+                        .ok_or(format!("[LoadMethod] No argval, deviation is {}",instruction.offset))?;
                     exprs_stack.push(ExpressionEnum::Attribute(Attribute {
                         parent: Box::new(parent),
                         attr: Box::new(ExpressionEnum::BaseValue(BaseValue {
@@ -78,7 +78,7 @@ impl ExprParser for Expr {
                     let name = instruction
                         .argval
                         .as_ref()
-                        .ok_or("[Store] No argval")?
+                        .ok_or(format!("[Store] No argval, deviation is {}",instruction.offset))?
                         .clone();
 
                     #[cfg(debug_assertions)]
@@ -86,7 +86,7 @@ impl ExprParser for Expr {
                         //println!("StoreName argval is {}", name);
                     }
 
-                    let value = exprs_stack.pop().ok_or("[Store] Stack is empty")?;
+                    let value = exprs_stack.pop().ok_or(format!("[Store] Stack is empty, deviation is {}",instruction.offset))?;
 
                     match value {
                         ExpressionEnum::Function(function) => {
@@ -128,7 +128,7 @@ impl ExprParser for Expr {
                             } else {
                                 //有from
 
-                                if import.fragment.as_ref().ok_or("[StoreName-import]")? == &name {
+                                if import.fragment.as_ref().ok_or(format!("[StoreName-import], deviation is {}",instruction.offset))? == &name {
                                     //有from，无as
                                     exprs_stack.push(ExpressionEnum::Import(Import {
                                         module: import.module,
@@ -147,7 +147,7 @@ impl ExprParser for Expr {
                                                 + import
                                                     .fragment
                                                     .as_ref()
-                                                    .ok_or("[StoreName-import]")?
+                                                    .ok_or(format!("[StoreName-import], deviation is {}",instruction.offset))?
                                                 + " as "
                                                 + &name.clone()
                                                 + ", ",
@@ -175,8 +175,8 @@ impl ExprParser for Expr {
                         .as_ref()
                         .ok_or("[StoreFast] No argval")?
                         .clone();
-                    let value = exprs_stack.pop().ok_or("[StoreFast] Stack is empty")?;
-                    let index = instruction.arg.ok_or("[StoreFast] No arg")?;
+                    let value = exprs_stack.pop().ok_or(format!("[StoreFast] Stack is empty, deviation is {}",instruction.offset))?;
+                    let index = instruction.arg.ok_or(format!("[StoreFast] No arg, deviation is {}",instruction.offset))?;
                     traceback.insert_local(index, name.clone(), true);
                     match value {
                         ExpressionEnum::Function(_) => {
@@ -190,9 +190,9 @@ impl ExprParser for Expr {
                     }
                 }
                 Opcode::StoreAttr => {
-                    let parent = exprs_stack.pop().ok_or("[StoreAttr] Stack is empty")?;
-                    let attr = instruction.argval.as_ref().ok_or("[StoreAttr] No argval")?;
-                    let value = exprs_stack.pop().ok_or("[StoreAttr] Stack is empty")?;
+                    let parent = exprs_stack.pop().ok_or(format!("[StoreAttr] Stack is empty, deviation is {}",instruction.offset))?;
+                    let attr = instruction.argval.as_ref().ok_or(format!("[StoreAttr] No argval, deviation is {}",instruction.offset))?;
+                    let value = exprs_stack.pop().ok_or(format!("[StoreAttr] Stack is empty, deviation is {}",instruction.offset))?;
                     exprs_stack.push(ExpressionEnum::Assign(Assign {
                         target: Box::new(ExpressionEnum::Attribute(Attribute {
                             parent: Box::new(parent),
@@ -208,9 +208,9 @@ impl ExprParser for Expr {
                     let mark = opcode_instructions
                         .get(offset + 1)
                         .cloned()
-                        .ok_or("[LoadBuildClass] No mark")?
+                        .ok_or(format!("[LoadBuildClass] No mark, deviation is {}",instruction.offset))?
                         .argval
-                        .ok_or("[LoadBuildClass] No argval")?;
+                        .ok_or(format!("[LoadBuildClass] No argval, deviation is {}",instruction.offset))?;
                     exprs_stack.push(ExpressionEnum::Class(Class::new(mark)?));
 
                     break;
@@ -233,10 +233,10 @@ impl ExprParser for Expr {
                     }));
                 }
                 Opcode::BuildTuple => {
-                    let size = instruction.arg.ok_or("[BuildTuple] No arg")?;
+                    let size = instruction.arg.ok_or(format!("[BuildTuple] No arg, deviation is {}",instruction.offset))?;
                     let mut tuple = Vec::with_capacity(size);
                     for _ in 0..size {
-                        tuple.push(exprs_stack.pop().ok_or("[BuildTuple] Stack is empty")?);
+                        tuple.push(exprs_stack.pop().ok_or(format!("[BuildTuple] Stack is empty, deviation is {}",instruction.offset))?);
                     }
                     tuple.reverse();
                     exprs_stack.push(ExpressionEnum::Container(Container {
@@ -245,7 +245,7 @@ impl ExprParser for Expr {
                     }));
                 }
                 Opcode::BuildList => {
-                    let size = instruction.arg.ok_or("[BuildList] No arg")?;
+                    let size = instruction.arg.ok_or(format!("[BuildList] No arg, deviation is {}",instruction.offset))?;
                     if size == 0 {
                         exprs_stack.push(ExpressionEnum::Container(Container {
                             values: vec![],
@@ -254,7 +254,7 @@ impl ExprParser for Expr {
                     } else {
                         let mut list = Vec::with_capacity(size);
                         for _ in 0..size {
-                            list.push(exprs_stack.pop().ok_or("[BuildList] Stack is empty")?);
+                            list.push(exprs_stack.pop().ok_or(format!("[BuildList] Stack is empty, deviation is {}",instruction.offset))?);
                         }
                         list.reverse();
                         exprs_stack.push(ExpressionEnum::Container(Container {
@@ -264,13 +264,13 @@ impl ExprParser for Expr {
                     }
                 }
                 Opcode::ListExtend => {
-                    let size = instruction.arg.ok_or("[ListExtend] No arg")?;
+                    let size = instruction.arg.ok_or(format!("[ListExtend] No arg, deviation is {}",instruction.offset))?;
                     let mut extend = Vec::with_capacity(size);
                     for _ in 0..size {
-                        extend.push(exprs_stack.pop().ok_or("[ListExtend] Stack is empty")?);
+                        extend.push(exprs_stack.pop().ok_or(format!("[ListExtend] Stack is empty, deviation is {}",instruction.offset))?);
                     }
                     extend.reverse();
-                    let list = exprs_stack.pop().ok_or("[ListExtend] Stack is empty")?;
+                    let list = exprs_stack.pop().ok_or(format!("[ListExtend] Stack is empty, deviation is {}",instruction.offset))?;
                     if let ExpressionEnum::Container(Container {
                         values: mut list,
                         container_type: ContainerType::List,
@@ -295,10 +295,10 @@ impl ExprParser for Expr {
                     }
                 }
                 Opcode::BuildSet => {
-                    let size = instruction.arg.ok_or("[BuildSet] No arg")?;
+                    let size = instruction.arg.ok_or(format!("[BuildSet] No arg, deviation is {}",instruction.offset))?;
                     let mut set = Vec::with_capacity(size);
                     for _ in 0..size {
-                        set.push(exprs_stack.pop().ok_or("[BuildSet] Stack is empty")?);
+                        set.push(exprs_stack.pop().ok_or(format!("[BuildSet] Stack is empty, deviation is {}",instruction.offset))?);
                     }
                     set.reverse();
                     exprs_stack.push(ExpressionEnum::Container(Container {
@@ -307,7 +307,7 @@ impl ExprParser for Expr {
                     }));
                 }
                 Opcode::BuildMap => {
-                    let size = instruction.arg.ok_or("[BuildMap] No arg")?;
+                    let size = instruction.arg.ok_or(format!("[BuildMap] No arg, deviation is {}",instruction.offset))?;
                     if size == 0 {
                         exprs_stack.push(ExpressionEnum::Container(Container {
                             values: vec![],
@@ -316,8 +316,8 @@ impl ExprParser for Expr {
                     } else {
                         let mut map = Vec::with_capacity(size * 2);
                         for _ in 0..size {
-                            let value = exprs_stack.pop().ok_or("[BuildMap] Stack is empty")?;
-                            let key = exprs_stack.pop().ok_or("[BuildMap] Stack is empty")?;
+                            let value = exprs_stack.pop().ok_or(format!("[BuildMap] Stack is empty, deviation is {}",instruction.offset))?;
+                            let key = exprs_stack.pop().ok_or(format!("[BuildMap] Stack is empty, deviation is {}",instruction.offset))?;
                             map.push(value);
                             map.push(key);
                         }
@@ -329,16 +329,16 @@ impl ExprParser for Expr {
                     }
                 }
                 Opcode::BuildConstKeyMap => {
-                    let size = instruction.arg.ok_or("[BuildConstKeyMap] No arg")?;
+                    let size = instruction.arg.ok_or(format!("[BuildConstKeyMap] No arg, deviation is {}",instruction.offset))?;
                     let keys = exprs_stack
                         .pop()
-                        .ok_or("[BuildConstKeyMap] Stack is empty")?;
+                        .ok_or(format!("[BuildConstKeyMap] Stack is empty, deviation is {}",instruction.offset))?;
                     let mut values = Vec::with_capacity(size);
                     for _ in 0..size {
                         values.push(
                             exprs_stack
                                 .pop()
-                                .ok_or("[BuildConstKeyMap] Stack is empty")?,
+                                .ok_or(format!("[BuildConstKeyMap] Stack is empty, deviation is {}",instruction.offset))?,
                         );
                     }
                     values.reverse();
@@ -362,25 +362,25 @@ impl ExprParser for Expr {
                     }))
                 }
                 Opcode::BuildSlice => {
-                    let size = instruction.arg.ok_or("[BuildSlice] No arg")?;
+                    let size = instruction.arg.ok_or(format!("[BuildSlice] No arg, deviation is {}",instruction.offset))?;
                     let mut slice = Vec::with_capacity(size);
                     for _ in 0..size {
-                        slice.push(exprs_stack.pop().ok_or("[BuildSlice] Stack is empty")?);
+                        slice.push(exprs_stack.pop().ok_or(format!("[BuildSlice] Stack is empty, deviation is {}",instruction.offset))?);
                     }
                     slice.reverse();
-                    let origin = exprs_stack.pop().ok_or("[BuildSlice] Stack is empty")?;
+                    let origin = exprs_stack.pop().ok_or(format!("[BuildSlice] Stack is empty, deviation is {}",instruction.offset))?;
                     exprs_stack.push(ExpressionEnum::Slice(Slice {
                         origin: Box::new(origin),
                         slice,
                     }));
                 }
                 Opcode::MakeFunction => {
-                    let mark = exprs_stack.pop().ok_or("[MakeFunction] Stack is empty")?;
+                    let mark = exprs_stack.pop().ok_or(format!("[MakeFunction] Stack is empty, deviation is {}",instruction.offset))?;
                     let mut function = Function::from(mark)?;
                     if let Some(argval) = instruction.argval.as_ref() {
                         if argval.contains("annotations") {
                             let values =
-                                exprs_stack.pop().ok_or("[MakeFunction] Stack is empty")?;
+                                exprs_stack.pop().ok_or(format!("[MakeFunction] Stack is empty, deviation is {}",instruction.offset))?;
                             if let ExpressionEnum::Container(container) = values {
                                 #[cfg(debug_assertions)]
                                 {
@@ -416,7 +416,7 @@ impl ExprParser for Expr {
                         }
                         if argval.contains("defaults") {
                             let defaults =
-                                exprs_stack.pop().ok_or("[MakeFunction] Stack is empty")?;
+                                exprs_stack.pop().ok_or(format!("[MakeFunction] Stack is empty, deviation is {}",instruction.offset))?;
                             if let ExpressionEnum::BaseValue(BaseValue { value }) = defaults {
                                 let defaults = value
                                     .trim_start_matches('(')
@@ -433,8 +433,8 @@ impl ExprParser for Expr {
                 }
                 // BinaryOperation
                 Opcode::BinaryOp | Opcode::CompareOp => {
-                    let right = exprs_stack.pop().ok_or("[BinaryOp] Stack is empty")?;
-                    let left = exprs_stack.pop().ok_or("[BinaryOp] Stack is empty")?;
+                    let right = exprs_stack.pop().ok_or(format!("[BinaryOp] Stack is empty, deviation is {}",instruction.offset))?;
+                    let left = exprs_stack.pop().ok_or(format!("[BinaryOp] Stack is empty, deviation is {}",instruction.offset))?;
                     exprs_stack.push(ExpressionEnum::BinaryOperation(BinaryOperation {
                         left: Box::new(left),
                         right: Box::new(right),
@@ -447,8 +447,8 @@ impl ExprParser for Expr {
                 }
                 // BinaryOperation
                 Opcode::IsOp => {
-                    let right = exprs_stack.pop().ok_or("[IsOp] Stack is empty")?;
-                    let left = exprs_stack.pop().ok_or("[IsOp] Stack is empty")?;
+                    let right = exprs_stack.pop().ok_or(format!("[IsOp] Stack is empty, deviation is {}",instruction.offset))?;
+                    let left = exprs_stack.pop().ok_or(format!("[IsOp] Stack is empty, deviation is {}",instruction.offset))?;
                     let operator = match instruction.arg.as_ref() {
                         Some(0) => "is",
                         Some(1) => "is not",
@@ -462,8 +462,8 @@ impl ExprParser for Expr {
                 }
                 // BinaryOperation
                 Opcode::ContainsOp => {
-                    let right = exprs_stack.pop().ok_or("[ContainsOp] Stack is empty")?;
-                    let left = exprs_stack.pop().ok_or("[ContainsOp] Stack is empty")?;
+                    let right = exprs_stack.pop().ok_or(format!("[ContainsOp] Stack is empty, deviation is {}",instruction.offset))?;
+                    let left = exprs_stack.pop().ok_or(format!("[ContainsOp] Stack is empty, deviation is {}",instruction.offset))?;
                     let operator = match instruction.arg.as_ref() {
                         Some(0) => "in",
                         Some(1) => "not in",
@@ -476,21 +476,21 @@ impl ExprParser for Expr {
                     }))
                 }
                 Opcode::UnaryInvert => {
-                    let target = exprs_stack.pop().ok_or("[UnaryInvert] Stack is empty")?;
+                    let target = exprs_stack.pop().ok_or(format!("[UnaryInvert] Stack is empty, deviation is {}",instruction.offset))?;
                     exprs_stack.push(ExpressionEnum::UnaryOperation(UnaryOperation {
                         target: Box::new(target),
                         unary_type: UnaryType::Invert,
                     }))
                 }
                 Opcode::UnaryNegative => {
-                    let target = exprs_stack.pop().ok_or("[UnaryNegative] Stack is empty")?;
+                    let target = exprs_stack.pop().ok_or(format!("[UnaryNegative] Stack is empty, deviation is {}",instruction.offset))?;
                     exprs_stack.push(ExpressionEnum::UnaryOperation(UnaryOperation {
                         target: Box::new(target),
                         unary_type: UnaryType::Negative,
                     }))
                 }
                 Opcode::UnaryNot => {
-                    let target = exprs_stack.pop().ok_or("[UnaryNot] Stack is empty")?;
+                    let target = exprs_stack.pop().ok_or(format!("[UnaryNot] Stack is empty, deviation is {}",instruction.offset))?;
                     exprs_stack.push(ExpressionEnum::UnaryOperation(UnaryOperation {
                         target: Box::new(target),
                         unary_type: UnaryType::Not,
@@ -502,9 +502,9 @@ impl ExprParser for Expr {
                         //dbg!(&exprs_stack);
                     }
 
-                    let count = instruction.arg.ok_or("[Call] No arg")?;
+                    let count = instruction.arg.ok_or(format!("[Call] No arg, deviation is {}",instruction.offset))?;
                     if count == 0 {
-                        let last = exprs_stack.pop().ok_or("[Call] Stack is empty")?;
+                        let last = exprs_stack.pop().ok_or(format!("[Call] Stack is empty, deviation is {}",instruction.offset))?;
                         if let ExpressionEnum::BaseValue(base_value) = &last {
                             if base_value.value.contains(' ') {
                                 // not a function call
@@ -523,7 +523,7 @@ impl ExprParser for Expr {
                     }
                     let mut args = Vec::with_capacity(count);
                     for _ in 0..count {
-                        args.push(exprs_stack.pop().ok_or("[Call] Stack is empty")?);
+                        args.push(exprs_stack.pop().ok_or(format!("[Call] Stack is empty, deviation is {}",instruction.offset))?);
                     }
                     args.reverse();
                     match exprs_stack.pop() {
@@ -546,13 +546,13 @@ impl ExprParser for Expr {
                 }
                 Opcode::ReturnValue => {
                     //dbg!(&exprs_stack);
-                    let value = exprs_stack.pop().ok_or("[ReturnValue] Stack is empty")?;
+                    let value = exprs_stack.pop().ok_or(format!("[ReturnValue] Stack is empty, deviation is {}",instruction.offset))?;
                     exprs_stack.push(ExpressionEnum::Return(Return {
                         value: Box::new(value),
                     }));
                 }
                 Opcode::ImportFrom => {
-                    let value = exprs_stack.pop().ok_or("[ImportFrom] Stack is empty")?;
+                    let value = exprs_stack.pop().ok_or(format!("[ImportFrom] Stack is empty, deviation is {}",instruction.offset))?;
                     if let ExpressionEnum::Import(import) = value {
                         if import.bk_module == None {
                             //没from
@@ -564,7 +564,7 @@ impl ExprParser for Expr {
                                 instruction
                                     .argval
                                     .as_ref()
-                                    .ok_or("[ImportName] No argval")?
+                                    .ok_or(format!("[ImportName] No argval, deviation is {}",instruction.offset))?
                                     .clone(),
                             );
                             import
@@ -576,7 +576,7 @@ impl ExprParser for Expr {
                     }
                 }
                 Opcode::ImportName => {
-                    let module = exprs_stack.pop().ok_or("[ImportName] Stack is empty")?;
+                    let module = exprs_stack.pop().ok_or(format!("[ImportName] Stack is empty, deviation is {}",instruction.offset))?;
 
                     if module.build()?.join("").len() != 0 {
                         //需要from
@@ -593,7 +593,7 @@ impl ExprParser for Expr {
                                 module: instruction
                                     .argval
                                     .as_ref()
-                                    .ok_or("[ImportName] No argval")?
+                                    .ok_or(format!("[ImportName] No argval, deviation is {}",instruction.offset))?
                                     .clone(),
                                 bk_module: Some("*".to_string()),
                                 fragment: None,
@@ -605,7 +605,7 @@ impl ExprParser for Expr {
                                 module: instruction
                                     .argval
                                     .as_ref()
-                                    .ok_or("[ImportName] No argval")?
+                                    .ok_or(format!("[ImportName] No argval, deviation is {}",instruction.offset))?
                                     .clone(),
                                 bk_module: Some("".to_string()),
                                 fragment: None,
@@ -618,7 +618,7 @@ impl ExprParser for Expr {
                             module: instruction
                                 .argval
                                 .as_ref()
-                                .ok_or("[ImportName] No argval")?
+                                .ok_or(format!("[ImportName] No argval, deviation is {}",instruction.offset))?
                                 .clone(),
                             bk_module: None,
                             fragment: None,
@@ -635,7 +635,7 @@ impl ExprParser for Expr {
                         }
                     }
 
-                    let test = exprs_stack.pop().ok_or("[PopJumpIfTrue] Stack is empty")?;
+                    let test = exprs_stack.pop().ok_or(format!("[PopJumpIfTrue] Stack is empty, deviation is {}",instruction.offset))?;
                     let test = ExpressionEnum::UnaryOperation(UnaryOperation {
                         target: Box::new(test),
                         unary_type: UnaryType::Not,
@@ -643,7 +643,7 @@ impl ExprParser for Expr {
                     let jump_target = instruction
                         .argval
                         .as_ref()
-                        .ok_or("[PopJumpIfTrue] No argval")?
+                        .ok_or(format!("[PopJumpIfTrue] No argval, deviation is {}",instruction.offset))?
                         .trim_start_matches("to ")
                         .parse::<usize>()?;
                     exprs_stack.push(ExpressionEnum::If(If {
@@ -664,11 +664,11 @@ impl ExprParser for Expr {
                         }
                     }
 
-                    let test = exprs_stack.pop().ok_or("[PopJumpIfFalse] Stack is empty")?;
+                    let test = exprs_stack.pop().ok_or(format!("[PopJumpIfFalse] Stack is empty, deviation is {}",instruction.offset))?;
                     let jump_target = instruction
                         .argval
                         .as_ref()
-                        .ok_or("[PopJumpIfFalse] No argval")?
+                        .ok_or(format!("[PopJumpIfFalse] No argval, deviation is {}",instruction.offset))?
                         .trim_start_matches("to ")
                         .parse::<usize>()?;
                     exprs_stack.push(ExpressionEnum::If(If {
@@ -684,7 +684,7 @@ impl ExprParser for Expr {
                     let jump_target = instruction
                         .argval
                         .as_ref()
-                        .ok_or("[JumpForward] No argval")?
+                        .ok_or(format!("[JumpForward] No argval, deviation is {}",instruction.offset))?
                         .trim_start_matches("to ")
                         .parse::<usize>()?;
                     exprs_stack.push(ExpressionEnum::Jump(Jump {
@@ -695,7 +695,7 @@ impl ExprParser for Expr {
                 Opcode::LoadAssertionError => {
                     let test = exprs_stack
                         .pop()
-                        .ok_or("[LoadAssertionError] Stack is empty")?;
+                        .ok_or(format!("[LoadAssertionError] Stack is empty, deviation is {}",instruction.offset))?;
 
                     exprs_stack.push(ExpressionEnum::Assert(Assert {
                         test: Box::new(test),
@@ -703,7 +703,7 @@ impl ExprParser for Expr {
                     }))
                 }
                 Opcode::RaiseVarargs => {
-                    let expr = exprs_stack.pop().ok_or("[RaiseVarargs] Stack is empty")?;
+                    let expr = exprs_stack.pop().ok_or(format!("[RaiseVarargs] Stack is empty, deviation is {}",instruction.offset))?;
                     if expr.is_base_value() {
                         let exception = expr;
                         if let Some(expr) = exprs_stack.pop() {
@@ -726,7 +726,7 @@ impl ExprParser for Expr {
                     }
                 }
                 Opcode::CheckExcMatch => {
-                    let err = exprs_stack.pop().ok_or("[CheckExcMatch] Stack is empty")?;
+                    let err = exprs_stack.pop().ok_or(format!("[CheckExcMatch] Stack is empty, deviation is {}",instruction.offset))?;
                     if let Some(store_name_instruction) = opcode_instructions[offset..]
                         .iter()
                         .find(|x| x.opcode == Opcode::StoreName)
@@ -734,7 +734,7 @@ impl ExprParser for Expr {
                         let alias = store_name_instruction
                             .argval
                             .as_ref()
-                            .ok_or("[CheckExcMatch] No argval")?;
+                            .ok_or(format!("[CheckExcMatch] No argval, deviation is {}",instruction.offset))?;
 
                         exprs_stack.push(ExpressionEnum::Except(Except {
                             exception: Box::new(ExpressionEnum::Alias(Alias {
