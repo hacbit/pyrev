@@ -215,6 +215,23 @@ impl ExprParser for Expr {
 
                     break;
                 }
+                Opcode::FormatValue => {
+                    let format_value = exprs_stack.pop().ok_or("[FormatValue] Stack is empty")?;
+                    exprs_stack.push(ExpressionEnum::FormatValue(FormatValue {
+                        value: Box::new(format_value),
+                    }));
+                }
+                Opcode::BuildString => {
+                    let size = instruction.arg.ok_or("[BuildString] No arg")?;
+                    let mut format_string = Vec::with_capacity(size);
+                    for _ in 0..size {
+                        format_string.push(exprs_stack.pop().ok_or("[BuildString] Stack is empty")?);
+                    }
+                    format_string.reverse();
+                    exprs_stack.push(ExpressionEnum::Format(Format {
+                        format_values: format_string,
+                    }));
+                }
                 Opcode::BuildTuple => {
                     let size = instruction.arg.ok_or("[BuildTuple] No arg")?;
                     let mut tuple = Vec::with_capacity(size);

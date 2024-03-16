@@ -106,6 +106,17 @@ pub struct Raise {
     pub exception: Box<ExpressionEnum>,
 }
 
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+pub struct FormatValue {
+    pub value: Box<ExpressionEnum>,
+}
+
+/// 格式化字符串
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+pub struct Format {
+    pub format_values: Vec<ExpressionEnum>,
+}
+
 /// 二元操作
 /// 包括 +, -, *, /, <<, %, ==, >, is, in等
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
@@ -200,6 +211,8 @@ pub enum ExpressionEnum {
     Assert(Assert),
     Raise(Raise),
     BaseValue(BaseValue),
+    FormatValue(FormatValue),
+    Format(Format),
     BinaryOperation(BinaryOperation),
     UnaryOperation(UnaryOperation),
     Call(Call),
@@ -335,7 +348,10 @@ impl ExpressionEnum {
                     for line in expr_code.iter() {
                         code.push(format!("    {}", line));
                     }
+                    code.push("".to_string());
                 }
+                // pop the last empty line
+                code.pop();
                 Ok(code)
             }
             ExpressionEnum::Function(function) => {
@@ -523,6 +539,24 @@ impl ExpressionEnum {
                     func_code,
                     args_code.join(", ").trim_end_matches(", ")
                 )])
+            }
+            ExpressionEnum::FormatValue(format_value) => {
+                let value_code = format_value.value.build()?.join("");
+                Ok(vec![value_code])
+            }
+            ExpressionEnum::Format(format) => {
+                let mut code = Vec::new();
+                let mut format_string = String::new();
+                for value in format.format_values.iter() {
+                    let value_code = value.build()?;
+                    if value.is_format_value() {
+                        format_string.push_str(&format!("{{{}}}", value_code.join("")));
+                    } else {
+                        format_string.push_str(&value_code.join("").trim_matches('\''));
+                    }
+                }
+                code.push(format!("f\"{}\"", format_string));
+                Ok(code)
             }
             ExpressionEnum::BinaryOperation(binary_operation) => Ok(vec![format!(
                 "{} {} {}",
