@@ -32,10 +32,6 @@ impl<E> QueryResMut<E>
 where
     E: Expression + 'static,
 {
-    pub fn get_mut(&self) -> &mut E {
-        unsafe { &mut *self.value }
-    }
-
     pub fn get(&self) -> &E {
         unsafe { &*self.value }
     }

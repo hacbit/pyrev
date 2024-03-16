@@ -59,7 +59,7 @@ where
                     "|".bright_blue(),
                 );
                 println!("{}", s);
-                line = line + 1;
+                line += 1;
             }
         } else {
             for (_, s) in self {

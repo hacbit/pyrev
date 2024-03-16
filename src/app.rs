@@ -89,8 +89,7 @@ impl App {
     }
 
     pub fn run(&mut self) -> &mut Self {
-        for (path, code_object_map) in &self.resources {
-            println!("{}", format!("Try to decompile {}", path.display()).green());
+        for code_object_map in self.resources.values() {
             let decompiled_result = code_object_map.decompile();
             self.output.push(decompiled_result);
         }
@@ -100,10 +99,19 @@ impl App {
     /// 会按照输入文件路径和输出文件路径的插入顺序导出
     /// 如果没有匹配到输出文件路径, 则会输出到控制台
     pub fn output(&mut self) {
+        let mut paths = self.resources.keys();
         self.output
             .iter_mut()
             .enumerate()
             .for_each(|(i, decompiled_result)| {
+                println!(
+                    "{}",
+                    format!(
+                        "Try to decompile {}",
+                        paths.next().expect("[App output] iter end").display()
+                    )
+                    .green()
+                );
                 if let Some(file) = self.output_files.get(i) {
                     match decompiled_result {
                         Ok(decompiled_code) => decompiled_code.iter().write_file(file).unwrap(),

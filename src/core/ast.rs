@@ -130,7 +130,7 @@ impl ExprParser for Expr {
                             }
                         }
                         ExpressionEnum::Import(import) => {
-                            if import.bk_module == None {
+                            if import.bk_module.is_none() {
                                 //没from
                                 if import.module == name {
                                     //没from，没as
@@ -503,8 +503,7 @@ impl ExprParser for Expr {
                                         let arg = FastVariable {
                                             index: idx,
                                             name: exprs
-                                                .get(0)
-                                                .as_ref()
+                                                .first()
                                                 .unwrap()
                                                 .unwrap_base_value()
                                                 .value
@@ -709,7 +708,7 @@ impl ExprParser for Expr {
                         instruction.offset
                     ))?;
                     if let ExpressionEnum::Import(import) = value {
-                        if import.bk_module == None {
+                        if import.bk_module.is_none() {
                             //没from
                             import.with_mut().patch_by(|i| i.fragment = None).unwrap();
                             exprs_stack.push(ExpressionEnum::Import(import))
@@ -739,14 +738,14 @@ impl ExprParser for Expr {
                         instruction.offset
                     ))?;
 
-                    if module.build()?.join("").len() != 0 {
+                    if module.build()?.join("").is_empty() {
                         //需要from
                         let origin_len = module.build()?.join("").len();
                         if origin_len                  //有“ * ”
                         - module
                             .build()?
                             .join("")
-                            .replace("*", "")
+                            .replace('*', "")
                             .len()
                             == 1
                         {
@@ -759,7 +758,7 @@ impl ExprParser for Expr {
                                         instruction.offset
                                     ))?
                                     .clone(),
-                                bk_module: Some("*".to_string()),
+                                bk_module: Some('*'.to_string()),
                                 fragment: None,
                                 alias: None,
                             }))

@@ -369,12 +369,12 @@ impl ExpressionEnum {
                         continue;
                     }
                     if anno.is_none() {
-                        args_code.push_str(&format!("{}", arg));
+                        args_code.push_str(arg);
                     } else {
                         args_code.push_str(&format!("{}: {}", arg, anno.as_ref().unwrap()));
                     }
 
-                    if default_offset <= 0 {
+                    if default_offset == 0 {
                         args_code.push_str(&format!(
                             " = {}",
                             defaults_iter.next().ok_or("No default! Iter error")?
@@ -552,7 +552,7 @@ impl ExpressionEnum {
                     if value.is_format_value() {
                         format_string.push_str(&format!("{{{}}}", value_code.join("")));
                     } else {
-                        format_string.push_str(&value_code.join("").trim_matches('\''));
+                        format_string.push_str(value_code.join("").trim_matches('\''));
                     }
                 }
                 code.push(format!("f\"{}\"", format_string));
@@ -574,9 +574,9 @@ impl ExpressionEnum {
                 unary_operation.target.build()?.join("")
             )]),
             ExpressionEnum::Import(import) => {
-                if import.bk_module == None {
+                if import.bk_module.is_none() {
                     //没from
-                    if import.alias == None {
+                    if import.alias.is_none() {
                         //没from，没as
                         Ok(vec![format!("import {}", import.module)])
                     } else {
