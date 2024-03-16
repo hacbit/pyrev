@@ -43,7 +43,7 @@ where
     fn write_console(&mut self) -> Result<()> {
         // 判断是否重定向
         // 如果被重定向(else分支), 则不着色(因为重定向到文件不需要行号和颜色信息)
-        let mut line:usize = 1;
+        let mut line: usize = 1;
         if atty::is(Stream::Stdout) {
             let max_wide = self
                 .clone()
