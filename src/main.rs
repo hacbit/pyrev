@@ -4,9 +4,9 @@ use std::path::PathBuf;
 
 mod app;
 mod core;
-use app::App;
 
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+use app::App;
+use core::common::Result;
 
 fn main() -> Result<()> {
     let matches = command!()
