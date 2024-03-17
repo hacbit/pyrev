@@ -1,7 +1,8 @@
 @echo off
-setlocal
+setlocal enabledelayedexpansion
 
 set IS_RELEASE=0
+set FILES=
 
 for %%a in (%*) do (
     if "%%a" == "--release" (
@@ -9,21 +10,16 @@ for %%a in (%*) do (
     )
 )
 
-if %IS_RELEASE% equ 1 (
-    echo Building in release mode
-    cargo build --release
-) else (
-    echo Building in debug mode
-    cargo build
+for %%f in (test\*.txt) do (
+    set FILES=!FILES! --file %%f
 )
 
-for %%f in (test\*.txt) do (
-    echo Running test %%f
-    if %IS_RELEASE% equ 1 (
-        cargo run --release -- --file %%f
-    ) else (
-        cargo run -- --file %%f
-    )
+if %IS_RELEASE% equ 1 (
+    echo Running in release mode...
+    cargo run --release -- !FILES!
+) else (
+    echo Running in debug mode...
+    cargo run -- !FILES!
 )
 
 echo Press any key to continue...

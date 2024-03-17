@@ -1,6 +1,7 @@
 #!/bin/bash
 
 is_release=0
+files=
 
 for arg in "$@"
 do
@@ -9,24 +10,21 @@ do
     fi
 done
 
-if [ "$is_release" == "1" ]; then
-    echo "Building in release mode"
-    cargo build --release
-else
-    echo "Building in debug mode"
-    cargo build
-fi
-
 # find all the .txt files in test/
 for file in test/*.txt
 do
-    echo "Running $file"
-    if [ "$is_release" == "1" ]; then
-        cargo run --release -- --file $file
-    else
-        cargo run -- --file $file
-    fi
+    files="$files --file $file"
 done
+
+echo "Running tests with the following files: $files"
+
+if [ "$is_release" == "1" ]; then
+    echo "Running tests in release mode"
+    #cargo run --release -- 
+else
+    echo "Running tests in debug mode"
+    #cargo run --
+fi
 
 echo "Press any key to continue..."
 
