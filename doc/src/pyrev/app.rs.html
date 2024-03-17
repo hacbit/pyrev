@@ -136,14 +136,18 @@
 <a href="#134" id="134">134</a>
 <a href="#135" id="135">135</a>
 <a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::core::common::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::core::decompile::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::core::parse_opcode::<span class="kw-2">*</span>;
 <span class="kw">use </span>colored::Colorize;
 <span class="kw">use </span>std::collections::HashMap;
 <span class="kw">use </span>std::path::PathBuf;
-
-<span class="kw">type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Box&lt;<span class="kw">dyn </span>std::error::Error&gt;&gt;;
 
 <span class="kw">pub struct </span>App {
     <span class="comment">// files order
@@ -227,8 +231,7 @@
     </span>}
 
     <span class="kw">pub fn </span>run(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
-        <span class="kw">for </span>(path, code_object_map) <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.resources {
-            <span class="macro">println!</span>(<span class="string">"{}"</span>, <span class="macro">format!</span>(<span class="string">"Try to decompile {}"</span>, path.display()).green());
+        <span class="kw">for </span>code_object_map <span class="kw">in </span><span class="self">self</span>.resources.values() {
             <span class="kw">let </span>decompiled_result = code_object_map.decompile();
             <span class="self">self</span>.output.push(decompiled_result);
         }
@@ -238,10 +241,19 @@
     <span class="doccomment">/// 会按照输入文件路径和输出文件路径的插入顺序导出
     /// 如果没有匹配到输出文件路径, 则会输出到控制台
     </span><span class="kw">pub fn </span>output(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="kw">let </span><span class="kw-2">mut </span>paths = <span class="self">self</span>.resources.keys();
         <span class="self">self</span>.output
             .iter_mut()
             .enumerate()
             .for_each(|(i, decompiled_result)| {
+                <span class="macro">println!</span>(
+                    <span class="string">"{}"</span>,
+                    <span class="macro">format!</span>(
+                        <span class="string">"Try to decompile {}"</span>,
+                        paths.next().expect(<span class="string">"[App output] iter end"</span>).display()
+                    )
+                    .green()
+                );
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(file) = <span class="self">self</span>.output_files.get(i) {
                     <span class="kw">match </span>decompiled_result {
                         <span class="prelude-val">Ok</span>(decompiled_code) =&gt; decompiled_code.iter().write_file(file).unwrap(),

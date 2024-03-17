@@ -192,10 +192,12 @@
 <a href="#190" id="190">190</a>
 <a href="#191" id="191">191</a>
 <a href="#192" id="192">192</a>
-</pre></div><pre class="rust"><code><span class="kw">use super</span>::{common::OrderMap, opcode::OpcodeInstruction};
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+</pre></div><pre class="rust"><code><span class="kw">use super</span>::{common::<span class="kw-2">*</span>, opcode::OpcodeInstruction};
 <span class="kw">use </span>regex::Regex;
-
-<span class="kw">type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Box&lt;<span class="kw">dyn </span>std::error::Error&gt;&gt;;
 
 <span class="kw">pub type </span>ObjectMark = String;
 <span class="kw">pub type </span>LineNumber = usize;
@@ -286,11 +288,17 @@
 </span><span class="kw">mod </span>tests {
     <span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::opcode::Opcode;
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use </span>std::fs;
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_parse_opcode() {
-        <span class="kw">let </span>bytecode = fs::read_to_string(<span class="string">"test/def.txt"</span>).unwrap();
+        <span class="kw">let </span>bytecode = <span class="string">r#"  1           2 LOAD_CONST               0 ('b')
+        4 LOAD_NAME                0 (int)
+        6 LOAD_CONST               1 ('return')
+        8 LOAD_NAME                0 (int)
+       10 BUILD_TUPLE              4
+       12 LOAD_CONST               2 (&lt;code object test at 0x0000025C36EDDB80, file "test/def.py", line 1&gt;)
+       14 MAKE_FUNCTION            4 (annotations)
+       16 STORE_NAME               1 (test)"#</span>.to_string();
         <span class="kw">let </span>parsed = bytecode.parse().unwrap();
         <span class="comment">//dbg!(parsed);
         //assert!(false);
@@ -301,7 +309,7 @@
                     opcode: Opcode::LoadConst,
                     opname: <span class="string">"LOAD_CONST"</span>.to_string(),
                     arg: <span class="prelude-val">Some</span>(<span class="number">0</span>,),
-                    argval: <span class="prelude-val">Some</span>(<span class="string">"'a'"</span>.to_string(),),
+                    argval: <span class="prelude-val">Some</span>(<span class="string">"'b'"</span>.to_string(),),
                     offset: <span class="number">2</span>,
                     starts_line: <span class="prelude-val">Some</span>(<span class="number">1</span>,),
                     is_jump_target: <span class="bool-val">false</span>,
@@ -352,7 +360,7 @@
                     opname: <span class="string">"LOAD_CONST"</span>.to_string(),
                     arg: <span class="prelude-val">Some</span>(<span class="number">2</span>,),
                     argval: <span class="prelude-val">Some</span>(
-                        <span class="string">r#"&lt;code object test at 0x00000279922BDB80, file "test/def.py", line 1&gt;"#
+                        <span class="string">r#"&lt;code object test at 0x0000025C36EDDB80, file "test/def.py", line 1&gt;"#
                             </span>.to_string(),
                     ),
                     offset: <span class="number">12</span>,

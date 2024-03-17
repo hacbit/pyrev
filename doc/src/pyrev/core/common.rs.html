@@ -175,6 +175,39 @@
 <a href="#173" id="173">173</a>
 <a href="#174" id="174">174</a>
 <a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>atty::Stream;
 <span class="kw">use </span>colored::Colorize;
 <span class="kw">use </span>lazy_format::lazy_format;
@@ -182,7 +215,7 @@
 <span class="kw">use </span>std::io::Write;
 <span class="kw">use </span>std::path::Path;
 
-<span class="kw">type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Box&lt;<span class="kw">dyn </span>std::error::Error&gt;&gt;;
+<span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Box&lt;<span class="kw">dyn </span>std::error::Error&gt;&gt;;
 
 <span class="kw">pub trait </span>IStream {
     <span class="kw">fn </span>read(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;String&gt;;
@@ -220,7 +253,8 @@
     </span><span class="kw">fn </span>write_console(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="comment">// 判断是否重定向
         // 如果被重定向(else分支), 则不着色(因为重定向到文件不需要行号和颜色信息)
-        </span><span class="kw">if </span>atty::is(Stream::Stdout) {
+        </span><span class="kw">let </span><span class="kw-2">mut </span>line: usize = <span class="number">1</span>;
+        <span class="kw">if </span>atty::is(Stream::Stdout) {
             <span class="kw">let </span>max_wide = <span class="self">self
                 </span>.clone()
                 .max_by_key(|(i, <span class="kw">_</span>)| <span class="kw-2">*</span>i)
@@ -228,13 +262,14 @@
                 .<span class="number">0
                 </span>.to_string()
                 .len();
-            <span class="kw">for </span>(i, s) <span class="kw">in </span><span class="self">self </span>{
+            <span class="kw">for </span>(<span class="kw">_</span>, s) <span class="kw">in </span><span class="self">self </span>{
                 <span class="macro">print!</span>(
                     <span class="string">"{}{} "</span>,
-                    <span class="macro">lazy_format!</span>(<span class="string">"{:&gt;max$}"</span>, i.to_string().green(), max = max_wide + <span class="number">2</span>),
+                    <span class="macro">lazy_format!</span>(<span class="string">"{:&gt;max$}"</span>, line.to_string().green(), max = max_wide + <span class="number">2</span>),
                     <span class="string">"|"</span>.bright_blue(),
                 );
                 <span class="macro">println!</span>(<span class="string">"{}"</span>, s);
+                line += <span class="number">1</span>;
             }
         } <span class="kw">else </span>{
             <span class="kw">for </span>(<span class="kw">_</span>, s) <span class="kw">in </span><span class="self">self </span>{
@@ -249,6 +284,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>file = std::fs::OpenOptions::new()
             .write(<span class="bool-val">true</span>)
             .create(<span class="bool-val">true</span>)
+            .truncate(<span class="bool-val">true</span>)
             .open(file)<span class="question-mark">?</span>;
         <span class="kw">for </span>(<span class="kw">_</span>, s) <span class="kw">in </span><span class="self">self </span>{
             <span class="macro">writeln!</span>(file, <span class="string">"{}"</span>, s)<span class="question-mark">?</span>;
@@ -268,7 +304,7 @@
 </span><span class="attr">#[allow(unused)]
 </span><span class="kw">impl</span>&lt;K, V&gt; OrderMap&lt;K, V&gt;
 <span class="kw">where
-    </span>K: PartialEq + Eq + Clone,
+    </span>K: PartialEq + Eq + Clone + Ord,
     V: Clone,
 {
     <span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
@@ -283,28 +319,36 @@
         <span class="self">self</span>.values.push(code_object);
     }
 
-    <span class="kw">pub fn </span>get&lt;Q: <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, mark: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>V&gt;
+    <span class="kw">pub fn </span>extend(<span class="kw-2">&amp;mut </span><span class="self">self</span>, map: <span class="self">Self</span>) {
+        <span class="kw">for </span>(k, v) <span class="kw">in </span>map.iter() {
+            <span class="kw">if </span>!<span class="self">self</span>.contains_key(k) {
+                <span class="self">self</span>.insert(k.clone(), v.clone());
+            }
+        }
+    }
+
+    <span class="kw">pub fn </span>get&lt;Q&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, mark: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>V&gt;
     <span class="kw">where
         </span>K: std::borrow::Borrow&lt;Q&gt;,
-        Q: Ord,
+        Q: Ord + <span class="question-mark">?</span>Sized,
     {
         <span class="self">self</span>.values
             .get(<span class="self">self</span>.keys.iter().position(|m| m.borrow() == mark)<span class="question-mark">?</span>)
     }
 
-    <span class="kw">pub fn </span>get_mut&lt;Q: <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, mark: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;mut </span>V&gt;
+    <span class="kw">pub fn </span>get_mut&lt;Q&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, mark: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;mut </span>V&gt;
     <span class="kw">where
         </span>K: std::borrow::Borrow&lt;Q&gt;,
-        Q: Ord,
+        Q: Ord + <span class="question-mark">?</span>Sized,
     {
         <span class="self">self</span>.values
             .get_mut(<span class="self">self</span>.keys.iter().position(|m| m.borrow() == mark)<span class="question-mark">?</span>)
     }
 
-    <span class="kw">pub fn </span>contains_key&lt;Q: <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, mark: <span class="kw-2">&amp;</span>Q) -&gt; bool
+    <span class="kw">pub fn </span>contains_key&lt;Q&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, mark: <span class="kw-2">&amp;</span>Q) -&gt; bool
     <span class="kw">where
         </span>K: std::borrow::Borrow&lt;Q&gt;,
-        Q: Ord,
+        Q: Ord + <span class="question-mark">?</span>Sized,
     {
         <span class="self">self</span>.keys.iter().any(|m| m.borrow() == mark)
     }
@@ -315,6 +359,28 @@
 
     <span class="kw">pub fn </span>keys(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = <span class="kw-2">&amp;</span>K&gt; {
         <span class="self">self</span>.keys.iter()
+    }
+}
+
+<span class="attr">#[derive(Debug, Clone)]
+</span><span class="kw">pub struct </span>TraceBack {
+    <span class="kw">pub </span>locals: OrderMap&lt;usize, (String, bool)&gt;,
+}
+
+<span class="attr">#[allow(unused)]
+</span><span class="kw">impl </span>TraceBack {
+    <span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            locals: OrderMap::new(),
+        }
+    }
+
+    <span class="kw">pub fn </span>insert_local(<span class="kw-2">&amp;mut </span><span class="self">self</span>, arg: usize, argval: String, is_store: bool) {
+        <span class="self">self</span>.locals.insert(arg, (argval, is_store));
+    }
+
+    <span class="kw">pub fn </span>extend(<span class="kw-2">&amp;mut </span><span class="self">self</span>, tb: <span class="self">Self</span>) {
+        <span class="self">self</span>.locals.extend(tb.locals);
     }
 }
 
@@ -332,7 +398,7 @@
 from pwn import *
 import numpy as np
 import matplotlib.pyplot as plt
-from os import system, popen"#</span>;
+from os import system as sys, popen"#</span>;
         <span class="macro">assert_eq!</span>(file.read().unwrap(), target);
     }
 

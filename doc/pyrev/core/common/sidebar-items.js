@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["OrderMap"],"trait":["IStream","OStream"],"type":["Result"]};
+window.SIDEBAR_ITEMS = {"struct":["OrderMap","TraceBack"],"trait":["IStream","OStream"],"type":["Result"]};

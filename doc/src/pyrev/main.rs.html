@@ -63,9 +63,9 @@
 
 <span class="kw">mod </span>app;
 <span class="kw">mod </span>core;
-<span class="kw">use </span>app::App;
 
-<span class="kw">type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Box&lt;<span class="kw">dyn </span>std::error::Error&gt;&gt;;
+<span class="kw">use </span>app::App;
+<span class="kw">use </span>core::common::Result;
 
 <span class="kw">fn </span>main() -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">let </span>matches = <span class="macro">command!</span>()

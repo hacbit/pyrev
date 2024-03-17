@@ -104,6 +104,30 @@
 <a href="#102" id="102">102</a>
 <a href="#103" id="103">103</a>
 <a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
 </pre></div><pre class="rust"><code><span class="kw">extern crate </span>proc_macro;
 <span class="kw">use </span>proc_macro::TokenStream;
 <span class="kw">use </span>quote::quote;
@@ -112,8 +136,8 @@
 
 <span class="attr">#[proc_macro_derive(Expression)]
 </span><span class="kw">pub fn </span>derive_expression(input: TokenStream) -&gt; TokenStream {
-    <span class="kw">let </span>ast = <span class="macro">parse_macro_input!</span>(input <span class="kw">as </span>DeriveInput);
-    <span class="kw">let </span>name = <span class="kw-2">&amp;</span>ast.ident;
+    <span class="kw">let </span>input = <span class="macro">parse_macro_input!</span>(input <span class="kw">as </span>DeriveInput);
+    <span class="kw">let </span>name = <span class="kw-2">&amp;</span>input.ident;
     <span class="kw">let </span>gen = <span class="macro">quote!</span> {
         <span class="kw">impl </span>Expression <span class="kw">for </span>#name {}
     };
@@ -122,7 +146,6 @@
 
 <span class="doccomment">/// Query trait is depend on Queryable trait
 /// It searches for the type T recursively in the struct
-/// It will return immediately when if finds one, even if the return structures contains the target type T
 </span><span class="attr">#[proc_macro_derive(Query)]
 </span><span class="kw">pub fn </span>derive_query(input: TokenStream) -&gt; TokenStream {
     <span class="kw">let </span>input = <span class="macro">parse_macro_input!</span>(input <span class="kw">as </span>DeriveInput);
@@ -161,25 +184,13 @@
             gen.into()
         }
         Data::Enum(data_enum) =&gt; {
-            <span class="kw">let </span>variants = data_enum.variants.iter().map(|varient| {
-                <span class="kw">let </span>varient_name = <span class="kw-2">&amp;</span>varient.ident;
-                <span class="macro">quote!</span> {
-                    #name::#varient_name(inner) =&gt; inner.query::&lt;T&gt;(),
-                }
-            });
-            <span class="comment">// implement the is_*** function for each variant
-            </span><span class="kw">let </span>functions = data_enum.variants.iter().map(|variant| {
+            <span class="kw">let </span>variants = data_enum.variants.iter().map(|variant| {
                 <span class="kw">let </span>variant_name = <span class="kw-2">&amp;</span>variant.ident;
-                <span class="kw">let </span>function_name = <span class="kw-2">&amp;</span>Ident::new(
-                    <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"is_{}"</span>, camel_to_snake(variant_name.to_string())),
-                    variant_name.span(),
-                );
                 <span class="macro">quote!</span> {
-                    <span class="kw">pub fn </span>#function_name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-                        <span class="macro">matches!</span>(<span class="self">self</span>, #name::#variant_name(<span class="kw">_</span>))
-                    }
+                    #name::#variant_name(inner) =&gt; inner.query::&lt;T&gt;(),
                 }
             });
+
             <span class="kw">let </span>gen = <span class="macro">quote!</span> {
                 <span class="kw">impl </span>Query <span class="kw">for </span>#name
                 <span class="kw">where
@@ -190,10 +201,6 @@
                             #(#variants)*
                         }
                     }
-                }
-
-                <span class="kw">impl </span>#name {
-                    #(#functions)*
                 }
             };
             gen.into()
@@ -207,5 +214,46 @@
         .unwrap()
         .replace_all(s.as_ref(), <span class="string">"${lower}_${upper}"</span>)
         .to_lowercase()
+}
+
+<span class="attr">#[proc_macro_derive(Common)]
+</span><span class="kw">pub fn </span>derive_common(input: TokenStream) -&gt; TokenStream {
+    <span class="kw">let </span>input = <span class="macro">parse_macro_input!</span>(input <span class="kw">as </span>DeriveInput);
+    <span class="kw">let </span>name = <span class="kw-2">&amp;</span>input.ident;
+    <span class="kw">if let </span>Data::Enum(data_enum) = input.data {
+        <span class="comment">// implement the is_xxx function for each variant
+        </span><span class="kw">let </span>functions = data_enum.variants.iter().map(|variant| {
+            <span class="kw">let </span>variant_name = <span class="kw-2">&amp;</span>variant.ident;
+            <span class="kw">let </span>is_function_name = <span class="kw-2">&amp;</span>Ident::new(
+                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"is_{}"</span>, camel_to_snake(variant_name.to_string())),
+                variant_name.span(),
+            );
+            <span class="kw">let </span>unwrap_function_name = <span class="kw-2">&amp;</span>Ident::new(
+                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"unwrap_{}"</span>, camel_to_snake(variant_name.to_string())),
+                variant_name.span(),
+            );
+            <span class="macro">quote!</span> {
+                <span class="kw">pub fn </span>#is_function_name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+                    <span class="macro">matches!</span>(<span class="self">self</span>, #name::#variant_name(<span class="kw">_</span>))
+                }
+
+                <span class="kw">pub fn </span>#unwrap_function_name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; #variant_name {
+                    <span class="kw">match </span><span class="self">self </span>{
+                        #name::#variant_name(inner) =&gt; inner.clone(),
+                        <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">"unwrap_{} failed"</span>, <span class="macro">stringify!</span>(#variant_name)),
+                    }
+                }
+            }
+        });
+
+        <span class="kw">let </span>gen = <span class="macro">quote!</span> {
+            <span class="kw">impl </span>#name {
+                #(#functions)*
+            }
+        };
+        gen.into()
+    } <span class="kw">else </span>{
+        <span class="macro">panic!</span>(<span class="string">"only support enum"</span>);
+    }
 }
 </code></pre></div></section></main></body></html>

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"trait":["ExprParser"],"type":["Result"]};
+window.SIDEBAR_ITEMS = {"trait":["ExprParser"]};

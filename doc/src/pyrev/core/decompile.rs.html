@@ -141,17 +141,96 @@
 <a href="#139" id="139">139</a>
 <a href="#140" id="140">140</a>
 <a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::collections::HashMap;
 
 <span class="kw">use </span><span class="kw">super</span>::ast::<span class="kw-2">*</span>;
+<span class="kw">use </span><span class="kw">super</span>::common::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">super</span>::parse_opcode::<span class="kw-2">*</span>;
 <span class="kw">use </span>pyrev_ast::<span class="kw-2">*</span>;
 
-<span class="kw">type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Box&lt;<span class="kw">dyn </span>std::error::Error&gt;&gt;;
-
 <span class="kw">pub trait </span>Decompiler {
     <span class="kw">fn </span>decompile(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;DecompiledCode&gt;;
-    <span class="kw">fn </span>merge(<span class="kw-2">&amp;</span><span class="self">self</span>, mark: <span class="kw-2">&amp;</span>str, maps: <span class="kw-2">&amp;</span>HashMap&lt;String, Expr&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Expr&gt;;
+    <span class="kw">fn </span>merge(<span class="kw-2">&amp;</span><span class="self">self</span>, mark: <span class="kw-2">&amp;</span>str, maps: <span class="kw-2">&amp;</span>HashMap&lt;String, (Expr, TraceBack)&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Expr&gt;;
 }
 
 <span class="kw">impl </span>Decompiler <span class="kw">for </span>CodeObjectMap {
@@ -161,12 +240,20 @@
         <span class="kw">let </span><span class="kw-2">mut </span>exprs_map = HashMap::new();
         <span class="kw">for </span>(mark, code_object) <span class="kw">in </span><span class="self">self</span>.iter() {
             <span class="kw">let </span><span class="kw-2">mut </span>expr = Expr::new();
+            <span class="kw">let </span><span class="kw-2">mut </span>trace = TraceBack::new();
             <span class="kw">for </span>(<span class="kw">_</span>, instruction) <span class="kw">in </span>code_object.iter() {
-                <span class="kw">let </span>e = Expr::parse(instruction)<span class="question-mark">?</span>;
+                <span class="kw">let </span>(e, t) = Expr::parse(instruction)<span class="question-mark">?</span>;
                 <span class="comment">//dbg!(&amp;e);
                 </span>expr.extend(<span class="kw-2">*</span>e);
+                trace.extend(t);
             }
-            exprs_map.insert(mark.clone(), expr);
+
+            <span class="attr">#[cfg(debug_assertions)]
+            </span>{
+                <span class="macro">println!</span>(<span class="string">"{:?}"</span>, <span class="kw-2">&amp;</span>trace);
+            }
+
+            exprs_map.insert(mark.clone(), (expr, trace));
         }
         <span class="comment">//dbg!(&amp;exprs_map);
         </span><span class="kw">let </span>main_expr = <span class="self">self</span>.merge(<span class="string">"&lt;main&gt;"</span>, <span class="kw-2">&amp;</span>exprs_map)<span class="question-mark">?</span>;
@@ -186,32 +273,105 @@
 
     <span class="doccomment">/// 用来合并所有的Expr
     /// 比如`&lt;main&gt;`有一个函数foo, 就需要把foo的定义合并到`&lt;main&gt;`里面的foo Function的 bodys
-    </span><span class="kw">fn </span>merge(<span class="kw-2">&amp;</span><span class="self">self</span>, mark: <span class="kw-2">&amp;</span>str, maps: <span class="kw-2">&amp;</span>HashMap&lt;String, Expr&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Expr&gt; {
-        <span class="kw">let </span>this_expr = maps.get(mark).ok_or(<span class="macro">format!</span>(<span class="string">"No {} expr"</span>, <span class="kw-2">&amp;</span>mark))<span class="question-mark">?</span>.clone();
+    </span><span class="kw">fn </span>merge(<span class="kw-2">&amp;</span><span class="self">self</span>, mark: <span class="kw-2">&amp;</span>str, maps: <span class="kw-2">&amp;</span>HashMap&lt;String, (Expr, TraceBack)&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Expr&gt; {
+        <span class="kw">let </span>(this_expr, traceback) = maps.get(mark).ok_or(<span class="macro">format!</span>(<span class="string">"No {} expr"</span>, <span class="kw-2">&amp;</span>mark))<span class="question-mark">?</span>;
         <span class="kw">loop </span>{
             <span class="kw">let </span><span class="kw-2">mut </span>is_merged = <span class="bool-val">true</span>;
-            <span class="kw">let </span>function_query = this_expr.query::&lt;Function&gt;();
+
+            <span class="comment">// merge the function
+            </span><span class="kw">let </span>function_query = this_expr.query::&lt;Function&gt;();
             <span class="kw">for </span>function <span class="kw">in </span>function_query {
                 <span class="kw">if </span>function.bodys.is_empty() {
                     <span class="kw">let </span>new_bodys = maps
                         .get(<span class="kw-2">&amp;</span>function.mark)
                         .ok_or(<span class="macro">format!</span>(<span class="string">"No {} expr"</span>, <span class="kw-2">&amp;</span>function.mark))<span class="question-mark">?
+                        </span>.<span class="number">0
                         </span>.bodys
                         .clone();
 
-                    function
-                        .with_mut()
-                        .patch_by(|f| f.bodys.extend(new_bodys))<span class="question-mark">?</span>;
+                    function.with_mut().patch_by(|f| {
+                        f.bodys = new_bodys;
+                        traceback.locals.iter().for_each(|(k, (v, b))| {
+                            <span class="kw">if </span>!b {
+                                f.args.push(FastVariable {
+                                    index: <span class="kw-2">*</span>k,
+                                    name: v.to_string(),
+                                    annotation: <span class="prelude-val">None</span>,
+                                })
+                            }
+                        })
+                    })<span class="question-mark">?</span>;
+
+                    is_merged = <span class="bool-val">false</span>;
+                }
+
+                <span class="comment">// update the function arguments
+                </span><span class="kw">let </span>function_locals = maps
+                    .get(<span class="kw-2">&amp;</span>function.mark)
+                    .ok_or(<span class="macro">format!</span>(<span class="string">"No {} expr"</span>, <span class="kw-2">&amp;</span>function.mark))<span class="question-mark">?
+                    </span>.<span class="number">1
+                    </span>.locals
+                    .clone();
+                <span class="kw">let </span>args = function.args.clone();
+                <span class="kw">let </span><span class="kw-2">mut </span>function_args = HashMap::new();
+                <span class="kw">for </span>(k, (v, b)) <span class="kw">in </span>function_locals.iter() {
+                    <span class="kw">if </span>!b {
+                        function_args.insert(v, (k, <span class="prelude-val">None</span>));
+                    }
+                }
+                <span class="kw">for </span>fv <span class="kw">in </span>args.iter() {
+                    <span class="kw">if </span>function_args.contains_key(<span class="kw-2">&amp;</span>fv.name) {
+                        function_args.get_mut(<span class="kw-2">&amp;</span>fv.name).unwrap().<span class="number">1 </span>= fv.annotation.clone();
+                    } <span class="kw">else </span>{
+                        function_args.insert(<span class="kw-2">&amp;</span>fv.name, (<span class="kw-2">&amp;</span>fv.index, fv.annotation.clone()));
+                    }
+                }
+
+                function.with_mut().patch_by(|f| {
+                    f.args.clear();
+                    <span class="kw">for </span>(arg, (idx, anno)) <span class="kw">in </span>function_args.iter() {
+                        f.args.push(FastVariable {
+                            index: <span class="kw-2">**</span>idx,
+                            name: arg.to_string(),
+                            annotation: anno.clone(),
+                        })
+                    }
+                })<span class="question-mark">?</span>;
+                function
+                    .with_mut()
+                    .patch_by(|f| f.args.sort_by(|a, b| a.index.cmp(<span class="kw-2">&amp;</span>b.index)))<span class="question-mark">?</span>;
+
+                <span class="attr">#[cfg(debug_assertions)]
+                </span>{
+                    <span class="comment">//dbg!(&amp;function);
+                </span>}
+            }
+
+            <span class="comment">// merge the class
+            </span><span class="kw">let </span>class_query = this_expr.query::&lt;Class&gt;();
+            <span class="kw">for </span>class <span class="kw">in </span>class_query {
+                <span class="kw">if </span>class.members.is_empty() {
+                    <span class="kw">let </span>new_members = maps
+                        .get(<span class="kw-2">&amp;</span>class.mark)
+                        .ok_or(<span class="macro">format!</span>(<span class="string">"No {} expr"</span>, <span class="kw-2">&amp;</span>class.mark))<span class="question-mark">?
+                        </span>.<span class="number">0
+                        </span>.bodys
+                        .clone();
+
+                    class.with_mut().patch_by(|c| {
+                        c.members = new_members;
+                    })<span class="question-mark">?</span>;
 
                     is_merged = <span class="bool-val">false</span>;
                 }
             }
+
             <span class="comment">//dbg!(&amp;this_expr);
             </span><span class="kw">if </span>is_merged {
                 <span class="kw">break</span>;
             }
         }
-        <span class="prelude-val">Ok</span>(this_expr)
+        <span class="prelude-val">Ok</span>(this_expr.to_owned())
     }
 }
 
