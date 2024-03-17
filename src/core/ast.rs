@@ -153,7 +153,7 @@ impl ExprParser for Expr {
                                 //有from
 
                                 if import.fragment.as_ref().ok_or(format!(
-                                    "[StoreName-import], deviation is {}",
+                                    "[StoreName-import-HaveFrom], deviation is {}",
                                     instruction.offset
                                 ))? == &name
                                 {
@@ -173,7 +173,7 @@ impl ExprParser for Expr {
                                         bk_module: Some(
                                             import.bk_module.expect("")
                                                 + import.fragment.as_ref().ok_or(format!(
-                                                    "[StoreName-import], deviation is {}",
+                                                    "[StoreName-import-HaveFromAs], deviation is {}",
                                                     instruction.offset
                                                 ))?
                                                 + " as "
@@ -738,7 +738,7 @@ impl ExprParser for Expr {
                         instruction.offset
                     ))?;
 
-                    if module.build()?.join("").is_empty() {
+                    if !module.build()?.join("").is_empty() {
                         //需要from
                         let origin_len = module.build()?.join("").len();
                         if origin_len                  //有“ * ”
