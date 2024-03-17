@@ -1,4 +1,4 @@
-# Pyrev
+# Pyrev v1.0.5
 
 Reverse tools for bytecode of python
 
