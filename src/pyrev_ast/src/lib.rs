@@ -343,7 +343,43 @@ impl ExpressionEnum {
             ExpressionEnum::Class(class) => {
                 let mut code = Vec::new();
                 code.push(format!("class {}:", class.name));
-                for expr in class.members.iter() {
+
+                #[cfg(debug_assertions)]
+                {
+                    assert_eq!(class.members.iter().take(2).collect::<Vec<_>>(), &[
+                        &ExpressionEnum::Assign(
+                            Assign {
+                                target: Box::new(ExpressionEnum::BaseValue(
+                                    BaseValue {
+                                        value: "__module__".into(),
+                                    },
+                                )),
+                                values: Box::new(ExpressionEnum::BaseValue(
+                                    BaseValue {
+                                        value: "__name__".into(),
+                                    },
+                                )),
+                                operator: "=".into(),
+                            },
+                        ),
+                        &ExpressionEnum::Assign(
+                            Assign {
+                                target: Box::new(ExpressionEnum::BaseValue(
+                                    BaseValue {
+                                        value: "__qualname__".into(),
+                                    },
+                                )),
+                                values: Box::new(ExpressionEnum::BaseValue(
+                                    BaseValue {
+                                        value: format!("'{}'", class.name),
+                                    },
+                                )),
+                                operator: "=".into(),
+                            },
+                        ),
+                    ]);
+                }
+                for expr in class.members.iter().skip(2) {
                     let expr_code = expr.build()?;
                     for line in expr_code.iter() {
                         code.push(format!("    {}", line));

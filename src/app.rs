@@ -108,7 +108,7 @@ impl App {
                         "Try to decompile {}",
                         paths.next().expect("[App output] iter end").display()
                     )
-                    .green()
+                    .bright_green()
                 );
                 if let Some(file) = self.output_files.get(i) {
                     match decompiled_result {

@@ -55,7 +55,7 @@ where
             for (_, s) in self {
                 print!(
                     "{}{} ",
-                    lazy_format!("{:>max$}", line.to_string().green(), max = max_wide + 2),
+                    lazy_format!("{:>max$}", line.to_string().bright_green(), max = max_wide + 2),
                     "|".bright_blue(),
                 );
                 println!("{}", s);
