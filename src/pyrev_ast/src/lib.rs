@@ -56,6 +56,11 @@ pub struct Return {
     pub value: Box<ExpressionEnum>,
 }
 
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+pub struct Yield {
+    pub value: Box<ExpressionEnum>,
+}
+
 /// 赋值
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
 pub struct Assign {
@@ -203,6 +208,7 @@ pub enum ExpressionEnum {
     FastVariable(FastVariable),
     Function(Function),
     Return(Return),
+    Yield(Yield),
     Assign(Assign),
     Alias(Alias),
     Try(Try),
@@ -346,38 +352,29 @@ impl ExpressionEnum {
 
                 #[cfg(debug_assertions)]
                 {
-                    assert_eq!(class.members.iter().take(2).collect::<Vec<_>>(), &[
-                        &ExpressionEnum::Assign(
-                            Assign {
-                                target: Box::new(ExpressionEnum::BaseValue(
-                                    BaseValue {
-                                        value: "__module__".into(),
-                                    },
-                                )),
-                                values: Box::new(ExpressionEnum::BaseValue(
-                                    BaseValue {
-                                        value: "__name__".into(),
-                                    },
-                                )),
+                    assert_eq!(
+                        class.members.iter().take(2).collect::<Vec<_>>(),
+                        &[
+                            &ExpressionEnum::Assign(Assign {
+                                target: Box::new(ExpressionEnum::BaseValue(BaseValue {
+                                    value: "__module__".into(),
+                                },)),
+                                values: Box::new(ExpressionEnum::BaseValue(BaseValue {
+                                    value: "__name__".into(),
+                                },)),
                                 operator: "=".into(),
-                            },
-                        ),
-                        &ExpressionEnum::Assign(
-                            Assign {
-                                target: Box::new(ExpressionEnum::BaseValue(
-                                    BaseValue {
-                                        value: "__qualname__".into(),
-                                    },
-                                )),
-                                values: Box::new(ExpressionEnum::BaseValue(
-                                    BaseValue {
-                                        value: format!("'{}'", class.name),
-                                    },
-                                )),
+                            },),
+                            &ExpressionEnum::Assign(Assign {
+                                target: Box::new(ExpressionEnum::BaseValue(BaseValue {
+                                    value: "__qualname__".into(),
+                                },)),
+                                values: Box::new(ExpressionEnum::BaseValue(BaseValue {
+                                    value: format!("'{}'", class.name),
+                                },)),
                                 operator: "=".into(),
-                            },
-                        ),
-                    ]);
+                            },),
+                        ]
+                    );
                 }
                 for expr in class.members.iter().skip(2) {
                     let expr_code = expr.build()?;
@@ -423,14 +420,23 @@ impl ExpressionEnum {
                 }
                 match function.name.as_str() {
                     "<lambda>" => {
-                        code.push(format!(
-                            "lambda {}: {}",
-                            args_code.trim_end_matches(", "),
-                            function.bodys[0]
-                                .build()?
-                                .join("")
-                                .trim_start_matches("return "),
-                        ));
+                        let lambda_args = args_code.trim_end_matches(", ");
+                        let lambda_body = function
+                            .bodys
+                            .first()
+                            .ok_or("No lambda body")?
+                            .build()?
+                            .join("");
+                        #[cfg(debug_assertions)]
+                        {
+                            dbg!(&lambda_body);
+                        }
+                        let lambda_body = lambda_body.trim_start_matches("return ");
+                        if lambda_body.starts_with("yield") {
+                            code.push(format!("lambda {}: ({})", lambda_args, lambda_body));
+                        } else {
+                            code.push(format!("lambda {}: {}", lambda_args, lambda_body));
+                        }
                     }
                     "<listcomp>" => {
                         code.push(format!(
@@ -479,6 +485,14 @@ impl ExpressionEnum {
                     Ok(vec![])
                 } else {
                     Ok(vec![format!("return {}", value_code)])
+                }
+            }
+            ExpressionEnum::Yield(y) => {
+                let value_code = y.value.build()?.join("");
+                if value_code.is_empty() {
+                    Ok(vec!["yield".to_string()])
+                } else {
+                    Ok(vec![format!("yield {}", value_code)])
                 }
             }
             ExpressionEnum::Assign(a) => {
@@ -570,11 +584,19 @@ impl ExpressionEnum {
                     let arg_code = arg.build()?;
                     args_code.push(arg_code.join(""));
                 }
-                Ok(vec![format!(
-                    "{}({})",
-                    func_code,
-                    args_code.join(", ").trim_end_matches(", ")
-                )])
+                if func_code.starts_with("lambda ") {
+                    Ok(vec![format!(
+                        "({})({})",
+                        func_code,
+                        args_code.join(", ").trim_end_matches(", ")
+                    )])
+                } else {
+                    Ok(vec![format!(
+                        "{}({})",
+                        func_code,
+                        args_code.join(", ").trim_end_matches(", ")
+                    )])
+                }
             }
             ExpressionEnum::FormatValue(format_value) => {
                 let value_code = format_value.value.build()?.join("");

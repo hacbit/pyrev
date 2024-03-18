@@ -705,6 +705,15 @@ impl ExprParser for Expr {
                         value: Box::new(value),
                     }));
                 }
+                Opcode::YieldValue => {
+                    let value = exprs_stack.pop().ok_or(format!(
+                        "[YieldValue] Stack is empty, deviation is {}",
+                        instruction.offset,
+                    ))?;
+                    exprs_stack.push(ExpressionEnum::Yield(Yield {
+                        value: Box::new(value),
+                    }))
+                }
                 Opcode::ImportFrom => {
                     let value = exprs_stack.pop().ok_or(format!(
                         "[ImportFrom] Stack is empty, deviation is {}",

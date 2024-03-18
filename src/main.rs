@@ -1,7 +1,7 @@
 // python bytecode reverse engineering by @hacbit
 use clap::{arg, command, value_parser, ArgAction, Command};
-use std::path::PathBuf;
 use std::io::Read;
+use std::path::PathBuf;
 
 mod app;
 mod core;
@@ -51,10 +51,7 @@ fn main() -> Result<()> {
         // read from stdin
         let mut buf = String::new();
         std::io::stdin().read_to_string(&mut buf)?;
-        App::new()
-            .run_once(buf)
-            .with_files(ofiles)
-            .output();
+        App::new().run_once(buf).with_files(ofiles).output();
     } else {
         //dbg!(&ifiles);
         //dbg!(&ofiles);
