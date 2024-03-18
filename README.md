@@ -1,4 +1,4 @@
-# Pyrev v1.0.5
+# Pyrev v1.0.6
 
 Reverse tools for bytecode of python
 
@@ -49,8 +49,10 @@ Options:
 
 **You can not specify the `-f/--file` option, and the program will read the bytecode from stdin.**
 ```powershell
-PS D:\path\to\pyrev> echo 'print("Hello, World!")' | python -m dis | pyrev
- 1| print("Hello, World!")
+PS D:\path\to\pyrev> echo 'a.b.c(); print()' | python -m dis | pyrev
+Try to decompile [Temp file]
+  1| a.b.c()
+  2| print()
 ```
 
 
