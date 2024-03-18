@@ -205,7 +205,7 @@
 <span class="kw">pub type </span>CodeObjectMap = OrderMap&lt;ObjectMark, CodeObject&gt;;
 
 <span class="kw">pub trait </span>OpcodeParser {
-    <span class="kw">fn </span>parse(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;CodeObjectMap&gt;;
+    <span class="kw">fn </span>parse_opcode(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;CodeObjectMap&gt;;
 }
 
 <span class="kw">impl</span>&lt;T&gt; OpcodeParser <span class="kw">for </span>T
@@ -216,7 +216,7 @@
     /// ObjectMark 是一个对象的标记(String), 就是字节码里面看到&lt;&gt;包裹的
     /// LineNumber 是一个行号(usize), 就是字节码里每一段左上角的数字
     /// CodeObject 是一个字节码对象, 里面包含了一个对象主体的所有指令
-    </span><span class="kw">fn </span>parse(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;CodeObjectMap&gt; {
+    </span><span class="kw">fn </span>parse_opcode(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;CodeObjectMap&gt; {
         <span class="kw">let </span>reg = Regex::new(
             <span class="string">r#"(?s)(?x)
             (Disassembly\ of\ (?P&lt;mark&gt;[\S\ ]+):\s+)?      # mark  (optional)
@@ -299,7 +299,7 @@
        12 LOAD_CONST               2 (&lt;code object test at 0x0000025C36EDDB80, file "test/def.py", line 1&gt;)
        14 MAKE_FUNCTION            4 (annotations)
        16 STORE_NAME               1 (test)"#</span>.to_string();
-        <span class="kw">let </span>parsed = bytecode.parse().unwrap();
+        <span class="kw">let </span>parsed = bytecode.parse_opcode().unwrap();
         <span class="comment">//dbg!(parsed);
         //assert!(false);
         </span><span class="macro">assert_eq!</span>(

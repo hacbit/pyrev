@@ -265,7 +265,7 @@
             <span class="kw">for </span>(<span class="kw">_</span>, s) <span class="kw">in </span><span class="self">self </span>{
                 <span class="macro">print!</span>(
                     <span class="string">"{}{} "</span>,
-                    <span class="macro">lazy_format!</span>(<span class="string">"{:&gt;max$}"</span>, line.to_string().green(), max = max_wide + <span class="number">2</span>),
+                    <span class="macro">lazy_format!</span>(<span class="string">"{:&gt;max$}"</span>, line.to_string().bright_green(), max = max_wide + <span class="number">2</span>),
                     <span class="string">"|"</span>.bright_blue(),
                 );
                 <span class="macro">println!</span>(<span class="string">"{}"</span>, s);

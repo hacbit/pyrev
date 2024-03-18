@@ -142,6 +142,14 @@
 <a href="#140" id="140">140</a>
 <a href="#141" id="141">141</a>
 <a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::core::common::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::core::decompile::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::core::parse_opcode::<span class="kw-2">*</span>;
@@ -176,7 +184,7 @@
         <span class="kw">let </span>path = path.into();
         <span class="kw">if </span>path.is_file() {
             <span class="kw">let </span>resource = <span class="kw-2">&amp;</span>path.read().unwrap();
-            <span class="kw">let </span>code_object_map = resource.parse().unwrap();
+            <span class="kw">let </span>code_object_map = resource.parse_opcode().unwrap();
             <span class="kw">if </span><span class="self">self
                 </span>.resources
                 .insert(path.clone(), code_object_map)
@@ -238,10 +246,18 @@
         <span class="self">self
     </span>}
 
+    <span class="kw">pub fn </span>run_once(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _stdin: String) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
+        <span class="kw">let </span>parsed_map = _stdin.parse_opcode().unwrap();
+        <span class="kw">let </span>decompiled_result = parsed_map.decompile();
+        <span class="self">self</span>.files.push(PathBuf::from(<span class="string">"[Temp file]"</span>));
+        <span class="self">self</span>.output.push(decompiled_result);
+        <span class="self">self
+    </span>}
+
     <span class="doccomment">/// 会按照输入文件路径和输出文件路径的插入顺序导出
     /// 如果没有匹配到输出文件路径, 则会输出到控制台
     </span><span class="kw">pub fn </span>output(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="kw">let </span><span class="kw-2">mut </span>paths = <span class="self">self</span>.resources.keys();
+        <span class="kw">let </span><span class="kw-2">mut </span>paths = <span class="self">self</span>.files.iter();
         <span class="self">self</span>.output
             .iter_mut()
             .enumerate()
@@ -252,7 +268,7 @@
                         <span class="string">"Try to decompile {}"</span>,
                         paths.next().expect(<span class="string">"[App output] iter end"</span>).display()
                     )
-                    .green()
+                    .bright_green()
                 );
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(file) = <span class="self">self</span>.output_files.get(i) {
                     <span class="kw">match </span>decompiled_result {

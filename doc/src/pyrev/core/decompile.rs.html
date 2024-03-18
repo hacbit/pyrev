@@ -425,7 +425,7 @@
       
         3           2 LOAD_CONST               1 (1)
                     4 RETURN_VALUE"#</span>;
-        <span class="kw">let </span>code_objects = input.to_string().parse().unwrap();
+        <span class="kw">let </span>code_objects = input.parse_opcode().unwrap();
         <span class="comment">//dbg!(code_object);
         </span><span class="kw">let </span>expr = code_objects.decompile().unwrap();
         <span class="comment">//dbg!(expr);

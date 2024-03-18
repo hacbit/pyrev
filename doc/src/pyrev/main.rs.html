@@ -57,9 +57,22 @@
 <a href="#55" id="55">55</a>
 <a href="#56" id="56">56</a>
 <a href="#57" id="57">57</a>
+<a href="#58" id="58">58</a>
+<a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
+<a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
+<a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
 </pre></div><pre class="rust"><code><span class="comment">// python bytecode reverse engineering by @hacbit
 </span><span class="kw">use </span>clap::{arg, command, value_parser, ArgAction, Command};
 <span class="kw">use </span>std::path::PathBuf;
+<span class="kw">use </span>std::io::Read;
 
 <span class="kw">mod </span>app;
 <span class="kw">mod </span>core;
@@ -75,7 +88,8 @@
                 -f --file &lt;FILE&gt; <span class="string">"specify bytecode files"
             </span>)
             .action(ArgAction::Append)
-            .required(<span class="bool-val">true</span>)
+            <span class="comment">// If you don't specify the input file, it will read from stdin
+            </span>.required(<span class="bool-val">false</span>)
             .value_parser(<span class="macro">value_parser!</span>(PathBuf)),
         )
         .arg(
@@ -95,7 +109,7 @@
 
     <span class="kw">let </span>ifiles = matches
         .get_many::&lt;PathBuf&gt;(<span class="string">"file"</span>)
-        .expect(<span class="string">"file is required"</span>)
+        .unwrap_or_default()
         .cloned()
         .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
     <span class="kw">let </span>ofiles = matches
@@ -104,13 +118,23 @@
         .cloned()
         .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
-    <span class="comment">//dbg!(&amp;ifiles);
-    //dbg!(&amp;ofiles);
-    </span>App::new()
-        .insert_resources(ifiles)
-        .with_files(ofiles)
-        .run()
-        .output();
+    <span class="kw">if </span>ifiles.is_empty() {
+        <span class="comment">// read from stdin
+        </span><span class="kw">let </span><span class="kw-2">mut </span>buf = String::new();
+        std::io::stdin().read_to_string(<span class="kw-2">&amp;mut </span>buf)<span class="question-mark">?</span>;
+        App::new()
+            .run_once(buf)
+            .with_files(ofiles)
+            .output();
+    } <span class="kw">else </span>{
+        <span class="comment">//dbg!(&amp;ifiles);
+        //dbg!(&amp;ofiles);
+        </span>App::new()
+            .insert_resources(ifiles)
+            .with_files(ofiles)
+            .run()
+            .output();
+    }
 
     <span class="prelude-val">Ok</span>(())
 }
