@@ -7,7 +7,7 @@ pub type CodeObject = OrderMap<LineNumber, Vec<OpcodeInstruction>>;
 pub type CodeObjectMap = OrderMap<ObjectMark, CodeObject>;
 
 pub trait OpcodeParser {
-    fn parse(&self) -> Result<CodeObjectMap>;
+    fn parse_opcode(&self) -> Result<CodeObjectMap>;
 }
 
 impl<T> OpcodeParser for T
@@ -18,7 +18,7 @@ where
     /// ObjectMark 是一个对象的标记(String), 就是字节码里面看到<>包裹的
     /// LineNumber 是一个行号(usize), 就是字节码里每一段左上角的数字
     /// CodeObject 是一个字节码对象, 里面包含了一个对象主体的所有指令
-    fn parse(&self) -> Result<CodeObjectMap> {
+    fn parse_opcode(&self) -> Result<CodeObjectMap> {
         let reg = Regex::new(
             r#"(?s)(?x)
             (Disassembly\ of\ (?P<mark>[\S\ ]+):\s+)?      # mark  (optional)
@@ -101,7 +101,7 @@ mod tests {
        12 LOAD_CONST               2 (<code object test at 0x0000025C36EDDB80, file "test/def.py", line 1>)
        14 MAKE_FUNCTION            4 (annotations)
        16 STORE_NAME               1 (test)"#.to_string();
-        let parsed = bytecode.parse().unwrap();
+        let parsed = bytecode.parse_opcode().unwrap();
         //dbg!(parsed);
         //assert!(false);
         assert_eq!(

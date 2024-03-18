@@ -202,7 +202,7 @@ mod tests {
       
         3           2 LOAD_CONST               1 (1)
                     4 RETURN_VALUE"#;
-        let code_objects = input.to_string().parse().unwrap();
+        let code_objects = input.parse_opcode().unwrap();
         //dbg!(code_object);
         let expr = code_objects.decompile().unwrap();
         //dbg!(expr);

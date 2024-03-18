@@ -47,6 +47,12 @@ Options:
   -V, --version        Print version
 ```
 
+**You can not specify the `-f/--file` option, and the program will read the bytecode from stdin.**
+```powershell
+PS D:\path\to\pyrev> echo 'print("Hello, World!")' | python -m dis | pyrev
+ 1| print("Hello, World!")
+```
+
 
 ## Test
 

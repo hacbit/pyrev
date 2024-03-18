@@ -32,7 +32,7 @@ impl App {
         let path = path.into();
         if path.is_file() {
             let resource = &path.read().unwrap();
-            let code_object_map = resource.parse().unwrap();
+            let code_object_map = resource.parse_opcode().unwrap();
             if self
                 .resources
                 .insert(path.clone(), code_object_map)
@@ -94,10 +94,18 @@ impl App {
         self
     }
 
+    pub fn run_once(&mut self, _stdin: String) -> &mut Self {
+        let parsed_map = _stdin.parse_opcode().unwrap();
+        let decompiled_result = parsed_map.decompile();
+        self.files.push(PathBuf::from("[Temp file]"));
+        self.output.push(decompiled_result);
+        self
+    }
+
     /// 会按照输入文件路径和输出文件路径的插入顺序导出
     /// 如果没有匹配到输出文件路径, 则会输出到控制台
     pub fn output(&mut self) {
-        let mut paths = self.resources.keys();
+        let mut paths = self.files.iter();
         self.output
             .iter_mut()
             .enumerate()

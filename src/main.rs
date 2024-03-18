@@ -1,6 +1,7 @@
 // python bytecode reverse engineering by @hacbit
 use clap::{arg, command, value_parser, ArgAction, Command};
 use std::path::PathBuf;
+use std::io::Read;
 
 mod app;
 mod core;
@@ -16,7 +17,8 @@ fn main() -> Result<()> {
                 -f --file <FILE> "specify bytecode files"
             )
             .action(ArgAction::Append)
-            .required(true)
+            // If you don't specify the input file, it will read from stdin
+            .required(false)
             .value_parser(value_parser!(PathBuf)),
         )
         .arg(
@@ -36,7 +38,7 @@ fn main() -> Result<()> {
 
     let ifiles = matches
         .get_many::<PathBuf>("file")
-        .expect("file is required")
+        .unwrap_or_default()
         .cloned()
         .collect::<Vec<_>>();
     let ofiles = matches
@@ -45,13 +47,23 @@ fn main() -> Result<()> {
         .cloned()
         .collect::<Vec<_>>();
 
-    //dbg!(&ifiles);
-    //dbg!(&ofiles);
-    App::new()
-        .insert_resources(ifiles)
-        .with_files(ofiles)
-        .run()
-        .output();
+    if ifiles.is_empty() {
+        // read from stdin
+        let mut buf = String::new();
+        std::io::stdin().read_to_string(&mut buf)?;
+        App::new()
+            .run_once(buf)
+            .with_files(ofiles)
+            .output();
+    } else {
+        //dbg!(&ifiles);
+        //dbg!(&ofiles);
+        App::new()
+            .insert_resources(ifiles)
+            .with_files(ofiles)
+            .run()
+            .output();
+    }
 
     Ok(())
 }
