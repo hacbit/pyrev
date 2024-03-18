@@ -661,7 +661,10 @@ impl ExprParser for Expr {
                                 }))
                             }
                         } else {
-                            exprs_stack.push(last);
+                            exprs_stack.push(ExpressionEnum::Call(Call {
+                                func: Box::new(last),
+                                args: vec![],
+                            }));
                         }
                         offset += 1;
                         continue;
