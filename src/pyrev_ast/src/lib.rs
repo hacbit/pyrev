@@ -201,7 +201,7 @@ pub struct BaseValue {
 /// });
 /// assert!(expr.is_assign());
 /// ```
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Common)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Is, Unwrap)]
 pub enum ExpressionEnum {
     Import(Import),
     Class(Class),
