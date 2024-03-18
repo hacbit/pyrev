@@ -1,5 +1,6 @@
 // python bytecode reverse engineering by @hacbit
 use clap::{arg, command, value_parser, ArgAction, Command};
+use colored::Colorize;
 use std::io::Read;
 use std::path::PathBuf;
 
@@ -48,10 +49,15 @@ fn main() -> Result<()> {
         .collect::<Vec<_>>();
 
     if ifiles.is_empty() {
-        // read from stdin
-        let mut buf = String::new();
-        std::io::stdin().read_to_string(&mut buf)?;
-        App::new().run_once(buf).with_files(ofiles).output();
+        if atty::is(atty::Stream::Stdin) {
+            eprintln!("{}", "Warning: no input".bright_yellow());
+            return Ok(())
+        } else {
+            // read from stdin
+            let mut buf = String::new();
+            std::io::stdin().read_to_string(&mut buf)?;
+            App::new().run_once(buf).with_files(ofiles).output();
+        }
     } else {
         //dbg!(&ifiles);
         //dbg!(&ofiles);
