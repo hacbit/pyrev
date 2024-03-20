@@ -1,0 +1,83 @@
+  0           0 RESUME                   0
+
+  1           2 PUSH_NULL
+              4 LOAD_NAME                0 (open)
+              6 LOAD_CONST               0 ('./bbb')
+              8 LOAD_CONST               1 ('r')
+             10 PRECALL                  2
+             14 CALL                     2
+             24 BEFORE_WITH
+             26 STORE_NAME               1 (f)
+
+  2          28 LOAD_NAME                1 (f)
+             30 LOAD_METHOD              2 (read)
+             52 PRECALL                  0
+             56 CALL                     0
+             66 STORE_NAME               3 (content)
+
+  1          68 LOAD_CONST               2 (None)
+             70 LOAD_CONST               2 (None)
+             72 LOAD_CONST               2 (None)
+             74 PRECALL                  2
+             78 CALL                     2
+             88 POP_TOP
+             90 JUMP_FORWARD            11 (to 114)
+        >>   92 PUSH_EXC_INFO
+             94 WITH_EXCEPT_START
+             96 POP_JUMP_FORWARD_IF_TRUE     4 (to 106)
+             98 RERAISE                  2
+        >>  100 COPY                     3
+            102 POP_EXCEPT
+            104 RERAISE                  1
+        >>  106 POP_TOP
+            108 POP_EXCEPT
+            110 POP_TOP
+            112 POP_TOP
+
+  4     >>  114 PUSH_NULL
+            116 LOAD_NAME                0 (open)
+            118 LOAD_CONST               3 ('aaaa')
+            120 LOAD_CONST               4 ('rb')
+            122 PRECALL                  2
+            126 CALL                     2
+            136 BEFORE_WITH
+            138 STORE_NAME               1 (f)
+
+  5         140 LOAD_NAME                1 (f)
+            142 LOAD_METHOD              4 (write)
+            164 LOAD_NAME                3 (content)
+            166 LOAD_METHOD              5 (encode)
+            188 PRECALL                  0
+            192 CALL                     0
+            202 PRECALL                  1
+            206 CALL                     1
+            216 POP_TOP
+
+  4         218 LOAD_CONST               2 (None)
+            220 LOAD_CONST               2 (None)
+            222 LOAD_CONST               2 (None)
+            224 PRECALL                  2
+            228 CALL                     2
+            238 POP_TOP
+            240 LOAD_CONST               2 (None)
+            242 RETURN_VALUE
+        >>  244 PUSH_EXC_INFO
+            246 WITH_EXCEPT_START
+            248 POP_JUMP_FORWARD_IF_TRUE     4 (to 258)
+            250 RERAISE                  2
+        >>  252 COPY                     3
+            254 POP_EXCEPT
+            256 RERAISE                  1
+        >>  258 POP_TOP
+            260 POP_EXCEPT
+            262 POP_TOP
+            264 POP_TOP
+            266 LOAD_CONST               2 (None)
+            268 RETURN_VALUE
+ExceptionTable:
+  26 to 66 -> 92 [1] lasti
+  92 to 98 -> 100 [3] lasti
+  106 to 106 -> 100 [3] lasti
+  138 to 216 -> 244 [1] lasti
+  244 to 250 -> 252 [3] lasti
+  258 to 258 -> 252 [3] lasti

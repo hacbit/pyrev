@@ -88,7 +88,10 @@ impl App {
 
     pub fn run(&mut self) -> &mut Self {
         for path in self.files.iter() {
-            let code_object_map = self.resources.get(path).expect(format!("[App run] resource {} not found", path.display()).as_str());
+            let code_object_map = self
+                .resources
+                .get(path)
+                .unwrap_or_else(|| panic!("[App run] resource {} not found", path.display()));
             let decompiled_result = code_object_map.decompile();
             self.output.push(decompiled_result);
         }

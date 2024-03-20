@@ -7,7 +7,8 @@ use pyrev_ast::*;
 
 pub trait Decompiler {
     fn decompile(&self) -> Result<DecompiledCode>;
-    fn merge(&self, mark: &str, maps: &HashMap<String, (Expr, TraceBack)>) -> Result<Expr>;
+    #[allow(unused)]
+    fn optimize(&self, expr: &Expr) -> Result<Expr>;
 }
 
 impl Decompiler for CodeObjectMap {
@@ -32,8 +33,10 @@ impl Decompiler for CodeObjectMap {
 
             exprs_map.insert(mark.clone(), (expr, trace));
         }
-        //dbg!(&exprs_map);
-        let main_expr = self.merge("<main>", &exprs_map)?;
+        #[cfg(debug_assertions)]
+        dbg!(&exprs_map);
+
+        let main_expr = merge("<main>", &exprs_map)?;
         //dbg!(&main_expr);
 
         for (i, instruction) in main_expr.bodys.iter().enumerate() {
@@ -48,108 +51,114 @@ impl Decompiler for CodeObjectMap {
         Ok(decompiled_code)
     }
 
-    /// 用来合并所有的Expr
-    /// 比如`<main>`有一个函数foo, 就需要把foo的定义合并到`<main>`里面的foo Function的 bodys
-    fn merge(&self, mark: &str, maps: &HashMap<String, (Expr, TraceBack)>) -> Result<Expr> {
-        let (this_expr, traceback) = maps.get(mark).ok_or(format!("No {} expr", &mark))?;
-        loop {
-            let mut is_merged = true;
+    fn optimize(&self, expr: &Expr) -> Result<Expr> {
+        Ok(expr.to_owned())
+    }
+}
 
-            // merge the function
-            let function_query = this_expr.query::<Function>();
-            for function in function_query {
-                if function.bodys.is_empty() {
-                    let new_bodys = maps
-                        .get(&function.mark)
-                        .ok_or(format!("No {} expr", &function.mark))?
-                        .0
-                        .bodys
-                        .clone();
+/// 用来合并所有的Expr
+/// 比如`<main>`有一个函数foo, 就需要把foo的定义合并到`<main>`里面的foo Function的 bodys
+fn merge(mark: &str, maps: &HashMap<String, (Expr, TraceBack)>) -> Result<Expr> {
+    let (this_expr, traceback) = maps.get(mark).ok_or(format!("No {} expr", &mark))?;
+    loop {
+        let mut is_merged = true;
 
-                    function.with_mut().patch_by(|f| {
-                        f.bodys = new_bodys;
-                        traceback.locals.iter().for_each(|(k, (v, b))| {
-                            if !b {
-                                f.args.push(FastVariable {
-                                    index: *k,
-                                    name: v.to_string(),
-                                    annotation: None,
-                                })
-                            }
-                        })
-                    })?;
-
-                    is_merged = false;
-                }
-
-                // update the function arguments
-                let function_locals = maps
+        // merge the function
+        let function_query = this_expr.query::<Function>();
+        for function in function_query {
+            if function.bodys.is_empty() {
+                let new_bodys = maps
                     .get(&function.mark)
                     .ok_or(format!("No {} expr", &function.mark))?
-                    .1
-                    .locals
+                    .0
+                    .bodys
                     .clone();
-                let args = function.args.clone();
-                let mut function_args = HashMap::new();
-                for (k, (v, b)) in function_locals.iter() {
-                    if !b {
-                        function_args.insert(v, (k, None));
-                    }
-                }
-                for fv in args.iter() {
-                    if function_args.contains_key(&fv.name) {
-                        function_args.get_mut(&fv.name).unwrap().1 = fv.annotation.clone();
-                    } else {
-                        function_args.insert(&fv.name, (&fv.index, fv.annotation.clone()));
-                    }
-                }
 
                 function.with_mut().patch_by(|f| {
-                    f.args.clear();
-                    for (arg, (idx, anno)) in function_args.iter() {
-                        f.args.push(FastVariable {
-                            index: **idx,
-                            name: arg.to_string(),
-                            annotation: anno.clone(),
-                        })
-                    }
+                    f.bodys = new_bodys;
+                    traceback.locals.iter().for_each(|(k, (v, b))| {
+                        if !b {
+                            f.args.push(FastVariable {
+                                index: *k,
+                                name: v.to_string(),
+                                annotation: None,
+                                ..Default::default()
+                            })
+                        }
+                    })
                 })?;
-                function
-                    .with_mut()
-                    .patch_by(|f| f.args.sort_by(|a, b| a.index.cmp(&b.index)))?;
 
-                #[cfg(debug_assertions)]
-                {
-                    //dbg!(&function);
+                is_merged = false;
+            }
+
+            // update the function arguments
+            let function_locals = maps
+                .get(&function.mark)
+                .ok_or(format!("No {} expr", &function.mark))?
+                .1
+                .locals
+                .clone();
+            let args = function.args.clone();
+            let mut function_args = HashMap::new();
+            for (k, (v, b)) in function_locals.iter() {
+                if !b {
+                    function_args.insert(v, (k, None));
+                }
+            }
+            for fv in args.iter() {
+                if function_args.contains_key(&fv.name) {
+                    function_args.get_mut(&fv.name).unwrap().1 = fv.annotation.clone();
+                } else {
+                    function_args.insert(&fv.name, (&fv.index, fv.annotation.clone()));
                 }
             }
 
-            // merge the class
-            let class_query = this_expr.query::<Class>();
-            for class in class_query {
-                if class.members.is_empty() {
-                    let new_members = maps
-                        .get(&class.mark)
-                        .ok_or(format!("No {} expr", &class.mark))?
-                        .0
-                        .bodys
-                        .clone();
-
-                    class.with_mut().patch_by(|c| {
-                        c.members = new_members;
-                    })?;
-
-                    is_merged = false;
+            function.with_mut().patch_by(|f| {
+                f.args.clear();
+                for (arg, (idx, anno)) in function_args.iter() {
+                    f.args.push(FastVariable {
+                        index: **idx,
+                        name: arg.to_string(),
+                        annotation: anno.clone(),
+                        ..Default::default()
+                    })
                 }
-            }
+            })?;
+            function
+                .with_mut()
+                .patch_by(|f| f.args.sort_by(|a, b| a.index.cmp(&b.index)))?;
 
-            //dbg!(&this_expr);
-            if is_merged {
-                break;
+            #[cfg(debug_assertions)]
+            {
+                //dbg!(&function);
             }
         }
-        Ok(this_expr.to_owned())
+
+        // merge the class
+        let class_query = this_expr.query::<Class>();
+        for class in class_query {
+            if class.members.is_empty() {
+                let new_members = maps
+                    .get(&class.mark)
+                    .ok_or(format!("No {} expr", &class.mark))?
+                    .0
+                    .bodys
+                    .clone();
+
+                class.with_mut().patch_by(|c| {
+                    c.members = new_members;
+                })?;
+
+                is_merged = false;
+            }
+        }
+
+        //dbg!(&this_expr);
+        if is_merged {
+            break;
+        }
     }
+    Ok(this_expr.to_owned())
 }
 
 #[derive(Debug, PartialEq)]

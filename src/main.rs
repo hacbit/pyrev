@@ -32,8 +32,30 @@ fn main() -> Result<()> {
         )
         .subcommand(
             Command::new("test")
-                .about("run the example")
-                .arg(arg!(-t --test "print test").action(ArgAction::SetTrue)),
+                .about("test by your given python code")
+                .arg(
+                    arg!(
+                        -c --code "specify the python code to test"
+                    )
+                    .action(ArgAction::Set)
+                    .required(true)
+                    .value_parser(value_parser!(String)),
+                )
+                .arg(
+                    arg!(
+                        -m --multiple "test multiple times"
+                    )
+                    .action(ArgAction::SetTrue),
+                ),
+        )
+        .subcommand(
+            Command::new("pyc").about("decompile pyc files").arg(
+                arg!(
+                    -d --directory "specify the directory to search for pyc files"
+                )
+                .action(ArgAction::Set)
+                .value_parser(value_parser!(PathBuf)),
+            ),
         )
         .get_matches();
 
@@ -51,7 +73,7 @@ fn main() -> Result<()> {
     if ifiles.is_empty() {
         if atty::is(atty::Stream::Stdin) {
             eprintln!("{}", "Warning: no input".bright_yellow());
-            return Ok(())
+            return Ok(());
         } else {
             // read from stdin
             let mut buf = String::new();

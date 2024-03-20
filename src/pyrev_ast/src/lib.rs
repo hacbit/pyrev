@@ -13,33 +13,41 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 pub trait Expression {}
 
 /// 导入
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
 pub struct Import {
     pub module: String,
     pub bk_module: Option<String>,
     pub fragment: Option<String>,
     pub alias: Option<String>,
+    pub start_line: usize,
+    pub start_offset: usize,
+    pub end_offset: usize,
 }
 
 /// 类
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
 pub struct Class {
     pub mark: String,
     pub name: String,
     pub members: Vec<ExpressionEnum>,
     pub start_line: usize,
+    pub start_offset: usize,
+    pub end_offset: usize,
 }
 
 /// 局部变量
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
 pub struct FastVariable {
     pub index: usize,
     pub name: String,
     pub annotation: Option<String>,
+    pub start_line: usize,
+    pub start_offset: usize,
+    pub end_offset: usize,
 }
 
 /// 函数
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
 pub struct Function {
     pub mark: String,
     pub name: String,
@@ -47,143 +55,214 @@ pub struct Function {
     pub defaults: Vec<String>,
     pub start_line: usize,
     pub end_line: usize,
+    pub start_offset: usize,
+    pub end_offset: usize,
     pub bodys: Vec<ExpressionEnum>,
 }
 
 /// 返回
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
 pub struct Return {
     pub value: Box<ExpressionEnum>,
+    pub start_line: usize,
+    pub start_offset: usize,
+    pub end_offset: usize,
 }
 
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
 pub struct Yield {
     pub value: Box<ExpressionEnum>,
+    pub start_line: usize,
+    pub start_offset: usize,
+    pub end_offset: usize,
 }
 
 /// 赋值
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
 pub struct Assign {
     pub target: Box<ExpressionEnum>,
     pub values: Box<ExpressionEnum>,
     pub operator: String,
+    pub start_line: usize,
+    pub start_offset: usize,
+    pub end_offset: usize,
 }
 
 /// Alias, like Assign but only for `as`
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
 pub struct Alias {
     pub target: Box<ExpressionEnum>,
     pub alias: Box<ExpressionEnum>,
+    pub start_line: usize,
+    pub start_offset: usize,
+    pub end_offset: usize,
 }
 
 /// Try
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
 pub struct Try {
     pub body: Vec<ExpressionEnum>,
     /// this is the exception which will be caught
     pub except: Vec<ExpressionEnum>,
     pub finally: Box<ExpressionEnum>,
+    pub start_line: usize,
+    pub start_offset: usize,
+    pub end_offset: usize,
 }
 
 /// Except
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
 pub struct Except {
     pub exception: Box<ExpressionEnum>,
     pub body: Vec<ExpressionEnum>,
+    pub start_line: usize,
+    pub start_offset: usize,
+    pub end_offset: usize,
 }
 
 /// finally
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
 pub struct Finally {
     pub body: Vec<ExpressionEnum>,
+    pub start_line: usize,
+    pub start_offset: usize,
+    pub end_offset: usize,
 }
 
 /// 断言
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
 pub struct Assert {
     pub test: Box<ExpressionEnum>,
     pub msg: Option<Box<ExpressionEnum>>,
+    pub start_line: usize,
+    pub start_offset: usize,
+    pub end_offset: usize,
 }
 
 /// 抛出异常
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
 pub struct Raise {
     pub exception: Box<ExpressionEnum>,
+    pub start_line: usize,
+    pub start_offset: usize,
+    pub end_offset: usize,
 }
 
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
 pub struct FormatValue {
     pub value: Box<ExpressionEnum>,
+    pub start_line: usize,
+    pub start_offset: usize,
+    pub end_offset: usize,
 }
 
 /// 格式化字符串
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
 pub struct Format {
     pub format_values: Vec<ExpressionEnum>,
+    pub start_line: usize,
+    pub start_offset: usize,
+    pub end_offset: usize,
 }
 
 /// 二元操作
 /// 包括 +, -, *, /, <<, %, ==, >, is, in等
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
 pub struct BinaryOperation {
     pub left: Box<ExpressionEnum>,
     pub right: Box<ExpressionEnum>,
     pub operator: String,
+    pub start_line: usize,
+    pub start_offset: usize,
+    pub end_offset: usize,
 }
 
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
 pub struct UnaryOperation {
     pub target: Box<ExpressionEnum>,
     pub unary_type: UnaryType,
+    pub start_line: usize,
+    pub start_offset: usize,
+    pub end_offset: usize,
 }
 /// 函数调用
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
 pub struct Call {
     pub func: Box<ExpressionEnum>,
     pub args: Vec<ExpressionEnum>,
+    pub start_line: usize,
+    pub start_offset: usize,
+    pub end_offset: usize,
+}
+
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
+pub struct With {
+    pub item: Box<ExpressionEnum>,
+    pub body: Vec<ExpressionEnum>,
+    pub start_line: usize,
+    pub start_offset: usize,
+    pub end_offset: usize,
 }
 
 /// If expression
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
 pub struct If {
     pub test: Box<ExpressionEnum>,
     pub body: Vec<ExpressionEnum>,
     pub or_else: Vec<ExpressionEnum>,
+    pub start_line: usize,
+    pub start_offset: usize,
+    pub end_offset: usize,
 }
 
 /// Jump
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
 pub struct Jump {
     pub target: usize,
     pub body: Vec<ExpressionEnum>,
+    pub start_line: usize,
+    pub start_offset: usize,
+    pub end_offset: usize,
 }
 
 /// 容器(包括list, tuple, set, dict等)
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
 pub struct Container {
     pub values: Vec<ExpressionEnum>,
     pub container_type: ContainerType,
+    pub start_line: usize,
+    pub start_offset: usize,
+    pub end_offset: usize,
 }
 
 /// 属性
 /// 例如: a.b
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
 pub struct Attribute {
     pub parent: Box<ExpressionEnum>,
     pub attr: Box<ExpressionEnum>,
+    pub start_line: usize,
+    pub start_offset: usize,
+    pub end_offset: usize,
 }
 
 /// 切片
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
 pub struct Slice {
     pub origin: Box<ExpressionEnum>,
     pub slice: Vec<ExpressionEnum>,
+    pub start_line: usize,
+    pub start_offset: usize,
+    pub end_offset: usize,
 }
 
 /// String的Expression封装
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
 pub struct BaseValue {
     pub value: String,
+    pub start_line: usize,
+    pub start_offset: usize,
+    pub end_offset: usize,
 }
 
 /// 为上面的表达式提供一个封装
@@ -222,6 +301,7 @@ pub enum ExpressionEnum {
     BinaryOperation(BinaryOperation),
     UnaryOperation(UnaryOperation),
     Call(Call),
+    With(With),
     If(If),
     Jump(Jump),
     Container(Container),
@@ -230,11 +310,19 @@ pub enum ExpressionEnum {
     // ...
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+impl Default for ExpressionEnum {
+    fn default() -> Self {
+        Self::BaseValue(Default::default())
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub enum UnaryType {
     Negative,
     Invert,
     Not,
+    #[default]
+    Positive,
 }
 
 impl Query for UnaryType {
@@ -243,9 +331,10 @@ impl Query for UnaryType {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub enum ContainerType {
     List,
+    #[default]
     Tuple,
     Set,
     Dict,
@@ -278,6 +367,7 @@ impl Class {
             name,
             members: Vec::new(),
             start_line,
+            ..Default::default()
         })
     }
 }
@@ -300,6 +390,7 @@ impl Function {
             start_line,
             end_line: start_line,
             bodys: Vec::new(),
+            ..Default::default()
         })
     }
 
@@ -358,20 +449,26 @@ impl ExpressionEnum {
                             &ExpressionEnum::Assign(Assign {
                                 target: Box::new(ExpressionEnum::BaseValue(BaseValue {
                                     value: "__module__".into(),
+                                    ..Default::default()
                                 },)),
                                 values: Box::new(ExpressionEnum::BaseValue(BaseValue {
                                     value: "__name__".into(),
+                                    ..Default::default()
                                 },)),
                                 operator: "=".into(),
+                                ..Default::default()
                             },),
                             &ExpressionEnum::Assign(Assign {
                                 target: Box::new(ExpressionEnum::BaseValue(BaseValue {
                                     value: "__qualname__".into(),
+                                    ..Default::default()
                                 },)),
                                 values: Box::new(ExpressionEnum::BaseValue(BaseValue {
                                     value: format!("'{}'", class.name),
+                                    ..Default::default()
                                 },)),
                                 operator: "=".into(),
+                                ..Default::default()
                             },),
                         ]
                     );
@@ -628,6 +725,7 @@ impl ExpressionEnum {
                     UnaryType::Negative => "-",
                     UnaryType::Invert => "~",
                     UnaryType::Not => "not ",
+                    UnaryType::Positive => unreachable!(),
                 },
                 unary_operation.target.build()?.join("")
             )]),
@@ -715,6 +813,22 @@ impl ExpressionEnum {
                 attribute.parent.build()?.join(""),
                 attribute.attr.build()?.join("")
             )]),
+            ExpressionEnum::With(with) => {
+                let item_code = with.item.build()?.join("");
+                let mut code = Vec::new();
+                code.push(format!("with {}:", item_code));
+                if with.body.is_empty() {
+                    code.push("    pass".to_string());
+                } else {
+                    for expr in with.body.iter() {
+                        let expr_code = expr.build()?;
+                        for line in expr_code.iter() {
+                            code.push(format!("    {}", line));
+                        }
+                    }
+                }
+                Ok(code)
+            }
             _ => Ok(vec![]),
         }
     }

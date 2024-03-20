@@ -2,4 +2,4 @@
 
 cargo build --release
 
-cp target/release/pyrev ~/.cargo/bin/pyrev
+sudo cp target/release/pyrev /usr/local/bin/pyrev

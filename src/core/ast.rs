@@ -35,6 +35,7 @@ impl ExprParser for Expr {
                                 instruction.offset
                             ))?
                             .clone(),
+                        ..Default::default()
                     }));
                 }
                 Opcode::LoadFast => {
@@ -58,7 +59,10 @@ impl ExprParser for Expr {
                         traceback.insert_local(index, name.clone(), false);
                     }
 
-                    exprs_stack.push(ExpressionEnum::BaseValue(BaseValue { value: name }));
+                    exprs_stack.push(ExpressionEnum::BaseValue(BaseValue {
+                        value: name,
+                        ..Default::default()
+                    }));
                 }
                 Opcode::LoadAttr => {
                     let parent = exprs_stack.pop().ok_or(format!(
@@ -73,7 +77,9 @@ impl ExprParser for Expr {
                         parent: Box::new(parent),
                         attr: Box::new(ExpressionEnum::BaseValue(BaseValue {
                             value: attr.clone(),
+                            ..Default::default()
                         })),
+                        ..Default::default()
                     }));
                 }
                 Opcode::LoadMethod => {
@@ -89,7 +95,9 @@ impl ExprParser for Expr {
                         parent: Box::new(parent),
                         attr: Box::new(ExpressionEnum::BaseValue(BaseValue {
                             value: method.clone(),
+                            ..Default::default()
                         })),
+                        ..Default::default()
                     }));
                 }
                 Opcode::StoreName | Opcode::StoreGlobal => {
@@ -121,9 +129,11 @@ impl ExprParser for Expr {
                                 exprs_stack.push(ExpressionEnum::Assign(Assign {
                                     target: Box::new(ExpressionEnum::BaseValue(BaseValue {
                                         value: name,
+                                        ..Default::default()
                                     })),
                                     values: Box::new(ExpressionEnum::Function(function)),
                                     operator: "=".to_string(),
+                                    ..Default::default()
                                 }));
                             } else {
                                 exprs_stack.push(ExpressionEnum::Function(function));
@@ -139,6 +149,9 @@ impl ExprParser for Expr {
                                         bk_module: None,
                                         alias: None,
                                         fragment: None,
+                                        start_line: import.start_line,
+                                        start_offset: import.start_offset,
+                                        end_offset: import.end_offset,
                                     }))
                                 } else {
                                     //没from，有as
@@ -147,6 +160,9 @@ impl ExprParser for Expr {
                                         bk_module: None,
                                         alias: Some(name),
                                         fragment: None,
+                                        start_line: import.start_line,
+                                        start_offset: import.start_offset,
+                                        end_offset: import.end_offset,
                                     }))
                                 }
                             } else {
@@ -165,6 +181,9 @@ impl ExprParser for Expr {
                                         ),
                                         alias: None,
                                         fragment: None,
+                                        start_line: import.start_line,
+                                        start_offset: import.start_offset,
+                                        end_offset: import.end_offset,
                                     }))
                                 } else {
                                     //有from，有as
@@ -182,17 +201,36 @@ impl ExprParser for Expr {
                                         ),
                                         alias: None,
                                         fragment: None,
+                                        start_line: import.start_line,
+                                        start_offset: import.start_offset,
+                                        end_offset: import.end_offset,
                                     }))
                                 }
                             }
+                        }
+                        ExpressionEnum::With(with) => {
+                            let item = with.item.clone();
+                            with.with_mut().patch_by(|w| {
+                                w.item = Box::new(ExpressionEnum::Alias(Alias {
+                                    target: item,
+                                    alias: Box::new(ExpressionEnum::BaseValue(BaseValue {
+                                        value: name,
+                                        ..Default::default()
+                                    })),
+                                    ..Default::default()
+                                }))
+                            })?;
+                            exprs_stack.push(ExpressionEnum::With(with));
                         }
                         _ => {
                             exprs_stack.push(ExpressionEnum::Assign(Assign {
                                 target: Box::new(ExpressionEnum::BaseValue(BaseValue {
                                     value: name,
+                                    ..Default::default()
                                 })),
                                 values: Box::new(value),
                                 operator: "=".to_string(),
+                                ..Default::default()
                             }));
                         }
                     }
@@ -217,9 +255,15 @@ impl ExprParser for Expr {
                             exprs_stack.push(value);
                         }
                         _ => exprs_stack.push(ExpressionEnum::Assign(Assign {
-                            target: Box::new(ExpressionEnum::BaseValue(BaseValue { value: name })),
+                            target: Box::new(ExpressionEnum::BaseValue(BaseValue {
+                                value: name,
+                                ..Default::default()
+                            })),
                             values: Box::new(value),
                             operator: "=".to_string(),
+                            start_line: instruction.starts_line.unwrap_or_default(),
+                            start_offset: instruction.offset,
+                            end_offset: instruction.offset,
                         })),
                     }
                 }
@@ -241,10 +285,15 @@ impl ExprParser for Expr {
                             parent: Box::new(parent),
                             attr: Box::new(ExpressionEnum::BaseValue(BaseValue {
                                 value: attr.clone(),
+                                ..Default::default()
                             })),
+                            ..Default::default()
                         })),
                         values: Box::new(value),
                         operator: "=".to_string(),
+                        start_line: instruction.starts_line.unwrap_or_default(),
+                        start_offset: instruction.offset,
+                        end_offset: instruction.offset,
                     }));
                 }
                 Opcode::LoadBuildClass => {
@@ -271,6 +320,7 @@ impl ExprParser for Expr {
                     ))?;
                     exprs_stack.push(ExpressionEnum::FormatValue(FormatValue {
                         value: Box::new(format_value),
+                        ..Default::default()
                     }));
                 }
                 Opcode::BuildString => {
@@ -288,6 +338,7 @@ impl ExprParser for Expr {
                     format_string.reverse();
                     exprs_stack.push(ExpressionEnum::Format(Format {
                         format_values: format_string,
+                        ..Default::default()
                     }));
                 }
                 Opcode::BuildTuple => {
@@ -306,6 +357,7 @@ impl ExprParser for Expr {
                     exprs_stack.push(ExpressionEnum::Container(Container {
                         values: tuple,
                         container_type: ContainerType::Tuple,
+                        ..Default::default()
                     }));
                 }
                 Opcode::BuildList => {
@@ -317,6 +369,7 @@ impl ExprParser for Expr {
                         exprs_stack.push(ExpressionEnum::Container(Container {
                             values: vec![],
                             container_type: ContainerType::List,
+                            ..Default::default()
                         }));
                     } else {
                         let mut list = Vec::with_capacity(size);
@@ -330,6 +383,7 @@ impl ExprParser for Expr {
                         exprs_stack.push(ExpressionEnum::Container(Container {
                             values: list,
                             container_type: ContainerType::List,
+                            ..Default::default()
                         }));
                     }
                 }
@@ -353,6 +407,7 @@ impl ExprParser for Expr {
                     if let ExpressionEnum::Container(Container {
                         values: mut list,
                         container_type: ContainerType::List,
+                        ..
                     }) = list
                     {
                         extend.iter_mut().for_each(|x| {
@@ -368,6 +423,7 @@ impl ExprParser for Expr {
                         exprs_stack.push(ExpressionEnum::Container(Container {
                             values: list,
                             container_type: ContainerType::List,
+                            ..Default::default()
                         }));
                     } else {
                         return Err("[ListExtend] Invalid list".into());
@@ -389,6 +445,7 @@ impl ExprParser for Expr {
                     exprs_stack.push(ExpressionEnum::Container(Container {
                         values: set,
                         container_type: ContainerType::Set,
+                        ..Default::default()
                     }));
                 }
                 Opcode::BuildMap => {
@@ -400,6 +457,7 @@ impl ExprParser for Expr {
                         exprs_stack.push(ExpressionEnum::Container(Container {
                             values: vec![],
                             container_type: ContainerType::Dict,
+                            ..Default::default()
                         }));
                     } else {
                         let mut map = Vec::with_capacity(size * 2);
@@ -419,6 +477,7 @@ impl ExprParser for Expr {
                         exprs_stack.push(ExpressionEnum::Container(Container {
                             values: map,
                             container_type: ContainerType::Dict,
+                            ..Default::default()
                         }));
                     }
                 }
@@ -440,7 +499,7 @@ impl ExprParser for Expr {
                     }
                     values.reverse();
                     let mut map = Vec::with_capacity(size * 2);
-                    if let ExpressionEnum::BaseValue(BaseValue { value: key }) = keys {
+                    if let ExpressionEnum::BaseValue(BaseValue { value: key, .. }) = keys {
                         for (k, v) in key
                             .trim_start_matches('(')
                             .trim_end_matches(')')
@@ -449,6 +508,7 @@ impl ExprParser for Expr {
                         {
                             map.push(ExpressionEnum::BaseValue(BaseValue {
                                 value: k.to_string(),
+                                ..Default::default()
                             }));
                             map.push(v);
                         }
@@ -456,6 +516,7 @@ impl ExprParser for Expr {
                     exprs_stack.push(ExpressionEnum::Container(Container {
                         values: map,
                         container_type: ContainerType::Dict,
+                        ..Default::default()
                     }))
                 }
                 Opcode::BuildSlice => {
@@ -478,6 +539,7 @@ impl ExprParser for Expr {
                     exprs_stack.push(ExpressionEnum::Slice(Slice {
                         origin: Box::new(origin),
                         slice,
+                        ..Default::default()
                     }));
                 }
                 Opcode::MakeFunction => {
@@ -518,6 +580,7 @@ impl ExprParser for Expr {
                                                     .unwrap_base_value()
                                                     .value,
                                             ),
+                                            ..Default::default()
                                         };
                                         function.args.push(arg);
                                     }
@@ -529,7 +592,7 @@ impl ExprParser for Expr {
                                 "[MakeFunction] Stack is empty, deviation is {}",
                                 instruction.offset
                             ))?;
-                            if let ExpressionEnum::BaseValue(BaseValue { value }) = defaults {
+                            if let ExpressionEnum::BaseValue(BaseValue { value, .. }) = defaults {
                                 let defaults = value
                                     .trim_start_matches('(')
                                     .trim_end_matches(')')
@@ -561,6 +624,7 @@ impl ExprParser for Expr {
                             .as_ref()
                             .ok_or("[BinaryOp] No argval")?
                             .clone(),
+                        ..Default::default()
                     }))
                 }
                 // BinaryOperation
@@ -582,6 +646,7 @@ impl ExprParser for Expr {
                         left: Box::new(left),
                         right: Box::new(right),
                         operator: operator.to_string(),
+                        ..Default::default()
                     }))
                 }
                 // BinaryOperation
@@ -603,6 +668,7 @@ impl ExprParser for Expr {
                         left: Box::new(left),
                         right: Box::new(right),
                         operator: operator.to_string(),
+                        ..Default::default()
                     }))
                 }
                 Opcode::UnaryInvert => {
@@ -613,6 +679,7 @@ impl ExprParser for Expr {
                     exprs_stack.push(ExpressionEnum::UnaryOperation(UnaryOperation {
                         target: Box::new(target),
                         unary_type: UnaryType::Invert,
+                        ..Default::default()
                     }))
                 }
                 Opcode::UnaryNegative => {
@@ -623,6 +690,7 @@ impl ExprParser for Expr {
                     exprs_stack.push(ExpressionEnum::UnaryOperation(UnaryOperation {
                         target: Box::new(target),
                         unary_type: UnaryType::Negative,
+                        ..Default::default()
                     }))
                 }
                 Opcode::UnaryNot => {
@@ -633,6 +701,7 @@ impl ExprParser for Expr {
                     exprs_stack.push(ExpressionEnum::UnaryOperation(UnaryOperation {
                         target: Box::new(target),
                         unary_type: UnaryType::Not,
+                        ..Default::default()
                     }))
                 }
                 Opcode::Call => {
@@ -658,12 +727,14 @@ impl ExprParser for Expr {
                                 exprs_stack.push(ExpressionEnum::Call(Call {
                                     func: Box::new(last),
                                     args: vec![],
+                                    ..Default::default()
                                 }))
                             }
                         } else {
                             exprs_stack.push(ExpressionEnum::Call(Call {
                                 func: Box::new(last),
                                 args: vec![],
+                                ..Default::default()
                             }));
                         }
                         offset += 1;
@@ -684,13 +755,20 @@ impl ExprParser for Expr {
                             exprs_stack.push(ExpressionEnum::Call(Call {
                                 func: Box::new(ExpressionEnum::BaseValue(BaseValue {
                                     value: function_name.to_string(),
+                                    ..Default::default()
                                 })),
                                 args,
+                                start_line: instruction.starts_line.unwrap_or_default(),
+                                start_offset: instruction.offset,
+                                end_offset: instruction.offset,
                             }))
                         }
                         Some(function) => exprs_stack.push(ExpressionEnum::Call(Call {
                             func: Box::new(function),
                             args,
+                            start_line: instruction.starts_line.unwrap_or_default(),
+                            start_offset: instruction.offset,
+                            end_offset: instruction.offset,
                         })),
                         None => return Err("[Call] Stack is empty".into()),
                     }
@@ -703,6 +781,9 @@ impl ExprParser for Expr {
                     ))?;
                     exprs_stack.push(ExpressionEnum::Return(Return {
                         value: Box::new(value),
+                        start_line: instruction.starts_line.unwrap_or_default(),
+                        start_offset: instruction.offset,
+                        end_offset: instruction.offset,
                     }));
                 }
                 Opcode::YieldValue => {
@@ -712,6 +793,9 @@ impl ExprParser for Expr {
                     ))?;
                     exprs_stack.push(ExpressionEnum::Yield(Yield {
                         value: Box::new(value),
+                        start_line: instruction.starts_line.unwrap_or_default(),
+                        start_offset: instruction.offset,
+                        end_offset: instruction.offset,
                     }))
                 }
                 Opcode::ImportFrom => {
@@ -773,6 +857,9 @@ impl ExprParser for Expr {
                                 bk_module: Some('*'.to_string()),
                                 fragment: None,
                                 alias: None,
+                                start_line: instruction.starts_line.unwrap_or_default(),
+                                start_offset: instruction.offset,
+                                end_offset: instruction.offset,
                             }))
                         } else {
                             //没 “ * ”
@@ -788,6 +875,9 @@ impl ExprParser for Expr {
                                 bk_module: Some("".to_string()),
                                 fragment: None,
                                 alias: None,
+                                start_line: instruction.starts_line.unwrap_or_default(),
+                                start_offset: instruction.offset,
+                                end_offset: instruction.offset,
                             }))
                         }
                     } else {
@@ -804,6 +894,9 @@ impl ExprParser for Expr {
                             bk_module: None,
                             fragment: None,
                             alias: None,
+                            start_line: instruction.starts_line.unwrap_or_default(),
+                            start_offset: instruction.offset,
+                            end_offset: instruction.offset,
                         }))
                     }
                 }
@@ -823,6 +916,7 @@ impl ExprParser for Expr {
                     let test = ExpressionEnum::UnaryOperation(UnaryOperation {
                         target: Box::new(test),
                         unary_type: UnaryType::Not,
+                        ..Default::default()
                     });
                     let jump_target = instruction
                         .argval
@@ -839,7 +933,13 @@ impl ExprParser for Expr {
                         or_else: vec![ExpressionEnum::Jump(Jump {
                             target: jump_target,
                             body: vec![],
+                            start_line: instruction.starts_line.unwrap_or_default(),
+                            start_offset: instruction.offset,
+                            end_offset: instruction.offset,
                         })],
+                        start_line: instruction.starts_line.unwrap_or_default(),
+                        start_offset: instruction.offset,
+                        end_offset: instruction.offset,
                     }));
                 }
                 Opcode::PopJumpIfFalse => {
@@ -870,7 +970,13 @@ impl ExprParser for Expr {
                         or_else: vec![ExpressionEnum::Jump(Jump {
                             target: jump_target,
                             body: vec![],
+                            start_line: instruction.starts_line.unwrap_or_default(),
+                            start_offset: instruction.offset,
+                            end_offset: instruction.offset,
                         })],
+                        start_line: instruction.starts_line.unwrap_or_default(),
+                        start_offset: instruction.offset,
+                        end_offset: instruction.offset,
                     }));
                 }
                 Opcode::JumpForward => {
@@ -886,6 +992,9 @@ impl ExprParser for Expr {
                     exprs_stack.push(ExpressionEnum::Jump(Jump {
                         target: jump_target,
                         body: vec![],
+                        start_line: instruction.starts_line.unwrap_or_default(),
+                        start_offset: instruction.offset,
+                        end_offset: instruction.offset,
                     }));
                 }
                 Opcode::LoadAssertionError => {
@@ -897,6 +1006,9 @@ impl ExprParser for Expr {
                     exprs_stack.push(ExpressionEnum::Assert(Assert {
                         test: Box::new(test),
                         msg: None,
+                        start_line: instruction.starts_line.unwrap_or_default(),
+                        start_offset: instruction.offset,
+                        end_offset: instruction.offset,
                     }))
                 }
                 Opcode::RaiseVarargs => {
@@ -916,6 +1028,9 @@ impl ExprParser for Expr {
                         } else {
                             exprs_stack.push(ExpressionEnum::Raise(Raise {
                                 exception: Box::new(exception),
+                                start_line: instruction.starts_line.unwrap_or_default(),
+                                start_offset: instruction.offset,
+                                end_offset: instruction.offset,
                             }))
                         }
                     } else {
@@ -944,16 +1059,37 @@ impl ExprParser for Expr {
                                 target: Box::new(err),
                                 alias: Box::new(ExpressionEnum::BaseValue(BaseValue {
                                     value: alias.clone(),
+                                    ..Default::default()
                                 })),
+                                ..Default::default()
                             })),
                             body: vec![],
+                            start_line: instruction.starts_line.unwrap_or_default(),
+                            start_offset: instruction.offset,
+                            end_offset: instruction.offset,
                         }));
                     } else {
                         exprs_stack.push(ExpressionEnum::Except(Except {
                             exception: Box::new(err),
                             body: vec![],
+                            start_line: instruction.starts_line.unwrap_or_default(),
+                            start_offset: instruction.offset,
+                            end_offset: instruction.offset,
                         }))
                     }
+                }
+                Opcode::BeforeWith => {
+                    let expr = exprs_stack.pop().ok_or(format!(
+                        "[BeforeWith] Stack is empty, deviation is {}",
+                        instruction.offset
+                    ))?;
+                    exprs_stack.push(ExpressionEnum::With(With {
+                        item: Box::new(expr),
+                        body: vec![],
+                        start_line: instruction.starts_line.unwrap_or_default(),
+                        start_offset: instruction.offset,
+                        end_offset: instruction.offset,
+                    }))
                 }
 
                 _ => {}
@@ -1069,11 +1205,13 @@ mod tests {
                             index: 0,
                             name: "a".into(),
                             annotation: Some("int".into()),
+                            ..Default::default()
                         },
                         FastVariable {
                             index: 1,
                             name: "return".into(),
                             annotation: Some("int".into()),
+                            ..Default::default()
                         },
                     ]
                     .into(),
@@ -1081,8 +1219,9 @@ mod tests {
                     start_line: 1,
                     end_line: 1,
                     bodys: vec![],
+                    ..Default::default()
                 },),]
-                .into(),
+                .into()
             })
         )
     }
@@ -1093,6 +1232,7 @@ mod tests {
             bodys: [ExpressionEnum::Assign(Assign {
                 target: Box::new(ExpressionEnum::BaseValue(BaseValue {
                     value: "test".into(),
+                    ..Default::default()
                 })),
                 values: Box::new(ExpressionEnum::Function(Function {
                     mark: "<code object test at 0x00000279922BDB80, file \"test/def.py\", line 1>"
@@ -1103,8 +1243,10 @@ mod tests {
                     start_line: 1,
                     end_line: 1,
                     bodys: vec![],
+                    ..Default::default()
                 })),
                 operator: "=".into(),
+                ..Default::default()
             })]
             .into(),
         });
@@ -1116,7 +1258,8 @@ mod tests {
             assign_query,
             vec![&Assign {
                 target: Box::new(ExpressionEnum::BaseValue(BaseValue {
-                    value: "test".into()
+                    value: "test".into(),
+                    ..Default::default()
                 })),
                 values: Box::new(ExpressionEnum::Function(Function {
                     mark: "<code object test at 0x00000279922BDB80, file \"test/def.py\", line 1>"
@@ -1127,8 +1270,10 @@ mod tests {
                     start_line: 1,
                     end_line: 1,
                     bodys: vec![],
+                    ..Default::default()
                 },)),
                 operator: "=".into(),
+                ..Default::default()
             }]
         );
         assert_eq!(
@@ -1142,6 +1287,7 @@ mod tests {
                 start_line: 1,
                 end_line: 1,
                 bodys: vec![],
+                ..Default::default()
             }]
         );
     }
@@ -1151,11 +1297,14 @@ mod tests {
         let expr = Assign {
             target: Box::new(ExpressionEnum::BaseValue(BaseValue {
                 value: "a".to_string(),
+                ..Default::default()
             })),
             values: Box::new(ExpressionEnum::BaseValue(BaseValue {
                 value: "1".to_string(),
+                ..Default::default()
             })),
             operator: "=".to_string(),
+            ..Default::default()
         };
         let any = expr.try_query::<Assign>();
 
@@ -1166,11 +1315,14 @@ mod tests {
             Some(&Assign {
                 target: Box::new(ExpressionEnum::BaseValue(BaseValue {
                     value: "a".to_string(),
+                    ..Default::default()
                 })),
                 values: Box::new(ExpressionEnum::BaseValue(BaseValue {
                     value: "1".to_string(),
+                    ..Default::default()
                 })),
                 operator: "=".to_string(),
+                ..Default::default()
             })
         )
     }

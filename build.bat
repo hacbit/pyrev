@@ -12,7 +12,7 @@ for %%a in (%*) do (
 if %IS_LINUX% equ 1 (
     echo Building for Linux...
     cargo build --release --target x86_64-unknown-linux-musl
-    wsl cp target/x86_64-unknown-linux-musl/release/pyrev ~/.cargo/bin/pyrev
+    wsl sudo cp target/x86_64-unknown-linux-musl/release/pyrev /usr/local/bin/pyrev
 ) else (
     echo Building for Windows...
     cargo build --release
