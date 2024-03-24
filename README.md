@@ -101,3 +101,13 @@ PS D:\path\to\pyrev> .\run-all.bat [--release]
 ```shell
 /path/to/pyrev> ./run-all.sh [--release]
 ```
+
+## Todo List
+
+-   [ ] if-else
+-   [ ] for & while
+-   [ ] async function
+-   [x] generator
+-   [ ] assertion
+-   [ ] try-except
+-   [ ] doc comment
