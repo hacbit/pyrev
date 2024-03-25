@@ -710,7 +710,7 @@ impl ExpressionEnum {
                         format_string.push_str(value_code.join("").trim_matches('\''));
                     }
                 }
-                code.push(format!("f\"{}\"", format_string));
+                code.push(format!("f\"{}\"", format_string.replace("\"", "\\\"")));
                 Ok(code)
             }
             ExpressionEnum::BinaryOperation(binary_operation) => Ok(vec![format!(
