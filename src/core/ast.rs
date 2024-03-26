@@ -1155,26 +1155,18 @@ impl ExprParser for Expr {
                                         next_instruction.offset
                                     ))?
                                     .clone();
-                                if let Some(last_seq) = sequence.last() {
-                                    if let ExpressionEnum::Container(sub_seq) = last_seq {
-                                        if sub_seq.values.len() < sub_seq.values.capacity() {
-                                            sub_seq.with_mut().patch_by(|container| {
-                                                container.values.push(ExpressionEnum::BaseValue(
-                                                    BaseValue {
-                                                        value: name,
-                                                        ..Default::default()
-                                                    },
-                                                ))
-                                            })?;
-                                        }
-                                        if sub_seq.values.len() == sub_seq.values.capacity() {
-                                            count -= 1;
-                                        }
-                                    } else {
-                                        sequence.push(ExpressionEnum::BaseValue(BaseValue {
-                                            value: name,
-                                            ..Default::default()
-                                        }));
+                                if let Some(ExpressionEnum::Container(sub_seq)) = sequence.last() {
+                                    if sub_seq.values.len() < sub_seq.values.capacity() {
+                                        sub_seq.with_mut().patch_by(|container| {
+                                            container.values.push(ExpressionEnum::BaseValue(
+                                                BaseValue {
+                                                    value: name,
+                                                    ..Default::default()
+                                                },
+                                            ))
+                                        })?;
+                                    }
+                                    if sub_seq.values.len() == sub_seq.values.capacity() {
                                         count -= 1;
                                     }
                                 } else {
