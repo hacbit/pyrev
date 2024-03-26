@@ -111,3 +111,5 @@ PS D:\path\to\pyrev> .\run-all.bat [--release]
 -   [ ] assertion
 -   [ ] try-except
 -   [ ] doc comment
+-   [ ] pyc decompile plugin
+-   [ ] pretty console output plugin

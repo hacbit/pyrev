@@ -1091,6 +1091,130 @@ impl ExprParser for Expr {
                         end_offset: instruction.offset,
                     }))
                 }
+                Opcode::ForIter => {
+                    let iter = exprs_stack.pop().ok_or(format!(
+                        "[ForIter] Stack is empty, deviation is {}",
+                        instruction.offset,
+                    ))?;
+                    if let Some(next_instruction) = opcode_instructions.get(offset + 1) {
+                        if next_instruction.opcode == Opcode::StoreName
+                            || next_instruction.opcode == Opcode::StoreFast
+                        {
+                            exprs_stack.push(ExpressionEnum::For(For {
+                                iterator: Box::new(iter),
+                                items: Box::new(ExpressionEnum::BaseValue(BaseValue {
+                                    value: next_instruction
+                                        .argval
+                                        .as_ref()
+                                        .ok_or(format!(
+                                            "[ForIter] No argval, deviation is {}",
+                                            next_instruction.offset
+                                        ))?
+                                        .clone(),
+                                    ..Default::default()
+                                })),
+                                ..Default::default()
+                            }));
+                            offset += 1;
+                        } else {
+                            exprs_stack.push(ExpressionEnum::For(For {
+                                iterator: Box::new(iter),
+                                ..Default::default()
+                            }))
+                        }
+                    } else {
+                        return Err(format!(
+                            "[ForIter] No next instruction, deviation is {}",
+                            instruction.offset,
+                        )
+                        .into());
+                    }
+                }
+                Opcode::UnpackSequence => {
+                    let mut count = instruction.arg.ok_or(format!(
+                        "[UnpackSequence] No arg, deviation is {}",
+                        instruction.offset
+                    ))?;
+                    let mut sequence = Vec::with_capacity(count);
+                    loop {
+                        if count == 0 {
+                            break;
+                        }
+                        let next_instruction =
+                            opcode_instructions.get(offset + 1).ok_or(format!(
+                                "[UnpackSequence] No next instruction, diviation is {}",
+                                instruction.offset
+                            ))?;
+                        match next_instruction.opcode {
+                            Opcode::StoreName => {
+                                let name = next_instruction
+                                    .argval
+                                    .as_ref()
+                                    .ok_or(format!(
+                                        "[UnpackSequence] No argval, diviation is {}",
+                                        next_instruction.offset
+                                    ))?
+                                    .clone();
+                                if let Some(last_seq) = sequence.last() {
+                                    if let ExpressionEnum::Container(sub_seq) = last_seq {
+                                        if sub_seq.values.len() < sub_seq.values.capacity() {
+                                            sub_seq.with_mut().patch_by(|container| {
+                                                container.values.push(ExpressionEnum::BaseValue(
+                                                    BaseValue {
+                                                        value: name,
+                                                        ..Default::default()
+                                                    },
+                                                ))
+                                            })?;
+                                        }
+                                        if sub_seq.values.len() == sub_seq.values.capacity() {
+                                            count -= 1;
+                                        }
+                                    } else {
+                                        sequence.push(ExpressionEnum::BaseValue(BaseValue {
+                                            value: name,
+                                            ..Default::default()
+                                        }));
+                                        count -= 1;
+                                    }
+                                } else {
+                                    sequence.push(ExpressionEnum::BaseValue(BaseValue {
+                                        value: name,
+                                        ..Default::default()
+                                    }));
+                                    count -= 1;
+                                }
+                            }
+                            Opcode::UnpackSequence => {
+                                let sub_count = next_instruction.arg.ok_or(format!(
+                                    "[UnpackSequence] No arg, diviation is {}",
+                                    next_instruction.offset
+                                ))?;
+                                let sub_sequence = Vec::with_capacity(sub_count);
+                                sequence.push(ExpressionEnum::Container(Container {
+                                    values: sub_sequence,
+                                    ..Default::default()
+                                }))
+                            }
+                            _ => {
+                                return Err(format!(
+                                "[UnpackSequence] Except StoreName or UnpackSequence, but got {:?}",
+                                next_instruction.opcode
+                            )
+                                .into())
+                            }
+                        }
+                        offset += 1;
+                    }
+                    if let Some(ExpressionEnum::For(for_expr)) = exprs_stack.last() {
+                        for_expr.with_mut().patch_by(|f| {
+                            f.items = Box::new(ExpressionEnum::Container(Container {
+                                values: sequence,
+                                ..Default::default()
+                            }))
+                        })?;
+                    }
+                }
 
                 _ => {}
             }

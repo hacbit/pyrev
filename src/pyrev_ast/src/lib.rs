@@ -204,6 +204,17 @@ pub struct With {
     pub end_offset: usize,
 }
 
+/// For循环
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
+pub struct For {
+    pub iterator: Box<ExpressionEnum>,
+    pub items: Box<ExpressionEnum>,
+    pub body: Vec<ExpressionEnum>,
+    pub start_line: usize,
+    pub start_offset: usize,
+    pub end_offset: usize,
+}
+
 /// If expression
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
 pub struct If {
@@ -302,6 +313,7 @@ pub enum ExpressionEnum {
     UnaryOperation(UnaryOperation),
     Call(Call),
     With(With),
+    For(For),
     If(If),
     Jump(Jump),
     Container(Container),
@@ -710,7 +722,7 @@ impl ExpressionEnum {
                         format_string.push_str(value_code.join("").trim_matches('\''));
                     }
                 }
-                code.push(format!("f\"{}\"", format_string.replace("\"", "\\\"")));
+                code.push(format!("f\"{}\"", format_string.replace('"', "\\\"")));
                 Ok(code)
             }
             ExpressionEnum::BinaryOperation(binary_operation) => Ok(vec![format!(
@@ -821,6 +833,23 @@ impl ExpressionEnum {
                     code.push("    pass".to_string());
                 } else {
                     for expr in with.body.iter() {
+                        let expr_code = expr.build()?;
+                        for line in expr_code.iter() {
+                            code.push(format!("    {}", line));
+                        }
+                    }
+                }
+                Ok(code)
+            }
+            ExpressionEnum::For(for_expr) => {
+                let iter_code = for_expr.iterator.build()?.join("");
+                let item_code = for_expr.items.build()?.join("");
+                let mut code = Vec::new();
+                code.push(format!("for {} in {}:", item_code, iter_code));
+                if for_expr.body.is_empty() {
+                    code.push("    pass".to_string());
+                } else {
+                    for expr in for_expr.body.iter() {
                         let expr_code = expr.build()?;
                         for line in expr_code.iter() {
                             code.push(format!("    {}", line));

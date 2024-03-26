@@ -49,7 +49,8 @@ impl App {
         } else {
             println!(
                 "{}",
-                format!("Warning: {} is not exists or is not a file", path.display()).bright_yellow()
+                format!("Warning: {} is not exists or is not a file", path.display())
+                    .bright_yellow()
             );
         }
         self
