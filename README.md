@@ -1,4 +1,4 @@
-# Pyrev v1.0.6
+# Pyrev v1.0.7
 
 Reverse tools for bytecode of python
 
@@ -105,7 +105,8 @@ PS D:\path\to\pyrev> .\run-all.bat [--release]
 ## Todo List
 
 -   [ ] if-else
--   [ ] for & while
+-   [x] for
+-   [ ] while
 -   [ ] async function
 -   [x] generator
 -   [ ] assertion

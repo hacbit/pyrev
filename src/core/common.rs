@@ -158,7 +158,13 @@ where
 
 #[derive(Debug, Clone)]
 pub struct TraceBack {
+    /// is_store is true if the arg is stored in the function argument
+    /// arg, (argval, is_store)
     pub locals: OrderMap<usize, (String, bool)>,
+    /// start is the start offset of the jump
+    /// jump_target is the target offset of the jump
+    /// start, jump_target
+    pub jumps: OrderMap<usize, usize>,
 }
 
 #[allow(unused)]
@@ -166,6 +172,7 @@ impl TraceBack {
     pub fn new() -> Self {
         Self {
             locals: OrderMap::new(),
+            jumps: OrderMap::new(),
         }
     }
 
@@ -173,8 +180,33 @@ impl TraceBack {
         self.locals.insert(arg, (argval, is_store));
     }
 
+    pub fn insert_jump(&mut self, start: usize, jump_target: usize) {
+        self.jumps.insert(start, jump_target);
+    }
+
     pub fn extend(&mut self, tb: Self) {
         self.locals.extend(tb.locals);
+        self.jumps.extend(tb.jumps);
+    }
+}
+
+pub struct ResMut<T>(*mut T);
+
+impl<T> ResMut<T> {
+    pub fn new(t: &T) -> Self {
+        Self {
+            0: t as *const T as *mut T,
+        }
+    }
+
+    pub fn patch_by<F>(&self, f: F) -> Result<()>
+    where
+        F: FnOnce(&mut T),
+    {
+        unsafe {
+            f(&mut *self.0);
+        }
+        Ok(())
     }
 }
 

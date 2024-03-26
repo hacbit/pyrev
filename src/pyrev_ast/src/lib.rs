@@ -210,6 +210,8 @@ pub struct For {
     pub iterator: Box<ExpressionEnum>,
     pub items: Box<ExpressionEnum>,
     pub body: Vec<ExpressionEnum>,
+    pub from: usize,
+    pub to: usize,
     pub start_line: usize,
     pub start_offset: usize,
     pub end_offset: usize,
@@ -276,6 +278,14 @@ pub struct BaseValue {
     pub end_offset: usize,
 }
 
+/// None
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
+pub struct NoneValue {
+    pub start_line: usize,
+    pub start_offset: usize,
+    pub end_offset: usize,
+}
+
 /// 为上面的表达式提供一个封装
 /// 用来实现不同Expression的嵌套
 ///
@@ -291,8 +301,9 @@ pub struct BaseValue {
 /// });
 /// assert!(expr.is_assign());
 /// ```
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Is, Unwrap)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Is, Unwrap, GetOffset)]
 pub enum ExpressionEnum {
+    NoneValue(NoneValue),
     Import(Import),
     Class(Class),
     FastVariable(FastVariable),

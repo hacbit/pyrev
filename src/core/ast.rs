@@ -35,6 +35,8 @@ impl ExprParser for Expr {
                                 instruction.offset
                             ))?
                             .clone(),
+                        start_offset: instruction.offset,
+                        end_offset: instruction.offset,
                         ..Default::default()
                     }));
                 }
@@ -61,6 +63,8 @@ impl ExprParser for Expr {
 
                     exprs_stack.push(ExpressionEnum::BaseValue(BaseValue {
                         value: name,
+                        start_offset: instruction.offset,
+                        end_offset: instruction.offset,
                         ..Default::default()
                     }));
                 }
@@ -79,6 +83,8 @@ impl ExprParser for Expr {
                             value: attr.clone(),
                             ..Default::default()
                         })),
+                        start_offset: instruction.offset,
+                        end_offset: instruction.offset,
                         ..Default::default()
                     }));
                 }
@@ -97,6 +103,8 @@ impl ExprParser for Expr {
                             value: method.clone(),
                             ..Default::default()
                         })),
+                        start_offset: instruction.offset,
+                        end_offset: instruction.offset,
                         ..Default::default()
                     }));
                 }
@@ -230,6 +238,8 @@ impl ExprParser for Expr {
                                 })),
                                 values: Box::new(value),
                                 operator: "=".to_string(),
+                                start_offset: instruction.offset,
+                                end_offset: instruction.offset,
                                 ..Default::default()
                             }));
                         }
@@ -287,6 +297,8 @@ impl ExprParser for Expr {
                                 value: attr.clone(),
                                 ..Default::default()
                             })),
+                            start_offset: instruction.offset,
+                            end_offset: instruction.offset,
                             ..Default::default()
                         })),
                         values: Box::new(value),
@@ -320,6 +332,8 @@ impl ExprParser for Expr {
                     ))?;
                     exprs_stack.push(ExpressionEnum::FormatValue(FormatValue {
                         value: Box::new(format_value),
+                        start_offset: instruction.offset,
+                        end_offset: instruction.offset,
                         ..Default::default()
                     }));
                 }
@@ -338,6 +352,8 @@ impl ExprParser for Expr {
                     format_string.reverse();
                     exprs_stack.push(ExpressionEnum::Format(Format {
                         format_values: format_string,
+                        start_offset: instruction.offset,
+                        end_offset: instruction.offset,
                         ..Default::default()
                     }));
                 }
@@ -357,6 +373,8 @@ impl ExprParser for Expr {
                     exprs_stack.push(ExpressionEnum::Container(Container {
                         values: tuple,
                         container_type: ContainerType::Tuple,
+                        start_offset: instruction.offset,
+                        end_offset: instruction.offset,
                         ..Default::default()
                     }));
                 }
@@ -369,6 +387,8 @@ impl ExprParser for Expr {
                         exprs_stack.push(ExpressionEnum::Container(Container {
                             values: vec![],
                             container_type: ContainerType::List,
+                            start_offset: instruction.offset,
+                            end_offset: instruction.offset,
                             ..Default::default()
                         }));
                     } else {
@@ -383,6 +403,8 @@ impl ExprParser for Expr {
                         exprs_stack.push(ExpressionEnum::Container(Container {
                             values: list,
                             container_type: ContainerType::List,
+                            start_offset: instruction.offset,
+                            end_offset: instruction.offset,
                             ..Default::default()
                         }));
                     }
@@ -423,6 +445,8 @@ impl ExprParser for Expr {
                         exprs_stack.push(ExpressionEnum::Container(Container {
                             values: list,
                             container_type: ContainerType::List,
+                            start_offset: instruction.offset,
+                            end_offset: instruction.offset,
                             ..Default::default()
                         }));
                     } else {
@@ -445,6 +469,8 @@ impl ExprParser for Expr {
                     exprs_stack.push(ExpressionEnum::Container(Container {
                         values: set,
                         container_type: ContainerType::Set,
+                        start_offset: instruction.offset,
+                        end_offset: instruction.offset,
                         ..Default::default()
                     }));
                 }
@@ -457,6 +483,8 @@ impl ExprParser for Expr {
                         exprs_stack.push(ExpressionEnum::Container(Container {
                             values: vec![],
                             container_type: ContainerType::Dict,
+                            start_offset: instruction.offset,
+                            end_offset: instruction.offset,
                             ..Default::default()
                         }));
                     } else {
@@ -477,6 +505,8 @@ impl ExprParser for Expr {
                         exprs_stack.push(ExpressionEnum::Container(Container {
                             values: map,
                             container_type: ContainerType::Dict,
+                            start_offset: instruction.offset,
+                            end_offset: instruction.offset,
                             ..Default::default()
                         }));
                     }
@@ -539,6 +569,8 @@ impl ExprParser for Expr {
                     exprs_stack.push(ExpressionEnum::Slice(Slice {
                         origin: Box::new(origin),
                         slice,
+                        start_offset: instruction.offset,
+                        end_offset: instruction.offset,
                         ..Default::default()
                     }));
                 }
@@ -604,6 +636,8 @@ impl ExprParser for Expr {
                             }
                         }
                     }
+                    function.start_offset = instruction.offset;
+                    function.end_offset = instruction.offset;
                     exprs_stack.push(ExpressionEnum::Function(function));
                 }
                 // BinaryOperation
@@ -624,6 +658,8 @@ impl ExprParser for Expr {
                             .as_ref()
                             .ok_or("[BinaryOp] No argval")?
                             .clone(),
+                        start_offset: instruction.offset,
+                        end_offset: instruction.offset,
                         ..Default::default()
                     }))
                 }
@@ -646,6 +682,8 @@ impl ExprParser for Expr {
                         left: Box::new(left),
                         right: Box::new(right),
                         operator: operator.to_string(),
+                        start_offset: instruction.offset,
+                        end_offset: instruction.offset,
                         ..Default::default()
                     }))
                 }
@@ -668,6 +706,8 @@ impl ExprParser for Expr {
                         left: Box::new(left),
                         right: Box::new(right),
                         operator: operator.to_string(),
+                        start_offset: instruction.offset,
+                        end_offset: instruction.offset,
                         ..Default::default()
                     }))
                 }
@@ -679,6 +719,8 @@ impl ExprParser for Expr {
                     exprs_stack.push(ExpressionEnum::UnaryOperation(UnaryOperation {
                         target: Box::new(target),
                         unary_type: UnaryType::Invert,
+                        start_offset: instruction.offset,
+                        end_offset: instruction.offset,
                         ..Default::default()
                     }))
                 }
@@ -690,6 +732,8 @@ impl ExprParser for Expr {
                     exprs_stack.push(ExpressionEnum::UnaryOperation(UnaryOperation {
                         target: Box::new(target),
                         unary_type: UnaryType::Negative,
+                        start_offset: instruction.offset,
+                        end_offset: instruction.offset,
                         ..Default::default()
                     }))
                 }
@@ -701,6 +745,8 @@ impl ExprParser for Expr {
                     exprs_stack.push(ExpressionEnum::UnaryOperation(UnaryOperation {
                         target: Box::new(target),
                         unary_type: UnaryType::Not,
+                        start_offset: instruction.offset,
+                        end_offset: instruction.offset,
                         ..Default::default()
                     }))
                 }
@@ -727,6 +773,8 @@ impl ExprParser for Expr {
                                 exprs_stack.push(ExpressionEnum::Call(Call {
                                     func: Box::new(last),
                                     args: vec![],
+                                    start_offset: instruction.offset,
+                                    end_offset: instruction.offset,
                                     ..Default::default()
                                 }))
                             }
@@ -734,6 +782,8 @@ impl ExprParser for Expr {
                             exprs_stack.push(ExpressionEnum::Call(Call {
                                 func: Box::new(last),
                                 args: vec![],
+                                start_offset: instruction.offset,
+                                end_offset: instruction.offset,
                                 ..Default::default()
                             }));
                         }
@@ -1096,6 +1146,20 @@ impl ExprParser for Expr {
                         "[ForIter] Stack is empty, deviation is {}",
                         instruction.offset,
                     ))?;
+                    let jump_target = instruction
+                        .argval
+                        .as_ref()
+                        .ok_or(format!(
+                            "[ForIter] No argval, deviation is {}",
+                            instruction.offset
+                        ))?
+                        .split("to ")
+                        .last()
+                        .ok_or(format!(
+                            "[ForIter] Invalid argval, expect \"to /* usize */\", but got {:?}",
+                            instruction.argval.as_ref().unwrap()
+                        ))?
+                        .parse::<usize>()?;
                     if let Some(next_instruction) = opcode_instructions.get(offset + 1) {
                         if next_instruction.opcode == Opcode::StoreName
                             || next_instruction.opcode == Opcode::StoreFast
@@ -1113,12 +1177,20 @@ impl ExprParser for Expr {
                                         .clone(),
                                     ..Default::default()
                                 })),
+                                from: instruction.offset,
+                                to: jump_target,
+                                start_offset: instruction.offset,
+                                end_offset: instruction.offset,
                                 ..Default::default()
                             }));
                             offset += 1;
                         } else {
                             exprs_stack.push(ExpressionEnum::For(For {
                                 iterator: Box::new(iter),
+                                from: instruction.offset,
+                                to: jump_target,
+                                start_offset: instruction.offset,
+                                end_offset: instruction.offset,
                                 ..Default::default()
                             }))
                         }
@@ -1161,6 +1233,8 @@ impl ExprParser for Expr {
                                             container.values.push(ExpressionEnum::BaseValue(
                                                 BaseValue {
                                                     value: name,
+                                                    start_offset: next_instruction.offset,
+                                                    end_offset: next_instruction.offset,
                                                     ..Default::default()
                                                 },
                                             ))
@@ -1172,6 +1246,8 @@ impl ExprParser for Expr {
                                 } else {
                                     sequence.push(ExpressionEnum::BaseValue(BaseValue {
                                         value: name,
+                                        start_offset: next_instruction.offset,
+                                        end_offset: next_instruction.offset,
                                         ..Default::default()
                                     }));
                                     count -= 1;
@@ -1185,12 +1261,14 @@ impl ExprParser for Expr {
                                 let sub_sequence = Vec::with_capacity(sub_count);
                                 sequence.push(ExpressionEnum::Container(Container {
                                     values: sub_sequence,
+                                    start_offset: next_instruction.offset,
+                                    end_offset: next_instruction.offset,
                                     ..Default::default()
                                 }))
                             }
                             _ => {
                                 return Err(format!(
-                                "[UnpackSequence] Except StoreName or UnpackSequence, but got {:?}",
+                                "[UnpackSequence] Expect StoreName or UnpackSequence, but got {:?}",
                                 next_instruction.opcode
                             )
                                 .into())
@@ -1202,6 +1280,8 @@ impl ExprParser for Expr {
                         for_expr.with_mut().patch_by(|f| {
                             f.items = Box::new(ExpressionEnum::Container(Container {
                                 values: sequence,
+                                start_offset: instruction.offset,
+                                end_offset: instruction.offset,
                                 ..Default::default()
                             }))
                         })?;

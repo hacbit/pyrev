@@ -148,3 +148,29 @@ pub fn derive_unwrap(input: TokenStream) -> TokenStream {
         panic!("only support enum");
     }
 }
+
+#[proc_macro_derive(GetOffset)]
+pub fn derive_get_offset(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    let name = &input.ident;
+    if let Data::Enum(data_enum) = input.data {
+        let variants = data_enum.variants.iter().map(|variant| {
+            let variant_name = &variant.ident;
+            quote! {
+                #name::#variant_name(inner) => (inner.start_offset, inner.end_offset),
+            }
+        });
+        let gen = quote! {
+            impl #name {
+                pub fn get_offset(&self) -> (usize, usize) {
+                    match self {
+                        #( #variants )*
+                    }
+                }
+            }
+        };
+        gen.into()
+    } else {
+        panic!("only support enum")
+    }
+}
