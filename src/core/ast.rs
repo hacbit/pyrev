@@ -216,20 +216,6 @@ impl ExprParser for Expr {
                                 }
                             }
                         }
-                        ExpressionEnum::With(with) => {
-                            let item = with.item.clone();
-                            with.with_mut().patch_by(|w| {
-                                w.item = Box::new(ExpressionEnum::Alias(Alias {
-                                    target: item,
-                                    alias: Box::new(ExpressionEnum::BaseValue(BaseValue {
-                                        value: name,
-                                        ..Default::default()
-                                    })),
-                                    ..Default::default()
-                                }))
-                            })?;
-                            exprs_stack.push(ExpressionEnum::With(with));
-                        }
                         _ => {
                             exprs_stack.push(ExpressionEnum::Assign(Assign {
                                 target: Box::new(ExpressionEnum::BaseValue(BaseValue {
@@ -1085,8 +1071,9 @@ impl ExprParser for Expr {
                         }
                     } else {
                         #[cfg(debug_assertions)]
-                        assert!(expr.is_assert());
-
+                        {
+                            assert!(expr.is_assert());
+                        }
                         //
                     }
                 }
@@ -1133,13 +1120,34 @@ impl ExprParser for Expr {
                         "[BeforeWith] Stack is empty, deviation is {}",
                         instruction.offset
                     ))?;
-                    exprs_stack.push(ExpressionEnum::With(With {
-                        item: Box::new(expr),
-                        body: vec![],
+                    let mut with = With {
                         start_line: instruction.starts_line.unwrap_or_default(),
                         start_offset: instruction.offset,
-                        end_offset: instruction.offset,
-                    }))
+                        ..Default::default()
+                    };
+                    if let Some(next_instruction) = opcode_instructions.get(offset + 1) {
+                        if next_instruction.opcode == Opcode::StoreName {
+                            let name = next_instruction.argval.as_ref().ok_or(format!(
+                                "[BeforeWith] No argval, deviation is {}",
+                                instruction.offset
+                            ))?;
+                            with.item = Box::new(ExpressionEnum::Alias(Alias {
+                                target: Box::new(expr),
+                                alias: Box::new(ExpressionEnum::BaseValue(BaseValue {
+                                    value: name.clone(),
+                                    ..Default::default()
+                                })),
+                                ..Default::default()
+                            }));
+                        } else {
+                            with.item = Box::new(expr);
+                        }
+                    }
+                    if let Some(next_instruction) = opcode_instructions.get(offset + 2) {
+                        with.end_offset = next_instruction.offset;
+                    }
+                    exprs_stack.push(ExpressionEnum::With(with));
+                    break;
                 }
                 Opcode::ForIter => {
                     let iter = exprs_stack.pop().ok_or(format!(

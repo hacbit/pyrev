@@ -34,7 +34,9 @@ impl Decompiler for CodeObjectMap {
             exprs_map.insert(mark.clone(), (expr, trace));
         }
         #[cfg(debug_assertions)]
-        dbg!(&exprs_map);
+        {
+            dbg!(&exprs_map);
+        }
 
         let main_expr = merge("<main>", &exprs_map)?;
         //dbg!(&main_expr);
@@ -155,14 +157,32 @@ fn merge(mark: &str, maps: &HashMap<String, (Expr, TraceBack)>) -> Result<Expr> 
 
         // merge the for loop
         let for_query = this_expr.query::<For>();
+        let mut want_to_removes = Vec::new();
         for for_loop in for_query {
             if for_loop.body.is_empty() {
-                let new_body = find_expr_among(this_expr, for_loop.from, for_loop.to)?;
+                let (new_body, want_to_remove) = find_expr_among(this_expr, for_loop.from, for_loop.to)?;
                 for_loop.with_mut().patch_by(|f| {
                     f.body = new_body;
                 })?;
+                want_to_removes.extend(want_to_remove);
             }
         }
+        commit_expr(this_expr, &want_to_removes)?;
+
+        // merge the with block
+        let with_query = this_expr.query::<With>();
+        want_to_removes.clear();
+        for with_block in with_query {
+            if with_block.body.is_empty() {
+                let (new_body, want_to_remove) =
+                    find_expr_among(this_expr, with_block.start_offset, with_block.end_offset)?;
+                with_block.with_mut().patch_by(|w| {
+                    w.body = new_body;
+                })?;
+                want_to_removes.extend(want_to_remove);
+            }
+        }
+        commit_expr(this_expr, &want_to_removes)?;
 
         //dbg!(&this_expr);
         if is_merged {
@@ -176,27 +196,30 @@ fn find_expr_among(
     expr: &Expr,
     offset: usize,
     target_offset: usize,
-) -> Result<Vec<ExpressionEnum>> {
+) -> Result<(Vec<ExpressionEnum>, Vec<usize>)> {
     let mut res = Vec::new();
-    let mut i = 0;
-    loop {
-        let (start, end) = expr.bodys.get(i).ok_or("[FindExpr] Index out of range")?.get_offset();
+    let mut want_to_remove = Vec::new();
+    for (i, e) in expr.bodys.iter().enumerate() {
+        let (start, end) = e.get_offset();
         #[cfg(debug_assertions)]
         {
             //dbg!(start, end, offset, target_offset);
         }
         if start > offset && end < target_offset {
-            ResMut::new(expr).patch_by(|e| {
-                res.push(e.bodys.remove(i));
-            })?;
-        } else {
-            i += 1;
-        }
-        if i >= expr.bodys.len() {
-            break;
+            res.push(e.to_owned());
+            want_to_remove.push(i);
         }
     }
-    Ok(res)
+    Ok((res, want_to_remove))
+}
+
+fn commit_expr(expr: &Expr, want_to_remove: &[usize]) -> Result<()> {
+    for idx in want_to_remove.iter().rev() {
+        ResMut::new(expr).patch_by(|e| {
+            e.bodys.remove(*idx);
+        })?;
+    }
+    Ok(())
 }
 
 #[derive(Debug, PartialEq)]
