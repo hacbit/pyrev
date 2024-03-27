@@ -35,7 +35,7 @@ where
 
 impl<T, S> OStream for T
 where
-    T: Iterator<Item = (usize, S)> + Clone,
+    T: Iterator<Item = (usize, S)> + Clone + std::fmt::Debug,
     S: AsRef<str> + std::fmt::Display,
 {
     /// 将迭代器中的内容写入控制台
@@ -48,7 +48,7 @@ where
             let max_wide = self
                 .clone()
                 .max_by_key(|(i, _)| *i)
-                .unwrap()
+                .ok_or(format!("[WriteConsole] Can't get max wide: {:?}", self))?
                 .0
                 .to_string()
                 .len();

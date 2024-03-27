@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt::Debug;
 
 use super::ast::*;
 use super::common::*;
@@ -160,7 +161,8 @@ fn merge(mark: &str, maps: &HashMap<String, (Expr, TraceBack)>) -> Result<Expr> 
         let mut want_to_removes = Vec::new();
         for for_loop in for_query {
             if for_loop.body.is_empty() {
-                let (new_body, want_to_remove) = find_expr_among(this_expr, for_loop.from, for_loop.to)?;
+                let (new_body, want_to_remove) =
+                    find_expr_among(this_expr, for_loop.from, for_loop.to)?;
                 for_loop.with_mut().patch_by(|f| {
                     f.body = new_body;
                 })?;
@@ -237,7 +239,7 @@ impl DecompiledCode {
         self.code.push((l, s.as_ref().to_string()));
     }
 
-    pub fn iter(&mut self) -> impl Iterator<Item = (usize, &std::string::String)> + Clone {
+    pub fn iter(&mut self) -> impl Iterator<Item = (usize, &std::string::String)> + Clone + Debug {
         self.code.iter().map(|(i, s)| (*i, s))
     }
 }
