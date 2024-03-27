@@ -194,9 +194,7 @@ pub struct ResMut<T>(*mut T);
 
 impl<T> ResMut<T> {
     pub fn new(t: &T) -> Self {
-        Self {
-            0: t as *const T as *mut T,
-        }
+        Self(t as *const T as *mut T)
     }
 
     pub fn patch_by<F>(&self, f: F) -> Result<()>

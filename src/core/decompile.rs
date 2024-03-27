@@ -157,7 +157,7 @@ fn merge(mark: &str, maps: &HashMap<String, (Expr, TraceBack)>) -> Result<Expr> 
         let for_query = this_expr.query::<For>();
         for for_loop in for_query {
             if for_loop.body.is_empty() {
-                let new_body = find_expr_among(&this_expr, for_loop.from, for_loop.to)?;
+                let new_body = find_expr_among(this_expr, for_loop.from, for_loop.to)?;
                 for_loop.with_mut().patch_by(|f| {
                     f.body = new_body;
                 })?;
@@ -172,28 +172,29 @@ fn merge(mark: &str, maps: &HashMap<String, (Expr, TraceBack)>) -> Result<Expr> 
     Ok(this_expr.to_owned())
 }
 
-fn find_expr_among<'a>(
+fn find_expr_among(
     expr: &Expr,
     offset: usize,
     target_offset: usize,
 ) -> Result<Vec<ExpressionEnum>> {
     let mut res = Vec::new();
-    let mut want_to_remove = Vec::new();
-    for (idx, e) in expr.bodys.iter().enumerate() {
-        let (start, end) = e.get_offset();
+    let mut i = 0;
+    loop {
+        let (start, end) = expr.bodys.get(i).ok_or("[FindExpr] Index out of range")?.get_offset();
         #[cfg(debug_assertions)]
         {
             //dbg!(start, end, offset, target_offset);
         }
         if start > offset && end < target_offset {
-            res.push(e.to_owned());
-            want_to_remove.push(idx);
+            ResMut::new(expr).patch_by(|e| {
+                res.push(e.bodys.remove(i));
+            })?;
+        } else {
+            i += 1;
         }
-    }
-    for i in want_to_remove.iter().rev() {
-        ResMut::new(expr).patch_by(|e| {
-            e.bodys.remove(*i);
-        })?;
+        if i >= expr.bodys.len() {
+            break;
+        }
     }
     Ok(res)
 }
