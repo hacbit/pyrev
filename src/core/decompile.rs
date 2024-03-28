@@ -18,21 +18,14 @@ impl Decompiler for CodeObjectMap {
         let mut decompiled_code = DecompiledCode::new();
         let mut exprs_map = HashMap::new();
         for (mark, code_object) in self.iter() {
-            let mut expr = Expr::new();
-            let mut trace = TraceBack::new();
-            for (_, instruction) in code_object.iter() {
-                let (e, t) = Expr::parse(instruction)?;
-                //dbg!(&e);
-                expr.extend(*e);
-                trace.extend(t);
-            }
+            let (expr, trace) = Expr::parse(&code_object)?;
 
             #[cfg(debug_assertions)]
             {
                 println!("{:?}", &trace);
             }
 
-            exprs_map.insert(mark.clone(), (expr, trace));
+            exprs_map.insert(mark.clone(), (*expr, trace));
         }
         #[cfg(debug_assertions)]
         {

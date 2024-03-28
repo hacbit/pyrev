@@ -3,7 +3,8 @@ use regex::Regex;
 
 pub type ObjectMark = String;
 pub type LineNumber = usize;
-pub type CodeObject = OrderMap<LineNumber, Vec<OpcodeInstruction>>;
+//pub type CodeObject = OrderMap<LineNumber, Vec<OpcodeInstruction>>;
+pub type CodeObject = Vec<OpcodeInstruction>;
 pub type CodeObjectMap = OrderMap<ObjectMark, CodeObject>;
 
 pub trait OpcodeParser {
@@ -64,21 +65,10 @@ where
             );
             if let Ok(line) = line.parse::<LineNumber>() {
                 last_line = line;
-                if code_object.contains_key(&line) {
-                    code_object
-                        .get_mut(&line)
-                        .ok_or("Unknown Line")?
-                        .push(instruction);
-                } else {
-                    code_object.insert(line, vec![instruction]);
-                }
             } else {
                 instruction.starts_line = Some(last_line);
-                code_object
-                    .get_mut(&last_line)
-                    .ok_or("Unknown Line")?
-                    .push(instruction);
             }
+            code_object.push(instruction);
         }
         if !code_object_map.contains_key(&this_obj_mark) {
             code_object_map.insert(this_obj_mark, code_object);
@@ -106,7 +96,7 @@ mod tests {
         //dbg!(parsed);
         //assert!(false);
         assert_eq!(
-            parsed.get("<main>").unwrap().get(&1).unwrap(),
+            parsed.get("<main>").unwrap(),
             &vec![
                 OpcodeInstruction {
                     opcode: Opcode::LoadConst,
@@ -114,7 +104,7 @@ mod tests {
                     arg: Some(0,),
                     argval: Some("'b'".to_string(),),
                     offset: 2,
-                    starts_line: Some(1,),
+                    starts_line: Some(1),
                     is_jump_target: false,
                     positions: vec![],
                 },
@@ -124,7 +114,7 @@ mod tests {
                     arg: Some(0,),
                     argval: Some("int".to_string(),),
                     offset: 4,
-                    starts_line: None,
+                    starts_line: Some(1),
                     is_jump_target: false,
                     positions: vec![],
                 },
@@ -134,7 +124,7 @@ mod tests {
                     arg: Some(1,),
                     argval: Some("'return'".to_string(),),
                     offset: 6,
-                    starts_line: None,
+                    starts_line: Some(1),
                     is_jump_target: false,
                     positions: vec![],
                 },
@@ -144,7 +134,7 @@ mod tests {
                     arg: Some(0,),
                     argval: Some("int".to_string(),),
                     offset: 8,
-                    starts_line: None,
+                    starts_line: Some(1),
                     is_jump_target: false,
                     positions: vec![],
                 },
@@ -154,7 +144,7 @@ mod tests {
                     arg: Some(4,),
                     argval: None,
                     offset: 10,
-                    starts_line: None,
+                    starts_line: Some(1),
                     is_jump_target: false,
                     positions: vec![],
                 },
@@ -167,7 +157,7 @@ mod tests {
                             .to_string(),
                     ),
                     offset: 12,
-                    starts_line: None,
+                    starts_line: Some(1),
                     is_jump_target: false,
                     positions: vec![],
                 },
@@ -177,7 +167,7 @@ mod tests {
                     arg: Some(4,),
                     argval: Some("annotations".to_string(),),
                     offset: 14,
-                    starts_line: None,
+                    starts_line: Some(1),
                     is_jump_target: false,
                     positions: vec![],
                 },
@@ -187,7 +177,7 @@ mod tests {
                     arg: Some(1,),
                     argval: Some("test".to_string(),),
                     offset: 16,
-                    starts_line: None,
+                    starts_line: Some(1),
                     is_jump_target: false,
                     positions: vec![],
                 },
