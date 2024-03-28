@@ -51,7 +51,7 @@ where
                 this_obj_mark = mark.to_string();
                 code_object = CodeObject::new();
             }
-            let instruction = OpcodeInstruction::new(
+            let mut instruction = OpcodeInstruction::new(
                 bc,
                 a.parse::<usize>().ok(),
                 if ra.is_empty() {
@@ -73,6 +73,7 @@ where
                     code_object.insert(line, vec![instruction]);
                 }
             } else {
+                instruction.starts_line = Some(last_line);
                 code_object
                     .get_mut(&last_line)
                     .ok_or("Unknown Line")?
