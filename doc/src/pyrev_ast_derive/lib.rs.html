@@ -128,6 +128,54 @@
 <a href="#126" id="126">126</a>
 <a href="#127" id="127">127</a>
 <a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
 </pre></div><pre class="rust"><code><span class="kw">extern crate </span>proc_macro;
 <span class="kw">use </span>proc_macro::TokenStream;
 <span class="kw">use </span>quote::quote;
@@ -216,8 +264,8 @@
         .to_lowercase()
 }
 
-<span class="attr">#[proc_macro_derive(Common)]
-</span><span class="kw">pub fn </span>derive_common(input: TokenStream) -&gt; TokenStream {
+<span class="attr">#[proc_macro_derive(Is)]
+</span><span class="kw">pub fn </span>derive_is(input: TokenStream) -&gt; TokenStream {
     <span class="kw">let </span>input = <span class="macro">parse_macro_input!</span>(input <span class="kw">as </span>DeriveInput);
     <span class="kw">let </span>name = <span class="kw-2">&amp;</span>input.ident;
     <span class="kw">if let </span>Data::Enum(data_enum) = input.data {
@@ -228,15 +276,37 @@
                 <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"is_{}"</span>, camel_to_snake(variant_name.to_string())),
                 variant_name.span(),
             );
+            <span class="macro">quote!</span> {
+                <span class="kw">pub fn </span>#is_function_name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+                    <span class="macro">matches!</span>(<span class="self">self</span>, #name::#variant_name(<span class="kw">_</span>))
+                }
+            }
+        });
+
+        <span class="kw">let </span>gen = <span class="macro">quote!</span> {
+            <span class="kw">impl </span>#name {
+                #(#functions)*
+            }
+        };
+        gen.into()
+    } <span class="kw">else </span>{
+        <span class="macro">panic!</span>(<span class="string">"only support enum"</span>);
+    }
+}
+
+<span class="attr">#[proc_macro_derive(Unwrap)]
+</span><span class="kw">pub fn </span>derive_unwrap(input: TokenStream) -&gt; TokenStream {
+    <span class="kw">let </span>input = <span class="macro">parse_macro_input!</span>(input <span class="kw">as </span>DeriveInput);
+    <span class="kw">let </span>name = <span class="kw-2">&amp;</span>input.ident;
+    <span class="kw">if let </span>Data::Enum(data_enum) = input.data {
+        <span class="comment">// implement the is_xxx function for each variant
+        </span><span class="kw">let </span>functions = data_enum.variants.iter().map(|variant| {
+            <span class="kw">let </span>variant_name = <span class="kw-2">&amp;</span>variant.ident;
             <span class="kw">let </span>unwrap_function_name = <span class="kw-2">&amp;</span>Ident::new(
                 <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"unwrap_{}"</span>, camel_to_snake(variant_name.to_string())),
                 variant_name.span(),
             );
             <span class="macro">quote!</span> {
-                <span class="kw">pub fn </span>#is_function_name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-                    <span class="macro">matches!</span>(<span class="self">self</span>, #name::#variant_name(<span class="kw">_</span>))
-                }
-
                 <span class="kw">pub fn </span>#unwrap_function_name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; #variant_name {
                     <span class="kw">match </span><span class="self">self </span>{
                         #name::#variant_name(inner) =&gt; inner.clone(),
@@ -254,6 +324,32 @@
         gen.into()
     } <span class="kw">else </span>{
         <span class="macro">panic!</span>(<span class="string">"only support enum"</span>);
+    }
+}
+
+<span class="attr">#[proc_macro_derive(GetOffset)]
+</span><span class="kw">pub fn </span>derive_get_offset(input: TokenStream) -&gt; TokenStream {
+    <span class="kw">let </span>input = <span class="macro">parse_macro_input!</span>(input <span class="kw">as </span>DeriveInput);
+    <span class="kw">let </span>name = <span class="kw-2">&amp;</span>input.ident;
+    <span class="kw">if let </span>Data::Enum(data_enum) = input.data {
+        <span class="kw">let </span>variants = data_enum.variants.iter().map(|variant| {
+            <span class="kw">let </span>variant_name = <span class="kw-2">&amp;</span>variant.ident;
+            <span class="macro">quote!</span> {
+                #name::#variant_name(inner) =&gt; (inner.start_offset, inner.end_offset),
+            }
+        });
+        <span class="kw">let </span>gen = <span class="macro">quote!</span> {
+            <span class="kw">impl </span>#name {
+                <span class="kw">pub fn </span>get_offset(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (usize, usize) {
+                    <span class="kw">match </span><span class="self">self </span>{
+                        #( #variants )*
+                    }
+                }
+            }
+        };
+        gen.into()
+    } <span class="kw">else </span>{
+        <span class="macro">panic!</span>(<span class="string">"only support enum"</span>)
     }
 }
 </code></pre></div></section></main></body></html>

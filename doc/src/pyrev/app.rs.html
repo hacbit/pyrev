@@ -150,6 +150,11 @@
 <a href="#148" id="148">148</a>
 <a href="#149" id="149">149</a>
 <a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::core::common::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::core::decompile::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::core::parse_opcode::<span class="kw-2">*</span>;
@@ -201,7 +206,8 @@
         } <span class="kw">else </span>{
             <span class="macro">println!</span>(
                 <span class="string">"{}"</span>,
-                <span class="macro">format!</span>(<span class="string">"Warning: {} is not a file"</span>, path.display()).bright_yellow()
+                <span class="macro">format!</span>(<span class="string">"Warning: {} is not exists or is not a file"</span>, path.display())
+                    .bright_yellow()
             );
         }
         <span class="self">self
@@ -239,7 +245,11 @@
     </span>}
 
     <span class="kw">pub fn </span>run(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
-        <span class="kw">for </span>code_object_map <span class="kw">in </span><span class="self">self</span>.resources.values() {
+        <span class="kw">for </span>path <span class="kw">in </span><span class="self">self</span>.files.iter() {
+            <span class="kw">let </span>code_object_map = <span class="self">self
+                </span>.resources
+                .get(path)
+                .unwrap_or_else(|| <span class="macro">panic!</span>(<span class="string">"[App run] resource {} not found"</span>, path.display()));
             <span class="kw">let </span>decompiled_result = code_object_map.decompile();
             <span class="self">self</span>.output.push(decompiled_result);
         }

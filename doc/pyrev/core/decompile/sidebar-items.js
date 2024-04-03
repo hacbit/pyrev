@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["DecompiledCode"],"trait":["Decompiler"]};
+window.SIDEBAR_ITEMS = {"fn":["commit_expr","find_expr_among","merge"],"struct":["DecompiledCode"],"trait":["Decompiler"]};

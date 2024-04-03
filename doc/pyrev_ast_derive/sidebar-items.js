@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"derive":["Common","Expression","Query"]};
+window.SIDEBAR_ITEMS = {"derive":["Expression","GetOffset","Is","Query","Unwrap"]};

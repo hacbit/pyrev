@@ -187,21 +187,13 @@
 <a href="#185" id="185">185</a>
 <a href="#186" id="186">186</a>
 <a href="#187" id="187">187</a>
-<a href="#188" id="188">188</a>
-<a href="#189" id="189">189</a>
-<a href="#190" id="190">190</a>
-<a href="#191" id="191">191</a>
-<a href="#192" id="192">192</a>
-<a href="#193" id="193">193</a>
-<a href="#194" id="194">194</a>
-<a href="#195" id="195">195</a>
-<a href="#196" id="196">196</a>
 </pre></div><pre class="rust"><code><span class="kw">use super</span>::{common::<span class="kw-2">*</span>, opcode::OpcodeInstruction};
 <span class="kw">use </span>regex::Regex;
 
 <span class="kw">pub type </span>ObjectMark = String;
 <span class="kw">pub type </span>LineNumber = usize;
-<span class="kw">pub type </span>CodeObject = OrderMap&lt;LineNumber, Vec&lt;OpcodeInstruction&gt;&gt;;
+<span class="comment">//pub type CodeObject = OrderMap&lt;LineNumber, Vec&lt;OpcodeInstruction&gt;&gt;;
+</span><span class="kw">pub type </span>CodeObject = Vec&lt;OpcodeInstruction&gt;;
 <span class="kw">pub type </span>CodeObjectMap = OrderMap&lt;ObjectMark, CodeObject&gt;;
 
 <span class="kw">pub trait </span>OpcodeParser {
@@ -249,7 +241,7 @@
                 this_obj_mark = mark.to_string();
                 code_object = CodeObject::new();
             }
-            <span class="kw">let </span>instruction = OpcodeInstruction::new(
+            <span class="kw">let </span><span class="kw-2">mut </span>instruction = OpcodeInstruction::new(
                 bc,
                 a.parse::&lt;usize&gt;().ok(),
                 <span class="kw">if </span>ra.is_empty() {
@@ -262,20 +254,10 @@
             );
             <span class="kw">if let </span><span class="prelude-val">Ok</span>(line) = line.parse::&lt;LineNumber&gt;() {
                 last_line = line;
-                <span class="kw">if </span>code_object.contains_key(<span class="kw-2">&amp;</span>line) {
-                    code_object
-                        .get_mut(<span class="kw-2">&amp;</span>line)
-                        .ok_or(<span class="string">"Unknown Line"</span>)<span class="question-mark">?
-                        </span>.push(instruction);
-                } <span class="kw">else </span>{
-                    code_object.insert(line, <span class="macro">vec!</span>[instruction]);
-                }
             } <span class="kw">else </span>{
-                code_object
-                    .get_mut(<span class="kw-2">&amp;</span>last_line)
-                    .ok_or(<span class="string">"Unknown Line"</span>)<span class="question-mark">?
-                    </span>.push(instruction);
+                instruction.starts_line = <span class="prelude-val">Some</span>(last_line);
             }
+            code_object.push(instruction);
         }
         <span class="kw">if </span>!code_object_map.contains_key(<span class="kw-2">&amp;</span>this_obj_mark) {
             code_object_map.insert(this_obj_mark, code_object);
@@ -303,7 +285,7 @@
         <span class="comment">//dbg!(parsed);
         //assert!(false);
         </span><span class="macro">assert_eq!</span>(
-            parsed.get(<span class="string">"&lt;main&gt;"</span>).unwrap().get(<span class="kw-2">&amp;</span><span class="number">1</span>).unwrap(),
+            parsed.get(<span class="string">"&lt;main&gt;"</span>).unwrap(),
             <span class="kw-2">&amp;</span><span class="macro">vec!</span>[
                 OpcodeInstruction {
                     opcode: Opcode::LoadConst,
@@ -311,7 +293,7 @@
                     arg: <span class="prelude-val">Some</span>(<span class="number">0</span>,),
                     argval: <span class="prelude-val">Some</span>(<span class="string">"'b'"</span>.to_string(),),
                     offset: <span class="number">2</span>,
-                    starts_line: <span class="prelude-val">Some</span>(<span class="number">1</span>,),
+                    starts_line: <span class="prelude-val">Some</span>(<span class="number">1</span>),
                     is_jump_target: <span class="bool-val">false</span>,
                     positions: <span class="macro">vec!</span>[],
                 },
@@ -321,7 +303,7 @@
                     arg: <span class="prelude-val">Some</span>(<span class="number">0</span>,),
                     argval: <span class="prelude-val">Some</span>(<span class="string">"int"</span>.to_string(),),
                     offset: <span class="number">4</span>,
-                    starts_line: <span class="prelude-val">None</span>,
+                    starts_line: <span class="prelude-val">Some</span>(<span class="number">1</span>),
                     is_jump_target: <span class="bool-val">false</span>,
                     positions: <span class="macro">vec!</span>[],
                 },
@@ -331,7 +313,7 @@
                     arg: <span class="prelude-val">Some</span>(<span class="number">1</span>,),
                     argval: <span class="prelude-val">Some</span>(<span class="string">"'return'"</span>.to_string(),),
                     offset: <span class="number">6</span>,
-                    starts_line: <span class="prelude-val">None</span>,
+                    starts_line: <span class="prelude-val">Some</span>(<span class="number">1</span>),
                     is_jump_target: <span class="bool-val">false</span>,
                     positions: <span class="macro">vec!</span>[],
                 },
@@ -341,7 +323,7 @@
                     arg: <span class="prelude-val">Some</span>(<span class="number">0</span>,),
                     argval: <span class="prelude-val">Some</span>(<span class="string">"int"</span>.to_string(),),
                     offset: <span class="number">8</span>,
-                    starts_line: <span class="prelude-val">None</span>,
+                    starts_line: <span class="prelude-val">Some</span>(<span class="number">1</span>),
                     is_jump_target: <span class="bool-val">false</span>,
                     positions: <span class="macro">vec!</span>[],
                 },
@@ -351,7 +333,7 @@
                     arg: <span class="prelude-val">Some</span>(<span class="number">4</span>,),
                     argval: <span class="prelude-val">None</span>,
                     offset: <span class="number">10</span>,
-                    starts_line: <span class="prelude-val">None</span>,
+                    starts_line: <span class="prelude-val">Some</span>(<span class="number">1</span>),
                     is_jump_target: <span class="bool-val">false</span>,
                     positions: <span class="macro">vec!</span>[],
                 },
@@ -364,7 +346,7 @@
                             </span>.to_string(),
                     ),
                     offset: <span class="number">12</span>,
-                    starts_line: <span class="prelude-val">None</span>,
+                    starts_line: <span class="prelude-val">Some</span>(<span class="number">1</span>),
                     is_jump_target: <span class="bool-val">false</span>,
                     positions: <span class="macro">vec!</span>[],
                 },
@@ -374,7 +356,7 @@
                     arg: <span class="prelude-val">Some</span>(<span class="number">4</span>,),
                     argval: <span class="prelude-val">Some</span>(<span class="string">"annotations"</span>.to_string(),),
                     offset: <span class="number">14</span>,
-                    starts_line: <span class="prelude-val">None</span>,
+                    starts_line: <span class="prelude-val">Some</span>(<span class="number">1</span>),
                     is_jump_target: <span class="bool-val">false</span>,
                     positions: <span class="macro">vec!</span>[],
                 },
@@ -384,7 +366,7 @@
                     arg: <span class="prelude-val">Some</span>(<span class="number">1</span>,),
                     argval: <span class="prelude-val">Some</span>(<span class="string">"test"</span>.to_string(),),
                     offset: <span class="number">16</span>,
-                    starts_line: <span class="prelude-val">None</span>,
+                    starts_line: <span class="prelude-val">Some</span>(<span class="number">1</span>),
                     is_jump_target: <span class="bool-val">false</span>,
                     positions: <span class="macro">vec!</span>[],
                 },

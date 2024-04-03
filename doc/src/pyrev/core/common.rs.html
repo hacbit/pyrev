@@ -208,6 +208,40 @@
 <a href="#206" id="206">206</a>
 <a href="#207" id="207">207</a>
 <a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
+<a href="#236" id="236">236</a>
+<a href="#237" id="237">237</a>
+<a href="#238" id="238">238</a>
+<a href="#239" id="239">239</a>
+<a href="#240" id="240">240</a>
+<a href="#241" id="241">241</a>
+<a href="#242" id="242">242</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>atty::Stream;
 <span class="kw">use </span>colored::Colorize;
 <span class="kw">use </span>lazy_format::lazy_format;
@@ -245,7 +279,7 @@
 
 <span class="kw">impl</span>&lt;T, S&gt; OStream <span class="kw">for </span>T
 <span class="kw">where
-    </span>T: Iterator&lt;Item = (usize, S)&gt; + Clone,
+    </span>T: Iterator&lt;Item = (usize, S)&gt; + Clone + std::fmt::Debug,
     S: AsRef&lt;str&gt; + std::fmt::Display,
 {
     <span class="doccomment">/// 将迭代器中的内容写入控制台
@@ -258,14 +292,18 @@
             <span class="kw">let </span>max_wide = <span class="self">self
                 </span>.clone()
                 .max_by_key(|(i, <span class="kw">_</span>)| <span class="kw-2">*</span>i)
-                .unwrap()
-                .<span class="number">0
+                .ok_or(<span class="macro">format!</span>(<span class="string">"[WriteConsole] Can't get max wide: {:?}"</span>, <span class="self">self</span>))<span class="question-mark">?
+                </span>.<span class="number">0
                 </span>.to_string()
                 .len();
             <span class="kw">for </span>(<span class="kw">_</span>, s) <span class="kw">in </span><span class="self">self </span>{
                 <span class="macro">print!</span>(
                     <span class="string">"{}{} "</span>,
-                    <span class="macro">lazy_format!</span>(<span class="string">"{:&gt;max$}"</span>, line.to_string().bright_green(), max = max_wide + <span class="number">2</span>),
+                    <span class="macro">lazy_format!</span>(
+                        <span class="string">"{:&gt;max$}"</span>,
+                        line.to_string().bright_green(),
+                        max = max_wide + <span class="number">2
+                    </span>),
                     <span class="string">"|"</span>.bright_blue(),
                 );
                 <span class="macro">println!</span>(<span class="string">"{}"</span>, s);
@@ -364,7 +402,13 @@
 
 <span class="attr">#[derive(Debug, Clone)]
 </span><span class="kw">pub struct </span>TraceBack {
-    <span class="kw">pub </span>locals: OrderMap&lt;usize, (String, bool)&gt;,
+    <span class="doccomment">/// is_store is true if the arg is stored in the function argument
+    /// arg, (argval, is_store)
+    </span><span class="kw">pub </span>locals: OrderMap&lt;usize, (String, bool)&gt;,
+    <span class="doccomment">/// start is the start offset of the jump
+    /// jump_target is the target offset of the jump
+    /// start, jump_target
+    </span><span class="kw">pub </span>jumps: OrderMap&lt;usize, usize&gt;,
 }
 
 <span class="attr">#[allow(unused)]
@@ -372,6 +416,7 @@
     <span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             locals: OrderMap::new(),
+            jumps: OrderMap::new(),
         }
     }
 
@@ -379,8 +424,31 @@
         <span class="self">self</span>.locals.insert(arg, (argval, is_store));
     }
 
+    <span class="kw">pub fn </span>insert_jump(<span class="kw-2">&amp;mut </span><span class="self">self</span>, start: usize, jump_target: usize) {
+        <span class="self">self</span>.jumps.insert(start, jump_target);
+    }
+
     <span class="kw">pub fn </span>extend(<span class="kw-2">&amp;mut </span><span class="self">self</span>, tb: <span class="self">Self</span>) {
         <span class="self">self</span>.locals.extend(tb.locals);
+        <span class="self">self</span>.jumps.extend(tb.jumps);
+    }
+}
+
+<span class="kw">pub struct </span>ResMut&lt;T&gt;(<span class="kw-2">*mut </span>T);
+
+<span class="kw">impl</span>&lt;T&gt; ResMut&lt;T&gt; {
+    <span class="kw">pub fn </span>new(t: <span class="kw-2">&amp;</span>T) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>(t <span class="kw">as </span><span class="kw-2">*const </span>T <span class="kw">as </span><span class="kw-2">*mut </span>T)
+    }
+
+    <span class="kw">pub fn </span>patch_by&lt;F&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: F) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt;
+    <span class="kw">where
+        </span>F: FnOnce(<span class="kw-2">&amp;mut </span>T),
+    {
+        <span class="kw">unsafe </span>{
+            f(<span class="kw-2">&amp;mut *</span><span class="self">self</span>.<span class="number">0</span>);
+        }
+        <span class="prelude-val">Ok</span>(())
     }
 }
 
