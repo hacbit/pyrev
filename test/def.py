@@ -8,4 +8,4 @@ def foo(a: int, b: int = 2, c = 3):
 b = lambda a: a + 1
 [i + 1 for i in range(10)]
 a = 1
-foo(test(a))
+foo(test(a, 2), c = 5)

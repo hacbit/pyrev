@@ -19,32 +19,35 @@
              30 BUILD_CONST_KEY_MAP      4
              32 STORE_NAME               3 (c)
 
-  4          34 LOAD_NAME                0 (a)
-             36 LOAD_CONST               6 (97)
-             38 LOAD_CONST               7 ('b')
-             40 LOAD_CONST               8 (None)
-             42 BUILD_MAP                2
-             44 STORE_NAME               4 (d)
+  4          34 LOAD_CONST               6 (111)
+             36 STORE_NAME               4 (key)
 
-  5          46 LOAD_CONST               9 (1232)
-             48 LOAD_CONST              10 (0)
-             50 LOAD_CONST               8 (None)
-             52 LOAD_NAME                2 (print)
-             54 BUILD_SET                4
-             56 STORE_NAME               5 (e)
+  5          38 LOAD_NAME                4 (key)
+             40 LOAD_CONST               7 (97)
+             42 LOAD_CONST               8 ('b')
+             44 LOAD_CONST               9 (None)
+             46 BUILD_MAP                2
+             48 STORE_NAME               5 (d)
 
-  6          58 PUSH_NULL
-             60 LOAD_NAME                3 (c)
-             62 LOAD_METHOD              6 (get)
-             84 LOAD_CONST              11 ('p')
-             86 PRECALL                  1
-             90 CALL                     1
-            100 LOAD_NAME                0 (a)
-            102 LOAD_NAME                1 (b)
-            104 LOAD_NAME                3 (c)
-            106 LOAD_NAME                4 (d)
-            108 PRECALL                  4
-            112 CALL                     4
-            122 POP_TOP
-            124 LOAD_CONST               8 (None)
-            126 RETURN_VALUE
+  6          50 LOAD_CONST              10 (1232)
+             52 LOAD_CONST              11 (0)
+             54 LOAD_CONST               9 (None)
+             56 LOAD_NAME                2 (print)
+             58 BUILD_SET                4
+             60 STORE_NAME               6 (e)
+
+  7          62 PUSH_NULL
+             64 LOAD_NAME                3 (c)
+             66 LOAD_METHOD              7 (get)
+             88 LOAD_CONST              12 ('p')
+             90 PRECALL                  1
+             94 CALL                     1
+            104 LOAD_NAME                0 (a)
+            106 LOAD_NAME                1 (b)
+            108 LOAD_NAME                3 (c)
+            110 LOAD_NAME                5 (d)
+            112 PRECALL                  4
+            116 CALL                     4
+            126 POP_TOP
+            128 LOAD_CONST               9 (None)
+            130 RETURN_VALUE

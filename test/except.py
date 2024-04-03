@@ -3,11 +3,11 @@ assert bool(a) == True, 'bool(a) == True'
 try:
     #assert bool(a) == False
     a = 1 + 'a'
-except AssertionError as e:
+except AssertionError:
     print('AssertionError: bool(a) == False')
-except TypeError as e:
+except TypeError:
     print('TypeError: a = 1 + "a"')
-except:
-    print('Unexpected error')
+except Exception as e:
+    print(f'Unexpected error: {e}')
 finally:
     print('Done')
