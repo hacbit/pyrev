@@ -1146,8 +1146,40 @@ impl ExprParser for Expr {
                     if let Some(next_instruction) = opcode_instructions.get(offset + 2) {
                         with.end_offset = next_instruction.offset;
                     }
+
+                    // get with block
+                    let sub_instructions = &opcode_instructions[offset + 2..];
+                    #[cfg(debug_assertions)]
+                    {
+                        //dbg!(&sub_instructions);
+                    }
+                    let block_end_idxs = sub_instructions
+                        .iter()
+                        .enumerate()
+                        .filter(|(_, x)| x.starts_line == Some(with.start_line))
+                        .map(|(i, _)| i)
+                        .collect::<Vec<_>>();
+                    let block_end_first_idx = *block_end_idxs.first().ok_or(format!(
+                        "[BeforeWith] No block end, deviation is {}",
+                        instruction.offset
+                    ))?;
+                    let block_end_last_idx = *block_end_idxs.last().ok_or(format!(
+                        "[BeforeWith] No block end, deviation is {}",
+                        instruction.offset
+                    ))?;
+                    let sub_instructions =
+                        &opcode_instructions[offset + 2..offset + 2 + block_end_first_idx];
+                    #[cfg(debug_assertions)]
+                    {
+                        //dbg!(&sub_instructions);
+                    }
+                    let (sub_expr, sub_traceback) = Self::parse(&sub_instructions)?;
+                    with.body = sub_expr.bodys;
+                    traceback.extend(sub_traceback);
+                    // skip the offset to the end of with block
+                    offset += 2 + block_end_last_idx;
+
                     exprs_stack.push(ExpressionEnum::With(with));
-                    break;
                 }
                 Opcode::ForIter => {
                     let iter = exprs_stack.pop().ok_or(format!(

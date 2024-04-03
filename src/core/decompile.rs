@@ -164,21 +164,6 @@ fn merge(mark: &str, maps: &HashMap<String, (Expr, TraceBack)>) -> Result<Expr> 
         }
         commit_expr(this_expr, &want_to_removes)?;
 
-        // merge the with block
-        let with_query = this_expr.query::<With>();
-        want_to_removes.clear();
-        for with_block in with_query {
-            if with_block.body.is_empty() {
-                let (new_body, want_to_remove) =
-                    find_expr_among(this_expr, with_block.start_offset, with_block.end_offset)?;
-                with_block.with_mut().patch_by(|w| {
-                    w.body = new_body;
-                })?;
-                want_to_removes.extend(want_to_remove);
-            }
-        }
-        commit_expr(this_expr, &want_to_removes)?;
-
         //dbg!(&this_expr);
         if is_merged {
             break;

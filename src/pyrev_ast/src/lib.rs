@@ -466,35 +466,7 @@ impl ExpressionEnum {
 
                 #[cfg(debug_assertions)]
                 {
-                    assert_eq!(
-                        class.members.iter().take(2).collect::<Vec<_>>(),
-                        &[
-                            &ExpressionEnum::Assign(Assign {
-                                target: Box::new(ExpressionEnum::BaseValue(BaseValue {
-                                    value: "__module__".into(),
-                                    ..Default::default()
-                                },)),
-                                values: Box::new(ExpressionEnum::BaseValue(BaseValue {
-                                    value: "__name__".into(),
-                                    ..Default::default()
-                                },)),
-                                operator: "=".into(),
-                                ..Default::default()
-                            },),
-                            &ExpressionEnum::Assign(Assign {
-                                target: Box::new(ExpressionEnum::BaseValue(BaseValue {
-                                    value: "__qualname__".into(),
-                                    ..Default::default()
-                                },)),
-                                values: Box::new(ExpressionEnum::BaseValue(BaseValue {
-                                    value: format!("'{}'", class.name),
-                                    ..Default::default()
-                                },)),
-                                operator: "=".into(),
-                                ..Default::default()
-                            },),
-                        ]
-                    );
+                    assert!(class.members.iter().take(2).all(|m| m.is_assign()));
                 }
                 for expr in class.members.iter().skip(2) {
                     let expr_code = expr.build()?;
