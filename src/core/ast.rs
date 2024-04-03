@@ -1173,7 +1173,7 @@ impl ExprParser for Expr {
                     {
                         //dbg!(&sub_instructions);
                     }
-                    let (sub_expr, sub_traceback) = Self::parse(&sub_instructions)?;
+                    let (sub_expr, sub_traceback) = Self::parse(sub_instructions)?;
                     with.body = sub_expr.bodys;
                     traceback.extend(sub_traceback);
                     // skip the offset to the end of with block

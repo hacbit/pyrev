@@ -18,7 +18,7 @@ impl Decompiler for CodeObjectMap {
         let mut decompiled_code = DecompiledCode::new();
         let mut exprs_map = HashMap::new();
         for (mark, code_object) in self.iter() {
-            let (expr, trace) = Expr::parse(&code_object)?;
+            let (expr, trace) = Expr::parse(code_object)?;
 
             #[cfg(debug_assertions)]
             {
