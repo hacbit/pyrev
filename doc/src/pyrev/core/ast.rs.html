@@ -1567,6 +1567,16 @@
 <a href="#1565" id="1565">1565</a>
 <a href="#1566" id="1566">1566</a>
 <a href="#1567" id="1567">1567</a>
+<a href="#1568" id="1568">1568</a>
+<a href="#1569" id="1569">1569</a>
+<a href="#1570" id="1570">1570</a>
+<a href="#1571" id="1571">1571</a>
+<a href="#1572" id="1572">1572</a>
+<a href="#1573" id="1573">1573</a>
+<a href="#1574" id="1574">1574</a>
+<a href="#1575" id="1575">1575</a>
+<a href="#1576" id="1576">1576</a>
+<a href="#1577" id="1577">1577</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::common::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">super</span>::opcode::{Opcode, OpcodeInstruction};
 <span class="kw">use </span>pyrev_ast::<span class="kw-2">*</span>;
@@ -1876,9 +1886,22 @@
                             <span class="string">"[LoadBuildClass] No argval, deviation is {}"</span>,
                             instruction.offset
                         ))<span class="question-mark">?</span>;
-                    exprs_stack.push(ExpressionEnum::Class(Class::new(mark)<span class="question-mark">?</span>));
+                    <span class="kw">let </span>class = Class::new(mark)<span class="question-mark">?</span>;
+                    <span class="kw">let </span>class_name = class.name.clone();
+                    exprs_stack.push(ExpressionEnum::Class(class));
 
-                    <span class="kw">break</span>;
+                    <span class="comment">// skip build class
+                    </span><span class="kw">loop </span>{
+                        offset += <span class="number">1</span>;
+                        <span class="kw">if let </span><span class="prelude-val">Some</span>(next_instruction) = opcode_instructions.get(offset) {
+                            <span class="kw">if </span>next_instruction.opcode == Opcode::StoreName
+                                &amp;&amp; next_instruction.argval.as_ref().unwrap() == <span class="kw-2">&amp;</span>class_name
+                            {
+                                <span class="kw">break</span>;
+                            }
+                        }
+                    }
+                    offset += <span class="number">1</span>;
                 }
                 Opcode::FormatValue =&gt; {
                     <span class="kw">let </span>format_value = exprs_stack.pop().ok_or(<span class="macro">format!</span>(
@@ -2732,10 +2755,7 @@
                         <span class="string">"[BeforeWith] No block end, deviation is {}"</span>,
                         instruction.offset
                     ))<span class="question-mark">?</span>;
-                    <span class="kw">let </span>block_end_last_idx = <span class="kw-2">*</span>block_end_idxs.last().ok_or(<span class="macro">format!</span>(
-                        <span class="string">"[BeforeWith] No block end, deviation is {}"</span>,
-                        instruction.offset
-                    ))<span class="question-mark">?</span>;
+                    <span class="kw">let </span>block_end_last_idx = <span class="kw-2">*</span>block_end_idxs.last().unwrap();
                     <span class="kw">let </span>sub_instructions =
                         <span class="kw-2">&amp;</span>opcode_instructions[offset + <span class="number">2</span>..offset + <span class="number">2 </span>+ block_end_first_idx];
                     <span class="attr">#[cfg(debug_assertions)]

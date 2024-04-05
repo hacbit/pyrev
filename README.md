@@ -1,4 +1,4 @@
-# Pyrev v1.0.7
+# Pyrev v1.0.8
 
 Reverse tools for bytecode of python
 
@@ -102,6 +102,53 @@ PS D:\path\to\pyrev> .\run-all.bat [--release]
 /path/to/pyrev> ./run-all.sh [--release]
 ```
 
+**You can add your custom test file to test/ dict and run the `get-dis` script to generate the .txt file**
+**Windows:**
+```powershell
+PS D:\path\to\pyrev> .\get-dis.bat
+This script will delete all .txt files in test/
+And get the new python bytecode from python files in test/ and save them as .txt files
+Deleting test\attr.txt
+Deleting test\class.txt
+Deleting test\container.txt
+Deleting test\def.txt
+Deleting test\demo.txt
+Deleting test\except.txt
+Deleting test\for.txt
+Deleting test\import.txt
+Deleting test\op.txt
+Deleting test\with.txt
+Deleting test\yield.txt
+Try run: python -m dis test\attr.py > attr.txt
+Try run: python -m dis test\class.py > class.txt
+Try run: python -m dis test\container.py > container.txt
+Try run: python -m dis test\def.py > def.txt
+Try run: python -m dis test\demo.py > demo.txt
+Try run: python -m dis test\except.py > except.txt
+Try run: python -m dis test\for.py > for.txt
+Try run: python -m dis test\import.py > import.txt
+Try run: python -m dis test\op.py > op.txt
+Try run: python -m dis test\with.py > with.txt
+Try run: python -m dis test\yield.py > yield.txt
+Done!
+```
+
+**Linux:**
+```shell
+/path/to/pyrev> ./get-dis.sh
+(output)
+```
+
+
+
+## Document
+
+run the `update-doc` script to generate doc
+
+You can double-click the index.html in doc/
+
+
+
 ## Todo List
 
 -   [ ] if-else
@@ -111,6 +158,6 @@ PS D:\path\to\pyrev> .\run-all.bat [--release]
 -   [x] generator
 -   [ ] assertion
 -   [ ] try-except
--   [ ] doc comment
+-   [x] doc comment
 -   [ ] pyc decompile plugin
 -   [ ] pretty console output plugin

@@ -1,6 +1,6 @@
   0           0 RESUME                   0
 
-  1           2 LOAD_CONST               0 (<code object get_gen at 0x000002890642B4B0, file "test\yield.py", line 1>)
+  1           2 LOAD_CONST               0 (<code object get_gen at 0x00000244192BB4B0, file "test\yield.py", line 1>)
               4 MAKE_FUNCTION            0
               6 STORE_NAME               0 (get_gen)
 
@@ -11,19 +11,19 @@
              26 STORE_NAME               1 (g)
 
   5          28 PUSH_NULL
-             30 LOAD_CONST               1 (<code object <lambda> at 0x0000028906612730, file "test\yield.py", line 5>)
+             30 LOAD_CONST               1 (<code object <lambda> at 0x00000244194A2730, file "test\yield.py", line 5>)
              32 MAKE_FUNCTION            0
              34 PRECALL                  0
              38 CALL                     0
              48 POP_TOP
 
-  6          50 LOAD_CONST               2 (<code object <lambda> at 0x0000028906612800, file "test\yield.py", line 6>)
+  6          50 LOAD_CONST               2 (<code object <lambda> at 0x00000244194A2800, file "test\yield.py", line 6>)
              52 MAKE_FUNCTION            0
              54 POP_TOP
              56 LOAD_CONST               3 (None)
              58 RETURN_VALUE
 
-Disassembly of <code object get_gen at 0x000002890642B4B0, file "test\yield.py", line 1>:
+Disassembly of <code object get_gen at 0x00000244192BB4B0, file "test\yield.py", line 1>:
   1           0 RETURN_GENERATOR
               2 POP_TOP
               4 RESUME                   0
@@ -37,7 +37,7 @@ Disassembly of <code object get_gen at 0x000002890642B4B0, file "test\yield.py",
              44 LOAD_CONST               0 (None)
              46 RETURN_VALUE
 
-Disassembly of <code object <lambda> at 0x0000028906612730, file "test\yield.py", line 5>:
+Disassembly of <code object <lambda> at 0x00000244194A2730, file "test\yield.py", line 5>:
   5           0 RETURN_GENERATOR
               2 POP_TOP
               4 RESUME                   0
@@ -46,7 +46,7 @@ Disassembly of <code object <lambda> at 0x0000028906612730, file "test\yield.py"
              10 RESUME                   1
              12 RETURN_VALUE
 
-Disassembly of <code object <lambda> at 0x0000028906612800, file "test\yield.py", line 6>:
+Disassembly of <code object <lambda> at 0x00000244194A2800, file "test\yield.py", line 6>:
   6           0 RETURN_GENERATOR
               2 POP_TOP
               4 RESUME                   0

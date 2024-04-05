@@ -29,11 +29,14 @@ impl Decompiler for CodeObjectMap {
         }
         #[cfg(debug_assertions)]
         {
-            dbg!(&exprs_map);
+            //dbg!(&exprs_map);
         }
 
         let main_expr = merge("<main>", &exprs_map)?;
-        //dbg!(&main_expr);
+        #[cfg(debug_assertions)]
+        {
+            //dbg!(&main_expr);
+        }
 
         for (i, instruction) in main_expr.bodys.iter().enumerate() {
             let code = instruction

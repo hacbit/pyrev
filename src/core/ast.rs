@@ -307,9 +307,22 @@ impl ExprParser for Expr {
                             "[LoadBuildClass] No argval, deviation is {}",
                             instruction.offset
                         ))?;
-                    exprs_stack.push(ExpressionEnum::Class(Class::new(mark)?));
+                    let class = Class::new(mark)?;
+                    let class_name = class.name.clone();
+                    exprs_stack.push(ExpressionEnum::Class(class));
 
-                    break;
+                    // skip build class
+                    loop {
+                        offset += 1;
+                        if let Some(next_instruction) = opcode_instructions.get(offset) {
+                            if next_instruction.opcode == Opcode::StoreName
+                                && next_instruction.argval.as_ref().unwrap() == &class_name
+                            {
+                                break;
+                            }
+                        }
+                    }
+                    offset += 1;
                 }
                 Opcode::FormatValue => {
                     let format_value = exprs_stack.pop().ok_or(format!(

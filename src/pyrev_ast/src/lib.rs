@@ -464,14 +464,52 @@ impl ExpressionEnum {
                 let mut code = Vec::new();
                 code.push(format!("class {}:", class.name));
 
+                let mut class_members = class.members.iter();
                 #[cfg(debug_assertions)]
                 {
                     assert!(class.members.iter().take(2).all(|m| m.is_assign()));
                 }
-                for expr in class.members.iter().skip(2) {
+                class_members.next();
+                class_members.next();
+
+                // check whether the docstring is exist
+                let mut has_doc = false;
+                let next_expr = class_members.next();
+                if let Some(ExpressionEnum::Assign(assign)) = next_expr {
+                    if let ExpressionEnum::BaseValue(name) = assign.target.as_ref() {
+                        if name.value == "__doc__" {
+                            has_doc = true;
+                            let docstring = assign.values.build()?.join("").replace("\\n", "\n");
+                            let docstring = docstring.trim_matches('\'');
+                            code.push("    \"\"\"".to_string());
+                            for line in docstring.lines().filter(|l| !l.trim().is_empty()) {
+                                code.push(line.to_string());
+                            }
+                            code.push("    \"\"\"".to_string());
+                            code.push("".to_string());
+                        }
+                    }
+                }
+                let fix_init = |line: String| {
+                    if line == "def __init__():" {
+                        "def __init__(self):".to_string()
+                    } else {
+                        line
+                    }
+                };
+
+                if !has_doc {
+                    let expr_code = next_expr.unwrap().build()?;
+                    for line in expr_code {
+                        code.push(format!("    {}", fix_init(line)));
+                    }
+                    code.push("".to_string());
+                }
+
+                for expr in class_members {
                     let expr_code = expr.build()?;
-                    for line in expr_code.iter() {
-                        code.push(format!("    {}", line));
+                    for line in expr_code {
+                        code.push(format!("    {}", fix_init(line)));
                     }
                     code.push("".to_string());
                 }

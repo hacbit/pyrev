@@ -1,4 +1,11 @@
 class Test:
+    """
+    This is a test class
+    - __init__: A constructor method
+    - change_name: A method to change the name attribute
+    - display: A method to display the class attribute and the instance attribute
+    """
+
     Foo = "This is Foo"
 
     def __init__(self, name: str = "Default"):
@@ -12,6 +19,11 @@ class Test:
     def display(self):
         print(self.Foo)
         print("Name is \"%s\"" % self.name)
+
+class NoDoc:
+    def __init__(self):
+        print("NoDoc class is initialized")
+        pass
 
 t = Test()
 t.change_name("This is new name")

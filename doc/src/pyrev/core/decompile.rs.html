@@ -271,6 +271,9 @@
 <a href="#269" id="269">269</a>
 <a href="#270" id="270">270</a>
 <a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::collections::HashMap;
 <span class="kw">use </span>std::fmt::Debug;
 
@@ -302,13 +305,16 @@
         }
         <span class="attr">#[cfg(debug_assertions)]
         </span>{
-            <span class="macro">dbg!</span>(<span class="kw-2">&amp;</span>exprs_map);
-        }
+            <span class="comment">//dbg!(&amp;exprs_map);
+        </span>}
 
         <span class="kw">let </span>main_expr = merge(<span class="string">"&lt;main&gt;"</span>, <span class="kw-2">&amp;</span>exprs_map)<span class="question-mark">?</span>;
-        <span class="comment">//dbg!(&amp;main_expr);
+        <span class="attr">#[cfg(debug_assertions)]
+        </span>{
+            <span class="comment">//dbg!(&amp;main_expr);
+        </span>}
 
-        </span><span class="kw">for </span>(i, instruction) <span class="kw">in </span>main_expr.bodys.iter().enumerate() {
+        <span class="kw">for </span>(i, instruction) <span class="kw">in </span>main_expr.bodys.iter().enumerate() {
             <span class="kw">let </span>code = instruction
                 .build()<span class="question-mark">?
                 </span>.iter()
