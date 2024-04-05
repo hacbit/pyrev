@@ -1163,10 +1163,7 @@ impl ExprParser for Expr {
                         "[BeforeWith] No block end, deviation is {}",
                         instruction.offset
                     ))?;
-                    let block_end_last_idx = *block_end_idxs.last().ok_or(format!(
-                        "[BeforeWith] No block end, deviation is {}",
-                        instruction.offset
-                    ))?;
+                    let block_end_last_idx = *block_end_idxs.last().unwrap();
                     let sub_instructions =
                         &opcode_instructions[offset + 2..offset + 2 + block_end_first_idx];
                     #[cfg(debug_assertions)]
