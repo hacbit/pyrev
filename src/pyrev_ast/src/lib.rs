@@ -52,12 +52,13 @@ pub struct Function {
     pub mark: String,
     pub name: String,
     pub args: Vec<FastVariable>,
+    pub bodys: Vec<ExpressionEnum>,
     pub defaults: Vec<String>,
+    pub is_async: bool,
     pub start_line: usize,
     pub end_line: usize,
     pub start_offset: usize,
     pub end_offset: usize,
-    pub bodys: Vec<ExpressionEnum>,
 }
 
 /// 返回
@@ -199,6 +200,7 @@ pub struct Call {
 pub struct With {
     pub item: Box<ExpressionEnum>,
     pub body: Vec<ExpressionEnum>,
+    pub is_async: bool,
     pub start_line: usize,
     pub start_offset: usize,
     pub end_offset: usize,
@@ -212,6 +214,7 @@ pub struct For {
     pub body: Vec<ExpressionEnum>,
     pub from: usize,
     pub to: usize,
+    pub is_async: bool,
     pub start_line: usize,
     pub start_offset: usize,
     pub end_offset: usize,
@@ -233,6 +236,15 @@ pub struct If {
 pub struct Jump {
     pub target: usize,
     pub body: Vec<ExpressionEnum>,
+    pub start_line: usize,
+    pub start_offset: usize,
+    pub end_offset: usize,
+}
+
+/// Await
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
+pub struct Await {
+    pub awaitable_expr: Box<ExpressionEnum>,
     pub start_line: usize,
     pub start_offset: usize,
     pub end_offset: usize,
@@ -278,13 +290,14 @@ pub struct BaseValue {
     pub end_offset: usize,
 }
 
-/// None
+/// Deprecated
+/* /// None
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
 pub struct NoneValue {
     pub start_line: usize,
     pub start_offset: usize,
     pub end_offset: usize,
-}
+} */
 
 /// 为上面的表达式提供一个封装
 /// 用来实现不同Expression的嵌套
@@ -303,7 +316,8 @@ pub struct NoneValue {
 /// ```
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Is, Unwrap, GetOffset)]
 pub enum ExpressionEnum {
-    NoneValue(NoneValue),
+    /// NoneValue is deprecated
+    // NoneValue(NoneValue),
     Import(Import),
     Class(Class),
     FastVariable(FastVariable),
@@ -326,6 +340,7 @@ pub enum ExpressionEnum {
     With(With),
     For(For),
     If(If),
+    Await(Await),
     Jump(Jump),
     Container(Container),
     Slice(Slice),
@@ -365,6 +380,12 @@ pub enum ContainerType {
 
 impl Query for ContainerType {
     fn query<T: 'static>(&self) -> Vec<&T> {
+        vec![]
+    }
+}
+
+impl Query for bool {
+    fn query<T: std::fmt::Debug + Expression + 'static>(&self) -> Vec<&T> {
         vec![]
     }
 }
@@ -421,7 +442,7 @@ impl Function {
         if let ExpressionEnum::BaseValue(value) = expr {
             Self::new(value.value)
         } else {
-            Err("Function name must be a string".into())
+            Err(format!("Expect BaseValue, got {:?}", expr).into())
         }
     }
 
@@ -490,9 +511,18 @@ impl ExpressionEnum {
                         }
                     }
                 }
-                let fix_init = |line: String| {
-                    if line == "def __init__():" {
-                        "def __init__(self):".to_string()
+                let re = Regex::new(r"def [A-Za-z_]+\((?P<args>[\S_]*)\)").unwrap();
+                let add_self_to_no_arg_func = |line: String| {
+                    if let Some(caps) = re.captures(&line) {
+                        if let Some(args) = caps.name("args") {
+                            if args.is_empty() {
+                                line.replace("()", "(self, *args)")
+                            } else {
+                                line.replace(args.as_str(), &format!("{}, *args", args.as_str()))
+                            }
+                        } else {
+                            line
+                        }
                     } else {
                         line
                     }
@@ -501,20 +531,23 @@ impl ExpressionEnum {
                 if !has_doc {
                     let expr_code = next_expr.unwrap().build()?;
                     for line in expr_code {
-                        code.push(format!("    {}", fix_init(line)));
+                        code.push(format!("    {}", add_self_to_no_arg_func(line)));
                     }
-                    code.push("".to_string());
+                    if !code.last().unwrap().trim().is_empty() {
+                        code.push("".to_string());
+                    }
                 }
 
                 for expr in class_members {
                     let expr_code = expr.build()?;
                     for line in expr_code {
-                        code.push(format!("    {}", fix_init(line)));
+                        code.push(format!("    {}", add_self_to_no_arg_func(line)));
                     }
-                    code.push("".to_string());
+                    if !code.last().unwrap().trim().is_empty() {
+                        code.push("".to_string());
+                    }
                 }
-                // pop the last empty line
-                code.pop();
+
                 Ok(code)
             }
             ExpressionEnum::Function(function) => {
@@ -579,14 +612,14 @@ impl ExpressionEnum {
                     _ => {
                         #[cfg(debug_assertions)]
                         {
-                            dbg!(&args_code);
+                            //dbg!(&args_code);
                         }
-                        code.push(format!(
-                            "def {}({}){}:",
-                            function.name,
-                            args_code.trim_end_matches(", "),
-                            ret_code
-                        ));
+                        let first_line = if function.is_async {
+                            format!("async def {}({}){}:", function.name, args_code, ret_code)
+                        } else {
+                            format!("def {}({}){}:", function.name, args_code, ret_code)
+                        };
+                        code.push(first_line);
                         for expr in function.bodys.iter() {
                             let expr_code = expr.build()?;
                             for line in expr_code.iter() {
@@ -596,6 +629,7 @@ impl ExpressionEnum {
                         if code.len() == 1 {
                             code.push("    pass".to_string());
                         }
+                        code.push("".to_string());
                     }
                 }
                 Ok(code)
@@ -698,12 +732,18 @@ impl ExpressionEnum {
                 let exception_code = raise.exception.build()?.join("");
                 Ok(vec![format!("raise {}", exception_code)])
             }
+            ExpressionEnum::Await(await_expr) => {
+                let awaitable_code = await_expr.awaitable_expr.build()?.join("");
+                Ok(vec![format!("await {}", awaitable_code)])
+            }
             ExpressionEnum::BaseValue(base_value) => {
                 if base_value.value == "None" {
                     Ok(vec!["".to_string()])
-                } else if base_value.value == "0" {
+                }
+                /* else if base_value.value == "0" {
                     Ok(vec![])
-                } else {
+                } */
+                else {
                     Ok(vec![base_value.value.clone()])
                 }
             }
@@ -849,7 +889,12 @@ impl ExpressionEnum {
             ExpressionEnum::With(with) => {
                 let item_code = with.item.build()?.join("");
                 let mut code = Vec::new();
-                code.push(format!("with {}:", item_code));
+                let first_line = if with.is_async {
+                    format!("async with {}:", item_code)
+                } else {
+                    format!("with {}:", item_code)
+                };
+                code.push(first_line);
                 if with.body.is_empty() {
                     code.push("    pass".to_string());
                 } else {
@@ -866,7 +911,12 @@ impl ExpressionEnum {
                 let iter_code = for_expr.iterator.build()?.join("");
                 let item_code = for_expr.items.build()?.join("");
                 let mut code = Vec::new();
-                code.push(format!("for {} in {}:", item_code, iter_code));
+                let first_line = if for_expr.is_async {
+                    format!("async for {} in {}:", item_code, iter_code)
+                } else {
+                    format!("for {} in {}:", item_code, iter_code)
+                };
+                code.push(first_line);
                 if for_expr.body.is_empty() {
                     code.push("    pass".to_string());
                 } else {

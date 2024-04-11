@@ -1,6 +1,5 @@
 // python bytecode reverse engineering by @hacbit
 use clap::{arg, command, value_parser, ArgAction, Command};
-use colored::Colorize;
 use std::io::Read;
 use std::path::PathBuf;
 
@@ -8,7 +7,7 @@ mod app;
 mod core;
 
 use app::App;
-use core::common::Result;
+use core::common::*;
 
 fn main() -> Result<()> {
     let matches = command!()
@@ -72,7 +71,7 @@ fn main() -> Result<()> {
 
     if ifiles.is_empty() {
         if atty::is(atty::Stream::Stdin) {
-            eprintln!("{}", "Warning: no input".bright_yellow());
+            warn!("No input files specified");
             return Ok(());
         } else {
             // read from stdin

@@ -3,7 +3,7 @@ workspace = { members = [ "src/pyrev_ast", "src/pyrev_ast_derive" ] }
 [package]
 name = "pyrev"
 authors = ["hacbit <hacbit@foxmail.com>"]
-version = "1.0.8"
+version = "1.0.9"
 edition = "2021"
 
 [features]

@@ -1,5 +1,5 @@
 use atty::Stream;
-use colored::Colorize;
+pub use colored::Colorize;
 use lazy_format::lazy_format;
 use std::io::BufRead;
 use std::io::Write;
@@ -157,14 +157,24 @@ where
 }
 
 #[derive(Debug, Clone)]
+pub struct Local {
+    pub name: String,
+    pub is_store: bool,
+    pub is_arg: bool,
+}
+
+#[derive(Debug, Clone)]
 pub struct TraceBack {
     /// is_store is true if the arg is stored in the function argument
-    /// arg, (argval, is_store)
-    pub locals: OrderMap<usize, (String, bool)>,
+    /// arg, Local
+    /// arg is the index of the argument
+    locals: OrderMap<usize, Local>,
     /// start is the start offset of the jump
     /// jump_target is the target offset of the jump
     /// start, jump_target
-    pub jumps: OrderMap<usize, usize>,
+    jumps: OrderMap<usize, usize>,
+    /// is_async is true if the function is async
+    is_async: bool,
 }
 
 #[allow(unused)]
@@ -173,20 +183,41 @@ impl TraceBack {
         Self {
             locals: OrderMap::new(),
             jumps: OrderMap::new(),
+            is_async: false,
         }
     }
 
-    pub fn insert_local(&mut self, arg: usize, argval: String, is_store: bool) {
-        self.locals.insert(arg, (argval, is_store));
+    pub fn insert_local(&mut self, arg: usize, local: Local) {
+        self.locals.insert(arg, local);
     }
 
-    pub fn insert_jump(&mut self, start: usize, jump_target: usize) {
-        self.jumps.insert(start, jump_target);
+    pub fn get_local(&self, arg: &usize) -> Option<&Local> {
+        self.locals.get(arg)
+    }
+
+    pub fn get_mut_local(&mut self, arg: &usize) -> Option<&mut Local> {
+        self.locals.get_mut(arg)
+    }
+
+    pub fn get_locals(&self) -> &OrderMap<usize, Local> {
+        &self.locals
+    }
+
+    pub fn get_mut_locals(&mut self) -> &mut OrderMap<usize, Local> {
+        &mut self.locals
     }
 
     pub fn extend(&mut self, tb: Self) {
         self.locals.extend(tb.locals);
         self.jumps.extend(tb.jumps);
+    }
+
+    pub fn asyncable(&self) -> bool {
+        self.is_async
+    }
+
+    pub fn mark_async(&mut self) {
+        self.is_async = true;
     }
 }
 
@@ -206,6 +237,27 @@ impl<T> ResMut<T> {
         }
         Ok(())
     }
+}
+
+#[macro_export]
+macro_rules! info {
+    ($($arg:tt)*) => {
+        println!("[INFO] {}", format!($($arg)*).bright_green())
+    };
+}
+
+#[macro_export]
+macro_rules! warn {
+    ($($arg:tt)*) => {
+        eprintln!("[WARN] {}", format!($($arg)*).bright_yellow())
+    };
+}
+
+#[macro_export]
+macro_rules! error {
+    ($($arg:tt)*) => {
+        eprintln!("[ERROR] {}", format!($($arg)*).bright_red())
+    };
 }
 
 #[cfg(test)]

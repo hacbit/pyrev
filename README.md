@@ -1,4 +1,4 @@
-# Pyrev v1.0.8
+# Pyrev v1.0.9
 
 Reverse tools for bytecode of python
 
@@ -154,7 +154,7 @@ You can double-click the index.html in doc/
 -   [ ] if-else
 -   [x] for
 -   [ ] while
--   [ ] async function
+-   [x] async
 -   [x] generator
 -   [ ] assertion
 -   [ ] try-except

@@ -1,16 +1,17 @@
-use super::common::*;
-use super::opcode::{Opcode, OpcodeInstruction};
+use super::prelude::*;
 use pyrev_ast::*;
+use regex::Regex;
+
+use std::cmp::Ordering;
 
 pub trait ExprParser {
-    fn parse(opcode_instructions: &[OpcodeInstruction]) -> Result<(Box<Self>, TraceBack)>;
+    fn parse(opcode_instructions: &[OpcodeInstruction]) -> Result<Box<Self>>;
 }
 
 impl ExprParser for Expr {
     /// 用于解析一段字节码指令为AST
-    fn parse(opcode_instructions: &[OpcodeInstruction]) -> Result<(Box<Self>, TraceBack)> {
+    fn parse(opcode_instructions: &[OpcodeInstruction]) -> Result<Box<Self>> {
         let mut exprs_stack = Vec::<ExpressionEnum>::new();
-        let mut traceback = TraceBack::new();
         let mut offset = 0;
         loop {
             if offset == opcode_instructions.len() {
@@ -34,18 +35,14 @@ impl ExprParser for Expr {
                                 "[Load] No argval, deviation is {}",
                                 instruction.offset
                             ))?
-                            .clone(),
+                            .trim_start_matches("NULL + ")
+                            .to_string(),
                         start_offset: instruction.offset,
                         end_offset: instruction.offset,
                         ..Default::default()
                     }));
                 }
                 Opcode::LoadFast => {
-                    // local variable in function
-                    let index = instruction.arg.ok_or(format!(
-                        "[LoadFast] No arg, deviation is {}",
-                        instruction.offset
-                    ))?;
                     let name = instruction
                         .argval
                         .as_ref()
@@ -54,12 +51,6 @@ impl ExprParser for Expr {
                             instruction.offset
                         ))?
                         .clone();
-                    // 如果先storefast再loadfast, 那么就不认为是函数参数
-                    if traceback.locals.contains_key(&index) {
-                        traceback.locals.get_mut(&index).unwrap().1 = false;
-                    } else {
-                        traceback.insert_local(index, name.clone(), false);
-                    }
 
                     exprs_stack.push(ExpressionEnum::BaseValue(BaseValue {
                         value: name,
@@ -241,11 +232,7 @@ impl ExprParser for Expr {
                         "[StoreFast] Stack is empty, deviation is {}",
                         instruction.offset
                     ))?;
-                    let index = instruction.arg.ok_or(format!(
-                        "[StoreFast] No arg, deviation is {}",
-                        instruction.offset
-                    ))?;
-                    traceback.insert_local(index, name.clone(), true);
+
                     match value {
                         ExpressionEnum::Function(_) => {
                             exprs_stack.push(value);
@@ -293,6 +280,7 @@ impl ExprParser for Expr {
                         start_offset: instruction.offset,
                         end_offset: instruction.offset,
                     }));
+                    //dbg!(&exprs_stack);
                 }
                 Opcode::LoadBuildClass => {
                     let mark = opcode_instructions
@@ -308,21 +296,20 @@ impl ExprParser for Expr {
                             instruction.offset
                         ))?;
                     let class = Class::new(mark)?;
-                    let class_name = class.name.clone();
                     exprs_stack.push(ExpressionEnum::Class(class));
 
                     // skip build class
                     loop {
                         offset += 1;
                         if let Some(next_instruction) = opcode_instructions.get(offset) {
-                            if next_instruction.opcode == Opcode::StoreName
-                                && next_instruction.argval.as_ref().unwrap() == &class_name
+                            if next_instruction.starts_line.unwrap()
+                                != instruction.starts_line.unwrap()
                             {
                                 break;
                             }
                         }
                     }
-                    offset += 1;
+                    offset -= 1;
                 }
                 Opcode::FormatValue => {
                     let format_value = exprs_stack.pop().ok_or(format!(
@@ -433,10 +420,16 @@ impl ExprParser for Expr {
                     {
                         extend.iter_mut().for_each(|x| {
                             if let ExpressionEnum::BaseValue(value) = x {
-                                value.value = value
-                                    .value
-                                    .trim_start_matches('(')
-                                    .trim_end_matches(')')
+                                // deprecated trim_start_matches('\'').trim_end_matches('\'')
+                                // because it may trim more than one matches
+                                // e.g. "((1, 2))" -> "1, 2"
+                                value.value = Regex::new(r"\((.*)\)")
+                                    .unwrap()
+                                    .captures(&value.value)
+                                    .unwrap()
+                                    .get(1)
+                                    .unwrap()
+                                    .as_str()
                                     .to_string();
                             }
                         });
@@ -1139,7 +1132,9 @@ impl ExprParser for Expr {
                         ..Default::default()
                     };
                     if let Some(next_instruction) = opcode_instructions.get(offset + 1) {
-                        if next_instruction.opcode == Opcode::StoreName {
+                        if next_instruction.opcode == Opcode::StoreName
+                            || next_instruction.opcode == Opcode::StoreFast
+                        {
                             let name = next_instruction.argval.as_ref().ok_or(format!(
                                 "[BeforeWith] No argval, deviation is {}",
                                 instruction.offset
@@ -1183,13 +1178,110 @@ impl ExprParser for Expr {
                     {
                         //dbg!(&sub_instructions);
                     }
-                    let (sub_expr, sub_traceback) = Self::parse(sub_instructions)?;
+                    let sub_expr = Self::parse(sub_instructions)?;
                     with.body = sub_expr.bodys;
-                    traceback.extend(sub_traceback);
                     // skip the offset to the end of with block
                     offset += 2 + block_end_last_idx;
 
                     exprs_stack.push(ExpressionEnum::With(with));
+                }
+                Opcode::BeforeAsyncWith => {
+                    let expr = exprs_stack.pop().ok_or(format!(
+                        "[BeforeWith] Stack is empty, deviation is {}",
+                        instruction.offset
+                    ))?;
+                    let mut async_with = With {
+                        start_line: instruction.starts_line.unwrap_or_default(),
+                        start_offset: instruction.offset,
+                        is_async: true,
+                        ..Default::default()
+                    };
+
+                    // find SEND instruction
+                    let mut send_to = 0;
+                    while let Some(next_instruction) = opcode_instructions.get(offset + 1) {
+                        if next_instruction.opcode == Opcode::Send {
+                            offset += 1;
+                            send_to = next_instruction
+                                .argval
+                                .as_ref()
+                                .ok_or(format!(
+                                    "[BeforeAsyncWith] No argval, deviation is {}",
+                                    next_instruction.offset
+                                ))?
+                                .trim_start_matches("to ")
+                                .parse::<usize>()?;
+                            break;
+                        }
+                        offset += 1;
+                    }
+
+                    // skip the offset to the <send_to>
+                    while let Some(next_instruction) = opcode_instructions.get(offset + 1) {
+                        match next_instruction.offset.cmp(&send_to) {
+                            Ordering::Equal => break,
+                            Ordering::Greater => {
+                                return Err(format!(
+                                    "[BeforeAsyncWith] Send target not found, deviation is {}",
+                                    next_instruction.offset
+                                )
+                                .into());
+                            }
+                            _ => {}
+                        }
+                        offset += 1;
+                    }
+
+                    // check has alias
+                    if let Some(next_instruction) = opcode_instructions.get(offset + 1) {
+                        if next_instruction.opcode == Opcode::StoreName
+                            || next_instruction.opcode == Opcode::StoreFast
+                        {
+                            let name = next_instruction.argval.as_ref().ok_or(format!(
+                                "[BeforeAsyncWith] No argval, deviation is {}",
+                                instruction.offset
+                            ))?;
+                            async_with.item = Box::new(ExpressionEnum::Alias(Alias {
+                                target: Box::new(expr),
+                                alias: Box::new(ExpressionEnum::BaseValue(BaseValue {
+                                    value: name.clone(),
+                                    ..Default::default()
+                                })),
+                                ..Default::default()
+                            }));
+                        } else {
+                            async_with.item = Box::new(expr);
+                        }
+                    }
+                    if let Some(next_instruction) = opcode_instructions.get(offset + 2) {
+                        async_with.end_offset = next_instruction.offset;
+                    }
+
+                    // get <with> block
+                    let sub_instructions = &opcode_instructions[offset + 2..];
+                    let block_end_idxs = sub_instructions
+                        .iter()
+                        .enumerate()
+                        .filter(|(_, x)| x.starts_line == Some(async_with.start_line))
+                        .map(|(i, _)| i)
+                        .collect::<Vec<_>>();
+                    let block_end_first_idx = *block_end_idxs.first().ok_or(format!(
+                        "[BeforeAsyncWith] No block end, deviation is {}",
+                        instruction.offset
+                    ))?;
+                    let block_end_last_idx = *block_end_idxs.last().unwrap();
+                    let sub_instructions =
+                        &opcode_instructions[offset + 2..offset + 2 + block_end_first_idx];
+                    #[cfg(debug_assertions)]
+                    {
+                        //dbg!(&sub_instructions);
+                    }
+                    let sub_expr = Self::parse(sub_instructions)?;
+                    async_with.body = sub_expr.bodys;
+                    // skip the offset to the end of with block
+                    offset += 2 + block_end_last_idx;
+
+                    exprs_stack.push(ExpressionEnum::With(async_with));
                 }
                 Opcode::ForIter => {
                     let iter = exprs_stack.pop().ok_or(format!(
@@ -1252,6 +1344,157 @@ impl ExprParser for Expr {
                         .into());
                     }
                 }
+                Opcode::GetAIter => {
+                    let aiter = exprs_stack.pop().ok_or(format!(
+                        "[GetAIter] Stack is empty, deviation is {}",
+                        instruction.offset,
+                    ))?;
+
+                    // find SEND instruction
+                    let mut send_to = 0;
+                    while let Some(next_instruction) = opcode_instructions.get(offset + 1) {
+                        if next_instruction.opcode == Opcode::Send {
+                            offset += 1;
+                            send_to = next_instruction
+                                .argval
+                                .as_ref()
+                                .ok_or(format!(
+                                    "[GetAIter] No argval, deviation is {}",
+                                    next_instruction.offset
+                                ))?
+                                .trim_start_matches("to ")
+                                .parse::<usize>()?;
+                            break;
+                        }
+                        offset += 1;
+                    }
+
+                    // skip the offset to the <send_to>
+                    while let Some(next_instruction) = opcode_instructions.get(offset + 1) {
+                        match next_instruction.offset.cmp(&send_to) {
+                            Ordering::Equal => break,
+                            Ordering::Greater => {
+                                return Err(format!(
+                                    "[GetAIter] Send target not found, deviation is {}",
+                                    next_instruction.offset
+                                )
+                                .into())
+                            }
+                            _ => {}
+                        }
+                        offset += 1;
+                    }
+
+                    if let Some(next_instruction) = opcode_instructions.get(offset + 1) {
+                        if next_instruction.opcode == Opcode::StoreName
+                            || next_instruction.opcode == Opcode::StoreFast
+                        {
+                            exprs_stack.push(ExpressionEnum::For(For {
+                                iterator: Box::new(aiter),
+                                items: Box::new(ExpressionEnum::BaseValue(BaseValue {
+                                    value: next_instruction
+                                        .argval
+                                        .as_ref()
+                                        .ok_or(format!(
+                                            "[GetAIter] No argval, deviation is {}",
+                                            next_instruction.offset
+                                        ))?
+                                        .clone(),
+                                    ..Default::default()
+                                })),
+                                from: instruction.offset,
+                                is_async: true,
+                                start_line: instruction.starts_line.unwrap_or_default(),
+                                start_offset: instruction.offset,
+                                end_offset: instruction.offset,
+                                ..Default::default()
+                            }));
+                            offset += 1;
+                        } else {
+                            exprs_stack.push(ExpressionEnum::For(For {
+                                iterator: Box::new(aiter),
+                                from: instruction.offset,
+                                is_async: true,
+                                start_line: instruction.starts_line.unwrap_or_default(),
+                                start_offset: instruction.offset,
+                                end_offset: instruction.offset,
+                                ..Default::default()
+                            }))
+                        }
+                    } else {
+                        return Err(format!(
+                            "[GetAIter] No next instruction, deviation is {}",
+                            instruction.offset,
+                        )
+                        .into());
+                    }
+                }
+                Opcode::EndAsyncFor => {
+                    let mut async_for_block = vec![];
+                    while let Some(expr) = exprs_stack.pop() {
+                        if let ExpressionEnum::For(async_for) = expr {
+                            async_for_block.reverse();
+                            async_for.with_mut().patch_by(|f| {
+                                f.body = async_for_block;
+                            })?;
+                            exprs_stack.push(ExpressionEnum::For(async_for));
+                            break;
+                        } else {
+                            async_for_block.push(expr);
+                        }
+                    }
+                }
+                /* Opcode::ReturnGenerator => {
+                    // mark this block is async
+                    traceback.mark_async();
+                } */
+                Opcode::GetAwaitable => {
+                    let awaitable_expr = exprs_stack.pop().ok_or(format!(
+                        "[GetAwaitable] Stack is empty, deviation is {}",
+                        instruction.offset
+                    ))?;
+                    exprs_stack.push(ExpressionEnum::Await(Await {
+                        awaitable_expr: Box::new(awaitable_expr),
+                        start_line: instruction.starts_line.unwrap_or_default(),
+                        start_offset: instruction.offset,
+                        end_offset: instruction.offset,
+                    }));
+
+                    // find SEND instruction
+                    let mut send_to = 0;
+                    while let Some(next_instruction) = opcode_instructions.get(offset + 1) {
+                        if next_instruction.opcode == Opcode::Send {
+                            offset += 1;
+                            send_to = next_instruction
+                                .argval
+                                .as_ref()
+                                .ok_or(format!(
+                                    "[GetAwaitable] No argval, deviation is {}",
+                                    next_instruction.offset
+                                ))?
+                                .trim_start_matches("to ")
+                                .parse::<usize>()?;
+                            break;
+                        }
+                        offset += 1;
+                    }
+
+                    // skip the offset to the <send_to>
+                    while let Some(next_instruction) = opcode_instructions.get(offset + 1) {
+                        match next_instruction.offset.cmp(&send_to) {
+                            Ordering::Equal => break,
+                            Ordering::Greater => {
+                                return Err(format!(
+                                    "[GetAwaitable] Send target not found, deviation is {}",
+                                    next_instruction.offset
+                                )
+                                .into())
+                            }
+                            _ => {}
+                        }
+                        offset += 1;
+                    }
+                }
                 Opcode::UnpackSequence => {
                     let mut count = instruction.arg.ok_or(format!(
                         "[UnpackSequence] No arg, deviation is {}",
@@ -1268,7 +1511,7 @@ impl ExprParser for Expr {
                                 instruction.offset
                             ))?;
                         match next_instruction.opcode {
-                            Opcode::StoreName => {
+                            Opcode::StoreName | Opcode::StoreFast => {
                                 let name = next_instruction
                                     .argval
                                     .as_ref()
@@ -1318,7 +1561,7 @@ impl ExprParser for Expr {
                             }
                             _ => {
                                 return Err(format!(
-                                "[UnpackSequence] Expect StoreName or UnpackSequence, but got {:?}",
+                                "[UnpackSequence] Expect StoreName, StoreFast or UnpackSequence, but got {:?}",
                                 next_instruction.opcode
                             )
                                 .into())
@@ -1335,6 +1578,12 @@ impl ExprParser for Expr {
                                 ..Default::default()
                             }))
                         })?;
+                    } else {
+                        return Err(format!(
+                            "[UnpackSequence] Expect <For> expr, but got {:?}",
+                            exprs_stack.last()
+                        )
+                        .into());
                     }
                 }
 
@@ -1344,8 +1593,80 @@ impl ExprParser for Expr {
             offset += 1;
         }
 
-        Ok((Box::new(Self { bodys: exprs_stack }), traceback))
+        Ok(Box::new(Self { bodys: exprs_stack }))
     }
+}
+
+pub fn get_trace(opcode_instructions: &[OpcodeInstruction]) -> Result<TraceBack> {
+    let mut traceback = TraceBack::new();
+
+    for instruction in opcode_instructions {
+        match instruction.opcode {
+            Opcode::StoreFast => {
+                let arg = instruction.arg.as_ref().ok_or(format!(
+                    "[Trace] No arg, deviation is {}",
+                    instruction.offset
+                ))?;
+                let name = instruction.argval.as_ref().ok_or(format!(
+                    "[Trace] No argval, deviation is {}",
+                    instruction.offset
+                ))?;
+                
+                if let Some(local) = traceback.get_mut_local(arg) {
+                    if !local.is_store {
+                        // do not store fast before, it's an arguement for function
+                        local.is_arg = true;
+                    } else {
+                        // store fast after load fast, not arguement for function
+                        local.is_arg = false;
+                    }
+                } else {
+                    // store fast before load fast, not arguement for function
+                    traceback.insert_local(*arg, Local {
+                        name: name.clone(),
+                        is_store: true,
+                        is_arg: false,
+                    });
+                }
+            }
+            Opcode::LoadFast => {
+                let arg = instruction.arg.as_ref().ok_or(format!(
+                    "[Trace] No arg, deviation is {}",
+                    instruction.offset
+                ))?;
+                let name = instruction.argval.as_ref().ok_or(format!(
+                    "[Trace] No argval, deviation is {}",
+                    instruction.offset
+                ))?;
+                if let Some(local) = traceback.get_mut_local(arg) {
+                    // load fast after store fast, not arguement for function
+                    if local.is_store {
+                        local.is_arg = false;
+                    } else {
+                        // is arg because its not store before
+                        local.is_arg = true;
+                    }
+                } else {
+                    // if load fast before store fast, it's an arguement for function
+                    traceback.insert_local(
+                        *arg,
+                        Local {
+                            name: name.clone(),
+                            is_store: false,
+                            is_arg: true,
+                        },
+                    );
+                }
+            }
+            Opcode::ReturnGenerator => {
+                // mark this block is async
+                traceback.mark_async();
+            }
+            _ => {}
+        }
+    }
+
+    Ok(traceback)
 }
 
 #[cfg(test)]
@@ -1440,7 +1761,7 @@ mod tests {
         ];
 
         assert_eq!(
-            Expr::parse(&instructions).unwrap().0,
+            Expr::parse(&instructions).unwrap(),
             Box::new(Expr {
                 bodys: [ExpressionEnum::Function(Function {
                     mark: "<code object test at 0x00000279922BDB80, file \"test/def.py\", line 1>"

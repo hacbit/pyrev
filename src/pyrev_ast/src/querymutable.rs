@@ -37,7 +37,7 @@ where
     }
 
     pub fn patch<T: 'static>(&self, value: T) -> Result<()> {
-        if TypeId::of::<T>() == self.value.type_id() {
+        if TypeId::of::<*mut T>() == self.value.type_id() {
             unsafe {
                 *(self.value as *mut T) = value;
             }

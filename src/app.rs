@@ -1,7 +1,4 @@
-use crate::core::common::*;
-use crate::core::decompile::*;
-use crate::core::parse_opcode::*;
-use colored::Colorize;
+use crate::core::prelude::*;
 use std::collections::HashMap;
 use std::path::PathBuf;
 
@@ -40,18 +37,10 @@ impl App {
             {
                 self.files.push(path);
             } else {
-                println!(
-                    "{}",
-                    format!("Warning: {} is already in the resources", path.display())
-                        .bright_yellow()
-                );
+                warn!("{} is already in the resources", path.display());
             }
         } else {
-            println!(
-                "{}",
-                format!("Warning: {} is not exists or is not a file", path.display())
-                    .bright_yellow()
-            );
+            warn!("{} is not exists or is not a file", path.display());
         }
         self
     }
@@ -70,11 +59,7 @@ impl App {
         if !path.exists() && !self.output_files.contains(&path) {
             self.output_files.push(path);
         } else {
-            println!(
-                "{}",
-                format!("Warning: {} is already in the output files", path.display())
-                    .bright_yellow()
-            );
+            warn!("{} is already in the output files", path.display());
         }
         self
     }
@@ -115,38 +100,26 @@ impl App {
             .iter_mut()
             .enumerate()
             .for_each(|(i, decompiled_result)| {
-                println!(
-                    "{}",
-                    format!(
-                        "Try to decompile {}",
-                        paths.next().expect("[App output] iter end").display()
-                    )
-                    .bright_green()
+                info!(
+                    "Try to decompile {}",
+                    paths.next().expect("[App output] iter end").display()
                 );
                 if let Some(file) = self.output_files.get(i) {
                     match decompiled_result {
                         Ok(decompiled_code) => decompiled_code.iter().write_file(file).unwrap(),
-                        Err(err) => eprintln!(
-                            "{}",
-                            format!(
-                                "The file {} decompiled failed: {}",
-                                self.files[i].display(),
-                                err
-                            )
-                            .bright_red()
+                        Err(err) => error!(
+                            "The file {} decompiled failed: {}",
+                            self.files[i].display(),
+                            err
                         ),
                     }
                 } else {
                     match decompiled_result {
                         Ok(decompiled_code) => decompiled_code.iter().write_console().unwrap(),
-                        Err(err) => eprintln!(
-                            "{}",
-                            format!(
-                                "The file {} decompiled failed: {}",
-                                self.files[i].display(),
-                                err
-                            )
-                            .bright_red()
+                        Err(err) => error!(
+                            "The file {} decompiled failed: {}",
+                            self.files[i].display(),
+                            err
                         ),
                     }
                 }
