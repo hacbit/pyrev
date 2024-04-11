@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src\core\decompile.rs`."><title>decompile.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="pyrev" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0-nightly (7d3702e47 2024-03-06)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-12cf3b4f4f9dc36d.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src\core\decompile.rs`."><title>decompile.rs - source</title><script> if (window.location.protocol !== "file:") document.write(`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2">`)</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9e1300b5663a8a03.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="pyrev" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (8b2459c1f 2024-04-09)" data-channel="nightly" data-search-js="search-ffac13a0df2b1870.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c97aec732c613ca4.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
             <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
     <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../pyrev/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
@@ -274,12 +274,37 @@
 <a href="#272" id="272">272</a>
 <a href="#273" id="273">273</a>
 <a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::collections::HashMap;
 <span class="kw">use </span>std::fmt::Debug;
 
-<span class="kw">use </span><span class="kw">super</span>::ast::<span class="kw-2">*</span>;
-<span class="kw">use </span><span class="kw">super</span>::common::<span class="kw-2">*</span>;
-<span class="kw">use </span><span class="kw">super</span>::parse_opcode::<span class="kw-2">*</span>;
+<span class="kw">use </span><span class="kw">super</span>::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>pyrev_ast::<span class="kw-2">*</span>;
 
 <span class="kw">pub trait </span>Decompiler {
@@ -294,12 +319,11 @@
         <span class="kw">let </span><span class="kw-2">mut </span>decompiled_code = DecompiledCode::new();
         <span class="kw">let </span><span class="kw-2">mut </span>exprs_map = HashMap::new();
         <span class="kw">for </span>(mark, code_object) <span class="kw">in </span><span class="self">self</span>.iter() {
-            <span class="kw">let </span>(expr, trace) = Expr::parse(code_object)<span class="question-mark">?</span>;
+            <span class="kw">let </span>expr = Expr::parse(code_object)<span class="question-mark">?</span>;
+            <span class="kw">let </span>trace = get_trace(code_object)<span class="question-mark">?</span>;
 
-            <span class="attr">#[cfg(debug_assertions)]
-            </span>{
-                <span class="macro">println!</span>(<span class="string">"{:?}"</span>, <span class="kw-2">&amp;</span>trace);
-            }
+            <span class="macro">dbg!</span>(<span class="kw-2">&amp;</span>trace);
+            
 
             exprs_map.insert(mark.clone(), (<span class="kw-2">*</span>expr, trace));
         }
@@ -308,11 +332,12 @@
             <span class="comment">//dbg!(&amp;exprs_map);
         </span>}
 
-        <span class="kw">let </span>main_expr = merge(<span class="string">"&lt;main&gt;"</span>, <span class="kw-2">&amp;</span>exprs_map)<span class="question-mark">?</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>main_expr = merge(<span class="string">"&lt;main&gt;"</span>, <span class="kw-2">&amp;</span>exprs_map)<span class="question-mark">?</span>;
         <span class="attr">#[cfg(debug_assertions)]
         </span>{
             <span class="comment">//dbg!(&amp;main_expr);
         </span>}
+        fixed_async_object(<span class="kw-2">&amp;mut </span>main_expr, <span class="kw-2">&amp;</span>exprs_map)<span class="question-mark">?</span>;
 
         <span class="kw">for </span>(i, instruction) <span class="kw">in </span>main_expr.bodys.iter().enumerate() {
             <span class="kw">let </span>code = instruction
@@ -331,10 +356,32 @@
     }
 }
 
+<span class="kw">fn </span>fixed_async_object(
+    main_expr: <span class="kw-2">&amp;mut </span>Expr,
+    maps: <span class="kw-2">&amp;</span>HashMap&lt;String, (Expr, TraceBack)&gt;,
+) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="comment">// fixed async object
+    </span><span class="kw">for </span>(mark, (<span class="kw">_</span>, trace)) <span class="kw">in </span>maps.iter() {
+        <span class="kw">if </span>trace.asyncable() {
+            <span class="kw">let </span>function_query = main_expr.query::&lt;Function&gt;();
+            <span class="kw">for </span>function <span class="kw">in </span>function_query {
+                <span class="kw">if </span><span class="kw-2">&amp;</span>function.mark == mark {
+                    function.with_mut().patch_by(|f| {
+                        f.is_async = <span class="bool-val">true</span>;
+                    })<span class="question-mark">?</span>;
+                }
+            }
+        }
+    }
+
+    <span class="prelude-val">Ok</span>(())
+}
+
 <span class="doccomment">/// 用来合并所有的Expr
 /// 比如`&lt;main&gt;`有一个函数foo, 就需要把foo的定义合并到`&lt;main&gt;`里面的foo Function的 bodys
 </span><span class="kw">fn </span>merge(mark: <span class="kw-2">&amp;</span>str, maps: <span class="kw-2">&amp;</span>HashMap&lt;String, (Expr, TraceBack)&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Expr&gt; {
     <span class="kw">let </span>(this_expr, traceback) = maps.get(mark).ok_or(<span class="macro">format!</span>(<span class="string">"No {} expr"</span>, <span class="kw-2">&amp;</span>mark))<span class="question-mark">?</span>;
+
     <span class="kw">loop </span>{
         <span class="kw">let </span><span class="kw-2">mut </span>is_merged = <span class="bool-val">true</span>;
 
@@ -351,16 +398,19 @@
 
                 function.with_mut().patch_by(|f| {
                     f.bodys = new_bodys;
-                    traceback.locals.iter().for_each(|(k, (v, b))| {
-                        <span class="kw">if </span>!b {
-                            f.args.push(FastVariable {
-                                index: <span class="kw-2">*</span>k,
-                                name: v.to_string(),
-                                annotation: <span class="prelude-val">None</span>,
-                                ..Default::default()
-                            })
-                        }
-                    })
+                    traceback
+                        .get_locals()
+                        .iter()
+                        .for_each(|(k, Local { name, is_arg, .. })| {
+                            <span class="kw">if </span><span class="kw-2">*</span>is_arg {
+                                f.args.push(FastVariable {
+                                    index: <span class="kw-2">*</span>k,
+                                    name: name.to_owned(),
+                                    annotation: <span class="prelude-val">None</span>,
+                                    ..Default::default()
+                                })
+                            }
+                        })
                 })<span class="question-mark">?</span>;
 
                 is_merged = <span class="bool-val">false</span>;
@@ -371,18 +421,22 @@
                 .get(<span class="kw-2">&amp;</span>function.mark)
                 .ok_or(<span class="macro">format!</span>(<span class="string">"No {} expr"</span>, <span class="kw-2">&amp;</span>function.mark))<span class="question-mark">?
                 </span>.<span class="number">1
-                </span>.locals
+                </span>.get_locals()
                 .clone();
             <span class="kw">let </span>args = function.args.clone();
             <span class="kw">let </span><span class="kw-2">mut </span>function_args = HashMap::new();
-            <span class="kw">for </span>(k, (v, b)) <span class="kw">in </span>function_locals.iter() {
-                <span class="kw">if </span>!b {
-                    function_args.insert(v, (k, <span class="prelude-val">None</span>));
+            <span class="kw">for </span>(k, Local { name, is_arg, .. }) <span class="kw">in </span>function_locals.iter() {
+                <span class="kw">if </span><span class="kw-2">*</span>is_arg &amp;&amp; !function_args.contains_key(name) {
+                    function_args.insert(name, (k, <span class="prelude-val">None</span>));
                 }
             }
             <span class="kw">for </span>fv <span class="kw">in </span>args.iter() {
                 <span class="kw">if </span>function_args.contains_key(<span class="kw-2">&amp;</span>fv.name) {
-                    function_args.get_mut(<span class="kw-2">&amp;</span>fv.name).unwrap().<span class="number">1 </span>= fv.annotation.clone();
+                    function_args
+                        .get_mut(<span class="kw-2">&amp;</span>fv.name)
+                        .unwrap()
+                        .<span class="number">1
+                        </span>.clone_from(<span class="kw-2">&amp;</span>fv.annotation)
                 } <span class="kw">else </span>{
                     function_args.insert(<span class="kw-2">&amp;</span>fv.name, (<span class="kw-2">&amp;</span>fv.index, fv.annotation.clone()));
                 }

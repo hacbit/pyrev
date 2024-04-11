@@ -7,7 +7,7 @@
 
   3          10 PUSH_NULL
              12 LOAD_BUILD_CLASS
-             14 LOAD_CONST               2 (<code object AIter at 0x0000023A1746B830, file "test/async.py", line 3>)
+             14 LOAD_CONST               2 (<code object AIter at 0x0000025F9BB7B830, file "test\async.py", line 3>)
              16 MAKE_FUNCTION            0
              18 LOAD_CONST               3 ('AIter')
              20 PRECALL                  2
@@ -16,22 +16,22 @@
 
  18          36 PUSH_NULL
              38 LOAD_BUILD_CLASS
-             40 LOAD_CONST               4 (<code object ACtxMgr at 0x0000023A1746BC90, file "test/async.py", line 18>)
+             40 LOAD_CONST               4 (<code object ACtxMgr at 0x0000025F9BB7BC90, file "test\async.py", line 18>)
              42 MAKE_FUNCTION            0
              44 LOAD_CONST               5 ('ACtxMgr')
              46 PRECALL                  2
              50 CALL                     2
              60 STORE_NAME               2 (ACtxMgr)
 
- 28          62 LOAD_CONST               6 (<code object foo at 0x0000023A1746BAD0, file "test/async.py", line 28>)
+ 28          62 LOAD_CONST               6 (<code object foo at 0x0000025F9BB7BAD0, file "test\async.py", line 28>)
              64 MAKE_FUNCTION            0
              66 STORE_NAME               3 (foo)
 
- 32          68 LOAD_CONST               7 (<code object bar at 0x0000023A17471B80, file "test/async.py", line 32>)
+ 32          68 LOAD_CONST               7 (<code object bar at 0x0000025F9BB81B80, file "test\async.py", line 32>)
              70 MAKE_FUNCTION            0
              72 STORE_NAME               4 (bar)
 
- 37          74 LOAD_CONST               8 (<code object main at 0x0000023A16FE9E60, file "test/async.py", line 37>)
+ 37          74 LOAD_CONST               8 (<code object main at 0x0000025F9B7678E0, file "test\async.py", line 37>)
              76 MAKE_FUNCTION            0
              78 STORE_NAME               5 (main)
 
@@ -48,7 +48,7 @@
             128 LOAD_CONST               1 (None)
             130 RETURN_VALUE
 
-Disassembly of <code object AIter at 0x0000023A1746B830, file "test/async.py", line 3>:
+Disassembly of <code object AIter at 0x0000025F9BB7B830, file "test\async.py", line 3>:
   3           0 RESUME                   0
               2 LOAD_NAME                0 (__name__)
               4 STORE_NAME               1 (__module__)
@@ -58,21 +58,21 @@ Disassembly of <code object AIter at 0x0000023A1746B830, file "test/async.py", l
   4          10 LOAD_CONST               1 ('ls')
              12 LOAD_NAME                3 (list)
              14 BUILD_TUPLE              2
-             16 LOAD_CONST               2 (<code object __init__ at 0x0000023A173DEB10, file "test/async.py", line 4>)
+             16 LOAD_CONST               2 (<code object __init__ at 0x0000025F9BAEEB10, file "test\async.py", line 4>)
              18 MAKE_FUNCTION            4 (annotations)
              20 STORE_NAME               4 (__init__)
 
-  8          22 LOAD_CONST               3 (<code object __aiter__ at 0x0000023A17630DB0, file "test/async.py", line 8>)
+  8          22 LOAD_CONST               3 (<code object __aiter__ at 0x0000025F9BD40DB0, file "test\async.py", line 8>)
              24 MAKE_FUNCTION            0
              26 STORE_NAME               5 (__aiter__)
 
- 11          28 LOAD_CONST               4 (<code object __anext__ at 0x0000023A17293C90, file "test/async.py", line 11>)
+ 11          28 LOAD_CONST               4 (<code object __anext__ at 0x0000025F9B9A3C90, file "test\async.py", line 11>)
              30 MAKE_FUNCTION            0
              32 STORE_NAME               6 (__anext__)
              34 LOAD_CONST               5 (None)
              36 RETURN_VALUE
 
-Disassembly of <code object __init__ at 0x0000023A173DEB10, file "test/async.py", line 4>:
+Disassembly of <code object __init__ at 0x0000025F9BAEEB10, file "test\async.py", line 4>:
   4           0 RESUME                   0
 
   5           2 LOAD_FAST                1 (ls)
@@ -85,13 +85,13 @@ Disassembly of <code object __init__ at 0x0000023A173DEB10, file "test/async.py"
              30 LOAD_CONST               0 (None)
              32 RETURN_VALUE
 
-Disassembly of <code object __aiter__ at 0x0000023A17630DB0, file "test/async.py", line 8>:
+Disassembly of <code object __aiter__ at 0x0000025F9BD40DB0, file "test\async.py", line 8>:
   8           0 RESUME                   0
 
   9           2 LOAD_FAST                0 (self)
               4 RETURN_VALUE
 
-Disassembly of <code object __anext__ at 0x0000023A17293C90, file "test/async.py", line 11>:
+Disassembly of <code object __anext__ at 0x0000025F9B9A3C90, file "test\async.py", line 11>:
  11           0 RETURN_GENERATOR
               2 POP_TOP
               4 RESUME                   0
@@ -127,34 +127,34 @@ Disassembly of <code object __anext__ at 0x0000023A17293C90, file "test/async.py
  16     >>  136 LOAD_GLOBAL              6 (StopAsyncIteration)
             148 RAISE_VARARGS            1
 
-Disassembly of <code object ACtxMgr at 0x0000023A1746BC90, file "test/async.py", line 18>:
+Disassembly of <code object ACtxMgr at 0x0000025F9BB7BC90, file "test\async.py", line 18>:
  18           0 RESUME                   0
               2 LOAD_NAME                0 (__name__)
               4 STORE_NAME               1 (__module__)
               6 LOAD_CONST               0 ('ACtxMgr')
               8 STORE_NAME               2 (__qualname__)
 
- 19          10 LOAD_CONST               1 (<code object __init__ at 0x0000023A176303F0, file "test/async.py", line 19>)
+ 19          10 LOAD_CONST               1 (<code object __init__ at 0x0000025F9BD403F0, file "test\async.py", line 19>)
              12 MAKE_FUNCTION            0
              14 STORE_NAME               3 (__init__)
 
- 22          16 LOAD_CONST               2 (<code object __aenter__ at 0x0000023A1746BD70, file "test/async.py", line 22>)
+ 22          16 LOAD_CONST               2 (<code object __aenter__ at 0x0000025F9BB7BD70, file "test\async.py", line 22>)
              18 MAKE_FUNCTION            0
              20 STORE_NAME               4 (__aenter__)
 
- 25          22 LOAD_CONST               3 (<code object __aexit__ at 0x0000023A1746BE50, file "test/async.py", line 25>)
+ 25          22 LOAD_CONST               3 (<code object __aexit__ at 0x0000025F9BB7BE50, file "test\async.py", line 25>)
              24 MAKE_FUNCTION            0
              26 STORE_NAME               5 (__aexit__)
              28 LOAD_CONST               4 (None)
              30 RETURN_VALUE
 
-Disassembly of <code object __init__ at 0x0000023A176303F0, file "test/async.py", line 19>:
+Disassembly of <code object __init__ at 0x0000025F9BD403F0, file "test\async.py", line 19>:
  19           0 RESUME                   0
 
  20           2 LOAD_CONST               0 (None)
               4 RETURN_VALUE
 
-Disassembly of <code object __aenter__ at 0x0000023A1746BD70, file "test/async.py", line 22>:
+Disassembly of <code object __aenter__ at 0x0000025F9BB7BD70, file "test\async.py", line 22>:
  22           0 RETURN_GENERATOR
               2 POP_TOP
               4 RESUME                   0
@@ -167,7 +167,7 @@ Disassembly of <code object __aenter__ at 0x0000023A1746BD70, file "test/async.p
              36 LOAD_CONST               0 (None)
              38 RETURN_VALUE
 
-Disassembly of <code object __aexit__ at 0x0000023A1746BE50, file "test/async.py", line 25>:
+Disassembly of <code object __aexit__ at 0x0000025F9BB7BE50, file "test\async.py", line 25>:
  25           0 RETURN_GENERATOR
               2 POP_TOP
               4 RESUME                   0
@@ -180,7 +180,7 @@ Disassembly of <code object __aexit__ at 0x0000023A1746BE50, file "test/async.py
              36 LOAD_CONST               0 (None)
              38 RETURN_VALUE
 
-Disassembly of <code object foo at 0x0000023A1746BAD0, file "test/async.py", line 28>:
+Disassembly of <code object foo at 0x0000025F9BB7BAD0, file "test\async.py", line 28>:
  28           0 RETURN_GENERATOR
               2 POP_TOP
               4 RESUME                   0
@@ -194,7 +194,7 @@ Disassembly of <code object foo at 0x0000023A1746BAD0, file "test/async.py", lin
  30          36 LOAD_CONST               2 (42)
              38 RETURN_VALUE
 
-Disassembly of <code object bar at 0x0000023A17471B80, file "test/async.py", line 32>:
+Disassembly of <code object bar at 0x0000025F9BB81B80, file "test\async.py", line 32>:
  32           0 RETURN_GENERATOR
               2 POP_TOP
               4 RESUME                   0
@@ -222,7 +222,7 @@ Disassembly of <code object bar at 0x0000023A17471B80, file "test/async.py", lin
  35         102 LOAD_CONST               2 ('bar end')
             104 RETURN_VALUE
 
-Disassembly of <code object main at 0x0000023A16FE9E60, file "test/async.py", line 37>:
+Disassembly of <code object main at 0x0000025F9B7678E0, file "test\async.py", line 37>:
  37           0 RETURN_GENERATOR
               2 POP_TOP
               4 RESUME                   0

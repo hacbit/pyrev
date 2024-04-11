@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src\pyrev_ast\src\lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="pyrev_ast" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0-nightly (7d3702e47 2024-03-06)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-12cf3b4f4f9dc36d.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src\pyrev_ast\src\lib.rs`."><title>lib.rs - source</title><script> if (window.location.protocol !== "file:") document.write(`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2">`)</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9e1300b5663a8a03.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="pyrev_ast" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (8b2459c1f 2024-04-09)" data-channel="nightly" data-search-js="search-ffac13a0df2b1870.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c97aec732c613ca4.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
             <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
     <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../pyrev_ast/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
@@ -885,6 +885,56 @@
 <a href="#883" id="883">883</a>
 <a href="#884" id="884">884</a>
 <a href="#885" id="885">885</a>
+<a href="#886" id="886">886</a>
+<a href="#887" id="887">887</a>
+<a href="#888" id="888">888</a>
+<a href="#889" id="889">889</a>
+<a href="#890" id="890">890</a>
+<a href="#891" id="891">891</a>
+<a href="#892" id="892">892</a>
+<a href="#893" id="893">893</a>
+<a href="#894" id="894">894</a>
+<a href="#895" id="895">895</a>
+<a href="#896" id="896">896</a>
+<a href="#897" id="897">897</a>
+<a href="#898" id="898">898</a>
+<a href="#899" id="899">899</a>
+<a href="#900" id="900">900</a>
+<a href="#901" id="901">901</a>
+<a href="#902" id="902">902</a>
+<a href="#903" id="903">903</a>
+<a href="#904" id="904">904</a>
+<a href="#905" id="905">905</a>
+<a href="#906" id="906">906</a>
+<a href="#907" id="907">907</a>
+<a href="#908" id="908">908</a>
+<a href="#909" id="909">909</a>
+<a href="#910" id="910">910</a>
+<a href="#911" id="911">911</a>
+<a href="#912" id="912">912</a>
+<a href="#913" id="913">913</a>
+<a href="#914" id="914">914</a>
+<a href="#915" id="915">915</a>
+<a href="#916" id="916">916</a>
+<a href="#917" id="917">917</a>
+<a href="#918" id="918">918</a>
+<a href="#919" id="919">919</a>
+<a href="#920" id="920">920</a>
+<a href="#921" id="921">921</a>
+<a href="#922" id="922">922</a>
+<a href="#923" id="923">923</a>
+<a href="#924" id="924">924</a>
+<a href="#925" id="925">925</a>
+<a href="#926" id="926">926</a>
+<a href="#927" id="927">927</a>
+<a href="#928" id="928">928</a>
+<a href="#929" id="929">929</a>
+<a href="#930" id="930">930</a>
+<a href="#931" id="931">931</a>
+<a href="#932" id="932">932</a>
+<a href="#933" id="933">933</a>
+<a href="#934" id="934">934</a>
+<a href="#935" id="935">935</a>
 </pre></div><pre class="rust"><code><span class="attr">#![feature(concat_idents)]
 
 </span><span class="kw">mod </span>query;
@@ -939,12 +989,13 @@
     <span class="kw">pub </span>mark: String,
     <span class="kw">pub </span>name: String,
     <span class="kw">pub </span>args: Vec&lt;FastVariable&gt;,
+    <span class="kw">pub </span>bodys: Vec&lt;ExpressionEnum&gt;,
     <span class="kw">pub </span>defaults: Vec&lt;String&gt;,
+    <span class="kw">pub </span>is_async: bool,
     <span class="kw">pub </span>start_line: usize,
     <span class="kw">pub </span>end_line: usize,
     <span class="kw">pub </span>start_offset: usize,
     <span class="kw">pub </span>end_offset: usize,
-    <span class="kw">pub </span>bodys: Vec&lt;ExpressionEnum&gt;,
 }
 
 <span class="doccomment">/// 返回
@@ -1086,6 +1137,7 @@
 </span><span class="kw">pub struct </span>With {
     <span class="kw">pub </span>item: Box&lt;ExpressionEnum&gt;,
     <span class="kw">pub </span>body: Vec&lt;ExpressionEnum&gt;,
+    <span class="kw">pub </span>is_async: bool,
     <span class="kw">pub </span>start_line: usize,
     <span class="kw">pub </span>start_offset: usize,
     <span class="kw">pub </span>end_offset: usize,
@@ -1099,6 +1151,7 @@
     <span class="kw">pub </span>body: Vec&lt;ExpressionEnum&gt;,
     <span class="kw">pub </span>from: usize,
     <span class="kw">pub </span>to: usize,
+    <span class="kw">pub </span>is_async: bool,
     <span class="kw">pub </span>start_line: usize,
     <span class="kw">pub </span>start_offset: usize,
     <span class="kw">pub </span>end_offset: usize,
@@ -1120,6 +1173,15 @@
 </span><span class="kw">pub struct </span>Jump {
     <span class="kw">pub </span>target: usize,
     <span class="kw">pub </span>body: Vec&lt;ExpressionEnum&gt;,
+    <span class="kw">pub </span>start_line: usize,
+    <span class="kw">pub </span>start_offset: usize,
+    <span class="kw">pub </span>end_offset: usize,
+}
+
+<span class="doccomment">/// Await
+</span><span class="attr">#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
+</span><span class="kw">pub struct </span>Await {
+    <span class="kw">pub </span>awaitable_expr: Box&lt;ExpressionEnum&gt;,
     <span class="kw">pub </span>start_line: usize,
     <span class="kw">pub </span>start_offset: usize,
     <span class="kw">pub </span>end_offset: usize,
@@ -1165,15 +1227,16 @@
     <span class="kw">pub </span>end_offset: usize,
 }
 
-<span class="doccomment">/// None
-</span><span class="attr">#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
-</span><span class="kw">pub struct </span>NoneValue {
-    <span class="kw">pub </span>start_line: usize,
-    <span class="kw">pub </span>start_offset: usize,
-    <span class="kw">pub </span>end_offset: usize,
-}
+<span class="doccomment">/// Deprecated
+</span><span class="comment">/* /// None
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
+pub struct NoneValue {
+    pub start_line: usize,
+    pub start_offset: usize,
+    pub end_offset: usize,
+} */
 
-<span class="doccomment">/// 为上面的表达式提供一个封装
+</span><span class="doccomment">/// 为上面的表达式提供一个封装
 /// 用来实现不同Expression的嵌套
 ///
 /// is_xxx function example:
@@ -1190,8 +1253,9 @@
 /// ```
 </span><span class="attr">#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Is, Unwrap, GetOffset)]
 </span><span class="kw">pub enum </span>ExpressionEnum {
-    NoneValue(NoneValue),
-    Import(Import),
+    <span class="doccomment">/// NoneValue is deprecated
+    </span><span class="comment">// NoneValue(NoneValue),
+    </span>Import(Import),
     Class(Class),
     FastVariable(FastVariable),
     Function(Function),
@@ -1213,6 +1277,7 @@
     With(With),
     For(For),
     If(If),
+    Await(Await),
     Jump(Jump),
     Container(Container),
     Slice(Slice),
@@ -1252,6 +1317,12 @@
 
 <span class="kw">impl </span>Query <span class="kw">for </span>ContainerType {
     <span class="kw">fn </span>query&lt;T: <span class="lifetime">'static</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;<span class="kw-2">&amp;</span>T&gt; {
+        <span class="macro">vec!</span>[]
+    }
+}
+
+<span class="kw">impl </span>Query <span class="kw">for </span>bool {
+    <span class="kw">fn </span>query&lt;T: std::fmt::Debug + Expression + <span class="lifetime">'static</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;<span class="kw-2">&amp;</span>T&gt; {
         <span class="macro">vec!</span>[]
     }
 }
@@ -1308,7 +1379,7 @@
         <span class="kw">if let </span>ExpressionEnum::BaseValue(value) = expr {
             <span class="self">Self</span>::new(value.value)
         } <span class="kw">else </span>{
-            <span class="prelude-val">Err</span>(<span class="string">"Function name must be a string"</span>.into())
+            <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">"Expect BaseValue, got {:?}"</span>, expr).into())
         }
     }
 
@@ -1377,9 +1448,18 @@
                         }
                     }
                 }
-                <span class="kw">let </span>fix_init = |line: String| {
-                    <span class="kw">if </span>line == <span class="string">"def __init__():" </span>{
-                        <span class="string">"def __init__(self):"</span>.to_string()
+                <span class="kw">let </span>re = Regex::new(<span class="string">r"def [A-Za-z_]+\((?P&lt;args&gt;[\S_]*)\)"</span>).unwrap();
+                <span class="kw">let </span>add_self_to_no_arg_func = |line: String| {
+                    <span class="kw">if let </span><span class="prelude-val">Some</span>(caps) = re.captures(<span class="kw-2">&amp;</span>line) {
+                        <span class="kw">if let </span><span class="prelude-val">Some</span>(args) = caps.name(<span class="string">"args"</span>) {
+                            <span class="kw">if </span>args.is_empty() {
+                                line.replace(<span class="string">"()"</span>, <span class="string">"(self, *args)"</span>)
+                            } <span class="kw">else </span>{
+                                line.replace(args.as_str(), <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{}, *args"</span>, args.as_str()))
+                            }
+                        } <span class="kw">else </span>{
+                            line
+                        }
                     } <span class="kw">else </span>{
                         line
                     }
@@ -1388,20 +1468,23 @@
                 <span class="kw">if </span>!has_doc {
                     <span class="kw">let </span>expr_code = next_expr.unwrap().build()<span class="question-mark">?</span>;
                     <span class="kw">for </span>line <span class="kw">in </span>expr_code {
-                        code.push(<span class="macro">format!</span>(<span class="string">"    {}"</span>, fix_init(line)));
+                        code.push(<span class="macro">format!</span>(<span class="string">"    {}"</span>, add_self_to_no_arg_func(line)));
                     }
-                    code.push(<span class="string">""</span>.to_string());
+                    <span class="kw">if </span>!code.last().unwrap().trim().is_empty() {
+                        code.push(<span class="string">""</span>.to_string());
+                    }
                 }
 
                 <span class="kw">for </span>expr <span class="kw">in </span>class_members {
                     <span class="kw">let </span>expr_code = expr.build()<span class="question-mark">?</span>;
                     <span class="kw">for </span>line <span class="kw">in </span>expr_code {
-                        code.push(<span class="macro">format!</span>(<span class="string">"    {}"</span>, fix_init(line)));
+                        code.push(<span class="macro">format!</span>(<span class="string">"    {}"</span>, add_self_to_no_arg_func(line)));
                     }
-                    code.push(<span class="string">""</span>.to_string());
+                    <span class="kw">if </span>!code.last().unwrap().trim().is_empty() {
+                        code.push(<span class="string">""</span>.to_string());
+                    }
                 }
-                <span class="comment">// pop the last empty line
-                </span>code.pop();
+
                 <span class="prelude-val">Ok</span>(code)
             }
             ExpressionEnum::Function(function) =&gt; {
@@ -1466,14 +1549,14 @@
                     <span class="kw">_ </span>=&gt; {
                         <span class="attr">#[cfg(debug_assertions)]
                         </span>{
-                            <span class="macro">dbg!</span>(<span class="kw-2">&amp;</span>args_code);
-                        }
-                        code.push(<span class="macro">format!</span>(
-                            <span class="string">"def {}({}){}:"</span>,
-                            function.name,
-                            args_code.trim_end_matches(<span class="string">", "</span>),
-                            ret_code
-                        ));
+                            <span class="comment">//dbg!(&amp;args_code);
+                        </span>}
+                        <span class="kw">let </span>first_line = <span class="kw">if </span>function.is_async {
+                            <span class="macro">format!</span>(<span class="string">"async def {}({}){}:"</span>, function.name, args_code, ret_code)
+                        } <span class="kw">else </span>{
+                            <span class="macro">format!</span>(<span class="string">"def {}({}){}:"</span>, function.name, args_code, ret_code)
+                        };
+                        code.push(first_line);
                         <span class="kw">for </span>expr <span class="kw">in </span>function.bodys.iter() {
                             <span class="kw">let </span>expr_code = expr.build()<span class="question-mark">?</span>;
                             <span class="kw">for </span>line <span class="kw">in </span>expr_code.iter() {
@@ -1483,6 +1566,7 @@
                         <span class="kw">if </span>code.len() == <span class="number">1 </span>{
                             code.push(<span class="string">"    pass"</span>.to_string());
                         }
+                        code.push(<span class="string">""</span>.to_string());
                     }
                 }
                 <span class="prelude-val">Ok</span>(code)
@@ -1585,12 +1669,18 @@
                 <span class="kw">let </span>exception_code = raise.exception.build()<span class="question-mark">?</span>.join(<span class="string">""</span>);
                 <span class="prelude-val">Ok</span>(<span class="macro">vec!</span>[<span class="macro">format!</span>(<span class="string">"raise {}"</span>, exception_code)])
             }
+            ExpressionEnum::Await(await_expr) =&gt; {
+                <span class="kw">let </span>awaitable_code = await_expr.awaitable_expr.build()<span class="question-mark">?</span>.join(<span class="string">""</span>);
+                <span class="prelude-val">Ok</span>(<span class="macro">vec!</span>[<span class="macro">format!</span>(<span class="string">"await {}"</span>, awaitable_code)])
+            }
             ExpressionEnum::BaseValue(base_value) =&gt; {
                 <span class="kw">if </span>base_value.value == <span class="string">"None" </span>{
                     <span class="prelude-val">Ok</span>(<span class="macro">vec!</span>[<span class="string">""</span>.to_string()])
-                } <span class="kw">else if </span>base_value.value == <span class="string">"0" </span>{
-                    <span class="prelude-val">Ok</span>(<span class="macro">vec!</span>[])
-                } <span class="kw">else </span>{
+                }
+                <span class="comment">/* else if base_value.value == "0" {
+                    Ok(vec![])
+                } */
+                </span><span class="kw">else </span>{
                     <span class="prelude-val">Ok</span>(<span class="macro">vec!</span>[base_value.value.clone()])
                 }
             }
@@ -1736,7 +1826,12 @@
             ExpressionEnum::With(with) =&gt; {
                 <span class="kw">let </span>item_code = with.item.build()<span class="question-mark">?</span>.join(<span class="string">""</span>);
                 <span class="kw">let </span><span class="kw-2">mut </span>code = Vec::new();
-                code.push(<span class="macro">format!</span>(<span class="string">"with {}:"</span>, item_code));
+                <span class="kw">let </span>first_line = <span class="kw">if </span>with.is_async {
+                    <span class="macro">format!</span>(<span class="string">"async with {}:"</span>, item_code)
+                } <span class="kw">else </span>{
+                    <span class="macro">format!</span>(<span class="string">"with {}:"</span>, item_code)
+                };
+                code.push(first_line);
                 <span class="kw">if </span>with.body.is_empty() {
                     code.push(<span class="string">"    pass"</span>.to_string());
                 } <span class="kw">else </span>{
@@ -1753,7 +1848,12 @@
                 <span class="kw">let </span>iter_code = for_expr.iterator.build()<span class="question-mark">?</span>.join(<span class="string">""</span>);
                 <span class="kw">let </span>item_code = for_expr.items.build()<span class="question-mark">?</span>.join(<span class="string">""</span>);
                 <span class="kw">let </span><span class="kw-2">mut </span>code = Vec::new();
-                code.push(<span class="macro">format!</span>(<span class="string">"for {} in {}:"</span>, item_code, iter_code));
+                <span class="kw">let </span>first_line = <span class="kw">if </span>for_expr.is_async {
+                    <span class="macro">format!</span>(<span class="string">"async for {} in {}:"</span>, item_code, iter_code)
+                } <span class="kw">else </span>{
+                    <span class="macro">format!</span>(<span class="string">"for {} in {}:"</span>, item_code, iter_code)
+                };
+                code.push(first_line);
                 <span class="kw">if </span>for_expr.body.is_empty() {
                     code.push(<span class="string">"    pass"</span>.to_string());
                 } <span class="kw">else </span>{

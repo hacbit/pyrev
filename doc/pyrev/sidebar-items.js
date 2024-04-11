@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["main"],"mod":["app","core"]};
+window.SIDEBAR_ITEMS = {"fn":["main"],"macro":["error","info","warn"],"mod":["app","core"]};

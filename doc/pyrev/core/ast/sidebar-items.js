@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"trait":["ExprParser"]};
+window.SIDEBAR_ITEMS = {"fn":["get_trace"],"trait":["ExprParser"]};

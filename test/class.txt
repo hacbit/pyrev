@@ -2,7 +2,7 @@
 
   1           2 PUSH_NULL
               4 LOAD_BUILD_CLASS
-              6 LOAD_CONST               0 (<code object Test at 0x00000259D76FB5A0, file "test\class.py", line 1>)
+              6 LOAD_CONST               0 (<code object Test at 0x000002701B2EF5A0, file "test\class.py", line 1>)
               8 MAKE_FUNCTION            0
              10 LOAD_CONST               1 ('Test')
              12 PRECALL                  2
@@ -11,7 +11,7 @@
 
  23          28 PUSH_NULL
              30 LOAD_BUILD_CLASS
-             32 LOAD_CONST               2 (<code object NoDoc at 0x00000259D7872730, file "test\class.py", line 23>)
+             32 LOAD_CONST               2 (<code object NoDoc at 0x000002701B4B68D0, file "test\class.py", line 23>)
              34 MAKE_FUNCTION            0
              36 LOAD_CONST               3 ('NoDoc')
              38 PRECALL                  2
@@ -39,7 +39,7 @@
             156 LOAD_CONST               5 (None)
             158 RETURN_VALUE
 
-Disassembly of <code object Test at 0x00000259D76FB5A0, file "test\class.py", line 1>:
+Disassembly of <code object Test at 0x000002701B2EF5A0, file "test\class.py", line 1>:
   1           0 RESUME                   0
               2 LOAD_NAME                0 (__name__)
               4 STORE_NAME               1 (__module__)
@@ -56,24 +56,24 @@ Disassembly of <code object Test at 0x00000259D76FB5A0, file "test\class.py", li
              20 LOAD_CONST               4 ('name')
              22 LOAD_NAME                5 (str)
              24 BUILD_TUPLE              2
-             26 LOAD_CONST               5 (<code object __init__ at 0x00000259D76FB4B0, file "test\class.py", line 11>)
+             26 LOAD_CONST               5 (<code object __init__ at 0x000002701B2EF4B0, file "test\class.py", line 11>)
              28 MAKE_FUNCTION            5 (defaults, annotations)
              30 STORE_NAME               6 (__init__)
 
  15          32 LOAD_CONST               6 ('new_name')
              34 LOAD_NAME                5 (str)
              36 BUILD_TUPLE              2
-             38 LOAD_CONST               7 (<code object change_name at 0x00000259D7806B30, file "test\class.py", line 15>)
+             38 LOAD_CONST               7 (<code object change_name at 0x000002701B466B30, file "test\class.py", line 15>)
              40 MAKE_FUNCTION            4 (annotations)
              42 STORE_NAME               7 (change_name)
 
- 19          44 LOAD_CONST               8 (<code object display at 0x00000259D78898F0, file "test\class.py", line 19>)
+ 19          44 LOAD_CONST               8 (<code object display at 0x000002701B4ED8F0, file "test\class.py", line 19>)
              46 MAKE_FUNCTION            0
              48 STORE_NAME               8 (display)
              50 LOAD_CONST               9 (None)
              52 RETURN_VALUE
 
-Disassembly of <code object __init__ at 0x00000259D76FB4B0, file "test\class.py", line 11>:
+Disassembly of <code object __init__ at 0x000002701B2EF4B0, file "test\class.py", line 11>:
  11           0 RESUME                   0
 
  12           2 LOAD_FAST                1 (name)
@@ -88,7 +88,7 @@ Disassembly of <code object __init__ at 0x00000259D76FB4B0, file "test\class.py"
              46 LOAD_CONST               0 (None)
              48 RETURN_VALUE
 
-Disassembly of <code object change_name at 0x00000259D7806B30, file "test\class.py", line 15>:
+Disassembly of <code object change_name at 0x000002701B466B30, file "test\class.py", line 15>:
  15           0 RESUME                   0
 
  16           2 LOAD_FAST                1 (new_name)
@@ -108,7 +108,7 @@ Disassembly of <code object change_name at 0x00000259D7806B30, file "test\class.
              64 LOAD_CONST               0 (None)
              66 RETURN_VALUE
 
-Disassembly of <code object display at 0x00000259D78898F0, file "test\class.py", line 19>:
+Disassembly of <code object display at 0x000002701B4ED8F0, file "test\class.py", line 19>:
  19           0 RESUME                   0
 
  20           2 LOAD_GLOBAL              1 (NULL + print)
@@ -129,20 +129,20 @@ Disassembly of <code object display at 0x00000259D78898F0, file "test\class.py",
              88 LOAD_CONST               0 (None)
              90 RETURN_VALUE
 
-Disassembly of <code object NoDoc at 0x00000259D7872730, file "test\class.py", line 23>:
+Disassembly of <code object NoDoc at 0x000002701B4B68D0, file "test\class.py", line 23>:
  23           0 RESUME                   0
               2 LOAD_NAME                0 (__name__)
               4 STORE_NAME               1 (__module__)
               6 LOAD_CONST               0 ('NoDoc')
               8 STORE_NAME               2 (__qualname__)
 
- 24          10 LOAD_CONST               1 (<code object __init__ at 0x00000259D765E790, file "test\class.py", line 24>)
+ 24          10 LOAD_CONST               1 (<code object __init__ at 0x000002701B24EB10, file "test\class.py", line 24>)
              12 MAKE_FUNCTION            0
              14 STORE_NAME               3 (__init__)
              16 LOAD_CONST               2 (None)
              18 RETURN_VALUE
 
-Disassembly of <code object __init__ at 0x00000259D765E790, file "test\class.py", line 24>:
+Disassembly of <code object __init__ at 0x000002701B24EB10, file "test\class.py", line 24>:
  24           0 RESUME                   0
 
  25           2 LOAD_GLOBAL              1 (NULL + print)
