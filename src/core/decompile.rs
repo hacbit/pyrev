@@ -19,9 +19,6 @@ impl Decompiler for CodeObjectMap {
             let expr = Expr::parse(code_object)?;
             let trace = get_trace(code_object)?;
 
-            dbg!(&trace);
-            
-
             exprs_map.insert(mark.clone(), (*expr, trace));
         }
         #[cfg(debug_assertions)]

@@ -615,9 +615,19 @@ impl ExpressionEnum {
                             //dbg!(&args_code);
                         }
                         let first_line = if function.is_async {
-                            format!("async def {}({}){}:", function.name, args_code, ret_code)
+                            format!(
+                                "async def {}({}){}:",
+                                function.name,
+                                args_code.trim_end_matches(", "),
+                                ret_code
+                            )
                         } else {
-                            format!("def {}({}){}:", function.name, args_code, ret_code)
+                            format!(
+                                "def {}({}){}:",
+                                function.name,
+                                args_code.trim_end_matches(", "),
+                                ret_code
+                            )
                         };
                         code.push(first_line);
                         for expr in function.bodys.iter() {

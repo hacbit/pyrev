@@ -1611,7 +1611,7 @@ pub fn get_trace(opcode_instructions: &[OpcodeInstruction]) -> Result<TraceBack>
                     "[Trace] No argval, deviation is {}",
                     instruction.offset
                 ))?;
-                
+
                 if let Some(local) = traceback.get_mut_local(arg) {
                     if !local.is_store {
                         // do not store fast before, it's an arguement for function
@@ -1622,11 +1622,14 @@ pub fn get_trace(opcode_instructions: &[OpcodeInstruction]) -> Result<TraceBack>
                     }
                 } else {
                     // store fast before load fast, not arguement for function
-                    traceback.insert_local(*arg, Local {
-                        name: name.clone(),
-                        is_store: true,
-                        is_arg: false,
-                    });
+                    traceback.insert_local(
+                        *arg,
+                        Local {
+                            name: name.clone(),
+                            is_store: true,
+                            is_arg: false,
+                        },
+                    );
                 }
             }
             Opcode::LoadFast => {
