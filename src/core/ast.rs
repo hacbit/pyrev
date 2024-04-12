@@ -876,6 +876,16 @@ impl ExprParser for Expr {
                         instruction.offset
                     ))?;
 
+                    // remove the "0"
+                    // when import a module, it will load a const "0" first
+                    if let Some(last) = exprs_stack.last() {
+                        if let ExpressionEnum::BaseValue(base_value) = last {
+                            if base_value.value == "0" {
+                                exprs_stack.pop();
+                            }
+                        }
+                    }
+
                     if !module.build()?.join("").is_empty() {
                         //需要from
                         let origin_len = module.build()?.join("").len();
