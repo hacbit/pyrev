@@ -1,4 +1,4 @@
-use crate::core::prelude::*;
+use pyrev_core::prelude::*;
 use std::collections::HashMap;
 use std::path::PathBuf;
 

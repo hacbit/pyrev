@@ -180,12 +180,8 @@ version = "1.0.10"
 dependencies = [
  "atty",
  "clap",
- "colored",
- "lazy_format",
- "lazy_static",
- "pyrev_ast",
+ "pyrev_core",
  "pyrev_pyc",
- "regex",
 ]
 
 [[package]]
@@ -206,8 +202,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "pyrev_core"
+version = "1.0.10"
+dependencies = [
+ "atty",
+ "colored",
+ "lazy_format",
+ "lazy_static",
+ "pyrev_ast",
+ "regex",
+]
+
+[[package]]
 name = "pyrev_pyc"
 version = "0.1.0"
+dependencies = [
+ "pyrev_core",
+]
 
 [[package]]
 name = "quote"

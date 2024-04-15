@@ -1,13 +1,12 @@
 // python bytecode reverse engineering by @hacbit
 use clap::{arg, command, value_parser, ArgAction, Command};
+use pyrev_core::prelude::*;
 use std::io::Read;
 use std::path::PathBuf;
 
 mod app;
-mod core;
 
 use app::App;
-use core::common::*;
 
 fn main() -> Result<()> {
     let matches = command!()
