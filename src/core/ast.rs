@@ -982,13 +982,13 @@ impl ExprParser for Expr {
                     exprs_stack.push(ExpressionEnum::If(If {
                         test: Box::new(test),
                         body: vec![],
-                        or_else: vec![ExpressionEnum::Jump(Jump {
+                        or_else: Some(Box::new(ExpressionEnum::Jump(Jump {
                             target: jump_target,
                             body: vec![],
                             start_line: instruction.starts_line.unwrap_or_default(),
                             start_offset: instruction.offset,
                             end_offset: instruction.offset,
-                        })],
+                        }))),
                         start_line: instruction.starts_line.unwrap_or_default(),
                         start_offset: instruction.offset,
                         end_offset: instruction.offset,
@@ -1019,13 +1019,13 @@ impl ExprParser for Expr {
                     exprs_stack.push(ExpressionEnum::If(If {
                         test: Box::new(test),
                         body: vec![],
-                        or_else: vec![ExpressionEnum::Jump(Jump {
+                        or_else: Some(Box::new(ExpressionEnum::Jump(Jump {
                             target: jump_target,
                             body: vec![],
                             start_line: instruction.starts_line.unwrap_or_default(),
                             start_offset: instruction.offset,
                             end_offset: instruction.offset,
-                        })],
+                        }))),
                         start_line: instruction.starts_line.unwrap_or_default(),
                         start_offset: instruction.offset,
                         end_offset: instruction.offset,

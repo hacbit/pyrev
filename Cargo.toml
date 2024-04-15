@@ -1,4 +1,4 @@
-workspace = { members = [ "src/pyrev_ast", "src/pyrev_ast_derive" ] }
+workspace = { members = [ "src/pyrev_ast", "src/pyrev_ast_derive" , "src/pyrev_pyc"] }
 
 [package]
 name = "pyrev"
@@ -22,6 +22,9 @@ features = ["derive", "cargo"]
 
 [dependencies.pyrev_ast]
 path = "src/pyrev_ast"
+
+[dependencies.pyrev_pyc]
+path = "src/pyrev_pyc"
 
 [profile.dev]
 # Uncomment the following lines to allow clippy to break your build.
