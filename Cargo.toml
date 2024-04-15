@@ -5,9 +5,9 @@ name = "pyrev"
 authors = ["hacbit <hacbit@foxmail.com>"]
 version = "1.0.10"
 edition = "2021"
-
-[features]
-clippy = []
+description = "A Python bytecode reverse engineering tool."
+build = "build.rs"
+license = "MIT"
 
 [dependencies]
 atty = "0.2.14"
@@ -21,7 +21,24 @@ path = "src/pyrev_core"
 
 [dependencies.pyrev_pyc]
 path = "src/pyrev_pyc"
+optional = true
 
 [profile.dev]
 # Uncomment the following lines to allow clippy to break your build.
 # rustflags = ["-D", "warnings"]
+panic = "unwind"
+lto = true
+opt-level = 3
+
+[profile.release]
+panic = "abort"
+lto = true
+opt-level = 3
+
+[features]
+default = []
+clippy = []
+pyc = ["pyrev_pyc"]
+all = [
+    "pyrev_pyc"
+]

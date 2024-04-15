@@ -37,7 +37,7 @@ where
         let mut last_line = 0;
         let mut this_obj_mark = "<main>".to_string();
         let mut code_object = CodeObject::new();
-        let mut code_object_map = CodeObjectMap::new();
+        let mut code_object_map = CodeObjectMap::default();
         for cap in reg.captures_iter(self.as_ref()) {
             let mark = cap.name("mark").map_or("", |m| m.as_str());
             let line = cap.name("line").map_or("", |m| m.as_str());

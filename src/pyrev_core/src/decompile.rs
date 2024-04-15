@@ -13,7 +13,7 @@ pub trait Decompiler {
 impl Decompiler for CodeObjectMap {
     /// 从字节码对象映射表中解析为AST, 然后再从AST解析为代码
     fn decompile(&self) -> Result<DecompiledCode> {
-        let mut decompiled_code = DecompiledCode::new();
+        let mut decompiled_code = DecompiledCode::default();
         let mut exprs_map = HashMap::new();
         for (mark, code_object) in self.iter() {
             let expr = Expr::parse(code_object)?;
@@ -229,17 +229,13 @@ fn commit_expr(expr: &Expr, want_to_remove: &[usize]) -> Result<()> {
     Ok(())
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Default)]
 pub struct DecompiledCode {
     code: Vec<(LineNumber, String)>,
 }
 
 #[allow(unused)]
 impl DecompiledCode {
-    pub fn new() -> Self {
-        Self { code: Vec::new() }
-    }
-
     pub fn insert<S: AsRef<str>>(&mut self, l: usize, s: S) {
         self.code.push((l, s.as_ref().to_string()));
     }

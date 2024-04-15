@@ -45,17 +45,19 @@ fn main() -> Result<()> {
                     )
                     .action(ArgAction::SetTrue),
                 ),
-        )
-        .subcommand(
-            Command::new("pyc").about("decompile pyc files").arg(
-                arg!(
-                    -d --directory "specify the directory to search for pyc files"
-                )
-                .action(ArgAction::Set)
-                .value_parser(value_parser!(PathBuf)),
-            ),
-        )
-        .get_matches();
+        );
+    #[cfg(feature = "pyc")]
+    let matches = matches.subcommand(
+        Command::new("pyc").about("decompile pyc files").arg(
+            arg!(
+                -d --directory "specify the directory to search for pyc files"
+            )
+            .action(ArgAction::Set)
+            .value_parser(value_parser!(PathBuf)),
+        ),
+    );
+
+    let matches = matches.get_matches();
 
     let ifiles = matches
         .get_many::<PathBuf>("file")

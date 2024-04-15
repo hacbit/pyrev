@@ -88,7 +88,7 @@ where
 }
 
 /// 一个简单的有序字典
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct OrderMap<K, V> {
     keys: Vec<K>,
     values: Vec<V>,
@@ -101,13 +101,6 @@ where
     K: PartialEq + Eq + Clone + Ord,
     V: Clone,
 {
-    pub fn new() -> Self {
-        Self {
-            keys: Vec::new(),
-            values: Vec::new(),
-        }
-    }
-
     pub fn insert(&mut self, mark: K, code_object: V) {
         self.keys.push(mark);
         self.values.push(code_object);
@@ -156,14 +149,14 @@ where
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Local {
     pub name: String,
     pub is_store: bool,
     pub is_arg: bool,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct TraceBack {
     /// is_store is true if the arg is stored in the function argument
     /// arg, Local
@@ -179,14 +172,6 @@ pub struct TraceBack {
 
 #[allow(unused)]
 impl TraceBack {
-    pub fn new() -> Self {
-        Self {
-            locals: OrderMap::new(),
-            jumps: OrderMap::new(),
-            is_async: false,
-        }
-    }
-
     pub fn insert_local(&mut self, arg: usize, local: Local) {
         self.locals.insert(arg, local);
     }

@@ -1606,7 +1606,7 @@ impl ExprParser for Expr {
 }
 
 pub fn get_trace(opcode_instructions: &[OpcodeInstruction]) -> Result<TraceBack> {
-    let mut traceback = TraceBack::new();
+    let mut traceback = TraceBack::default();
 
     for instruction in opcode_instructions {
         match instruction.opcode {
