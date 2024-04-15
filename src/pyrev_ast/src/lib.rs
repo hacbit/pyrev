@@ -225,7 +225,7 @@ pub struct For {
 pub struct If {
     pub test: Box<ExpressionEnum>,
     pub body: Vec<ExpressionEnum>,
-    pub or_else: Vec<ExpressionEnum>,
+    pub or_else: Option<Box<ExpressionEnum>>,
     pub start_line: usize,
     pub start_offset: usize,
     pub end_offset: usize,

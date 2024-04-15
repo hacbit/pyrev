@@ -2,7 +2,7 @@ use crate::object::*;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-pub const MAX_MARSHAL_STACK_DEPTH: usize = 2000;
+// pub const MAX_MARSHAL_STACK_DEPTH: usize = 2000;
 
 #[repr(u8)]
 #[derive(Debug)]
@@ -77,12 +77,6 @@ impl Type {
     }
 }
 
-pub enum CellKind {
-    CoFastLocal,
-    CoFastCell,
-    CoFastFree,
-}
-
 pub struct Reader<'a> {
     data: &'a [u8],
     pos: usize,
@@ -138,7 +132,7 @@ impl<'a> Reader<'a> {
 
     pub fn read_pylong(&mut self) -> PyLong {
         let n = self.read_int();
-        let size = n.abs() as usize;
+        let size = n.unsigned_abs() as usize;
         let mut value = Vec::with_capacity(size);
         for _ in 0..size {
             value.push(self.read_short());
@@ -178,7 +172,7 @@ impl<'a> Reader<'a> {
                 eprintln!("Index out of range: {}", idx)
             }
         }
-        return obj;
+        obj
     }
 
     pub fn read_ref(&mut self, obj: PyObject, flag: u8) -> PyObject {
@@ -424,7 +418,10 @@ mod test {
 
     #[test]
     fn test_loads() {
-        let data = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "../../../test/pyc_test/__pycache__/demo1.cpython-311.pyc"));
+        let data = include_bytes!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "../../../test/pyc_test/__pycache__/demo1.cpython-311.pyc"
+        ));
         println!("{:?}", &data[16..]);
 
         let obj = loads(&data[16..]);

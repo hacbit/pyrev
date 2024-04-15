@@ -878,11 +878,9 @@ impl ExprParser for Expr {
 
                     // remove the "0"
                     // when import a module, it will load a const "0" first
-                    if let Some(last) = exprs_stack.last() {
-                        if let ExpressionEnum::BaseValue(base_value) = last {
-                            if base_value.value == "0" {
-                                exprs_stack.pop();
-                            }
+                    if let Some(ExpressionEnum::BaseValue(base_value)) = exprs_stack.last() {
+                        if base_value.value == "0" {
+                            exprs_stack.pop();
                         }
                     }
 

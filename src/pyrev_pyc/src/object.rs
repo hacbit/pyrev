@@ -18,18 +18,12 @@ pub enum PyObject {
     Code(Box<Code>),
 }
 
-pub trait Object {}
-
-impl Object for PyObject {}
-
 #[derive(Debug, Clone, PartialEq, Hash)]
 pub struct PyLong {
     pub sign: bool,
     pub size: usize,
     pub value: Vec<u16>,
 }
-
-impl Object for PyLong {}
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Code {
