@@ -4,6 +4,8 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 // pub const MAX_MARSHAL_STACK_DEPTH: usize = 2000;
 
+const FLAG_REF: u8 = 0x80;
+
 #[repr(u8)]
 #[derive(Debug)]
 pub enum Type {
@@ -31,7 +33,6 @@ pub enum Type {
     Unknown = b'?',
     Set = b'<',
     FrozenSet = b'>',
-    FlagRef = b'\x80',
     Ascii = b'a',
     AsciiInterned = b'A',
     SmallTuple = b')',
@@ -66,7 +67,6 @@ impl Type {
             b'?' => Ok(Type::Unknown),
             b'<' => Ok(Type::Set),
             b'>' => Ok(Type::FrozenSet),
-            b'\x80' => Ok(Type::FlagRef),
             b'a' => Ok(Type::Ascii),
             b'A' => Ok(Type::AsciiInterned),
             b')' => Ok(Type::SmallTuple),
@@ -175,10 +175,10 @@ impl<'a> Reader<'a> {
         obj
     }
 
-    pub fn read_ref(&mut self, obj: PyObject, flag: u8) -> PyObject {
+    pub fn read_ref(&mut self, obj: PyObject, #[cfg(debug_assertions)] flag: u8) -> PyObject {
         #[cfg(debug_assertions)]
         {
-            assert!(flag & Type::FlagRef as u8 != 0);
+            assert!(flag & FLAG_REF != 0);
         }
         self.refs.push(obj.clone());
         obj
@@ -186,7 +186,11 @@ impl<'a> Reader<'a> {
 
     pub fn r_ref(&mut self, obj: PyObject, flag: u8) -> PyObject {
         if flag > 0 {
-            self.read_ref(obj.clone(), flag)
+            self.read_ref(
+                obj.clone(),
+                #[cfg(debug_assertions)]
+                flag,
+            )
         } else {
             obj
         }
@@ -209,8 +213,8 @@ impl<'a> Reader<'a> {
 
     fn _r_object(&mut self) -> Result<PyObject> {
         let code_byte = self.read_byte();
-        let flag = code_byte & Type::FlagRef as u8;
-        let co_type = code_byte & !(Type::FlagRef as u8);
+        let flag = code_byte & FLAG_REF;
+        let co_type = code_byte & !FLAG_REF;
         let co_type = Type::try_from(co_type)?;
         #[cfg(debug_assertions)]
         {
