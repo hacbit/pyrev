@@ -62,6 +62,39 @@ mod opcode;
 /// export some Python Object definition in object.rs
 /// you can use enum variant in PyObject no long need to use PyObject::xxx
 pub mod prelude {
+    use std::path::PathBuf;
+
     pub use crate::marshal::loads;
     pub use crate::object::{Code, PyLong, PyObject::*};
+    pub use pyrev_app::prelude::*;
+
+    pub struct PycPlugin;
+
+    impl Plugin for PycPlugin {
+        fn subcommand(&self) -> Command {
+            Command::new("pyc").about("decompile pyc files").arg(
+                Arg::new("file")
+                    .short('f')
+                    .help("specify a pyc file")
+                    .action(ArgAction::Set)
+                    .required(false)
+                    .value_parser(value_parser!(PathBuf)),
+            )
+        }
+
+        fn run(&self, args: &ArgMatches) -> Result<()> {
+            let pyc_path = args
+                .try_get_one::<PathBuf>("file")?
+                .ok_or("File not found")?;
+
+            info!("Decompiling {:?}", pyc_path);
+
+            let data = std::fs::read(pyc_path)?;
+            let code = loads(&data[16..]);
+
+            println!("{:?}", code);
+
+            Ok(())
+        }
+    }
 }

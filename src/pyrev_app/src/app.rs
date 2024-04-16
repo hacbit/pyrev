@@ -13,6 +13,12 @@ pub struct App {
     output: Vec<Result<DecompiledCode>>,
 }
 
+impl Default for App {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[allow(unused)]
 impl App {
     pub fn new() -> Self {

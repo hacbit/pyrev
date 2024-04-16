@@ -178,10 +178,17 @@ dependencies = [
 name = "pyrev"
 version = "1.0.10"
 dependencies = [
+ "pyrev_app",
+ "pyrev_pyc",
+]
+
+[[package]]
+name = "pyrev_app"
+version = "1.0.10"
+dependencies = [
  "atty",
  "clap",
  "pyrev_core",
- "pyrev_pyc",
 ]
 
 [[package]]
@@ -217,6 +224,7 @@ dependencies = [
 name = "pyrev_pyc"
 version = "0.1.0"
 dependencies = [
+ "pyrev_app",
  "pyrev_core",
 ]
 

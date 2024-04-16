@@ -8,3 +8,6 @@ edition = "2021"
 
 [dependencies.pyrev_core]
 path = "../pyrev_core"
+
+[dependencies.pyrev_app]
+path = "../pyrev_app"

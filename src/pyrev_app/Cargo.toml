@@ -1,0 +1,14 @@
+[package]
+name = "pyrev_app"
+version = "1.0.10"
+edition = "2021"
+
+[dependencies]
+atty = "0.2.14"
+
+[dependencies.clap]
+version = "4.5.1"
+features = ["derive", "cargo"]
+
+[dependencies.pyrev_core]
+path = "../pyrev_core"

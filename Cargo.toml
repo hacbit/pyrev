@@ -1,4 +1,10 @@
-workspace = { members = [ "src/pyrev_ast", "src/pyrev_ast_derive" , "src/pyrev_core", "src/pyrev_pyc"] }
+workspace = { members = [ 
+    "src/pyrev_ast", 
+    "src/pyrev_ast_derive" , 
+    "src/pyrev_core", 
+    "src/pyrev_app", 
+    "src/pyrev_pyc"
+] }
 
 [package]
 name = "pyrev"
@@ -10,18 +16,12 @@ build = "build.rs"
 license = "MIT"
 
 [dependencies]
-atty = "0.2.14"
 
-[dependencies.clap]
-version = "4.5.1"
-features = ["derive", "cargo"]
-
-[dependencies.pyrev_core]
-path = "src/pyrev_core"
+[dependencies.pyrev_app]
+path = "src/pyrev_app"
 
 [dependencies.pyrev_pyc]
 path = "src/pyrev_pyc"
-optional = true
 
 [profile.dev]
 # Uncomment the following lines to allow clippy to break your build.
@@ -36,9 +36,3 @@ lto = true
 opt-level = 3
 
 [features]
-default = []
-clippy = []
-pyc = ["pyrev_pyc"]
-all = [
-    "pyrev_pyc"
-]
