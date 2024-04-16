@@ -1,0 +1,3 @@
+(function() {var implementors = {
+"pyrev_pyc":[["impl <a class=\"trait\" href=\"pyrev_pyc/prelude/trait.Plugin.html\" title=\"trait pyrev_pyc::prelude::Plugin\">Plugin</a> for <a class=\"struct\" href=\"pyrev_pyc/prelude/struct.PycPlugin.html\" title=\"struct pyrev_pyc::prelude::PycPlugin\">PycPlugin</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

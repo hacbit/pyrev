@@ -935,6 +935,16 @@
 <a href="#933" id="933">933</a>
 <a href="#934" id="934">934</a>
 <a href="#935" id="935">935</a>
+<a href="#936" id="936">936</a>
+<a href="#937" id="937">937</a>
+<a href="#938" id="938">938</a>
+<a href="#939" id="939">939</a>
+<a href="#940" id="940">940</a>
+<a href="#941" id="941">941</a>
+<a href="#942" id="942">942</a>
+<a href="#943" id="943">943</a>
+<a href="#944" id="944">944</a>
+<a href="#945" id="945">945</a>
 </pre></div><pre class="rust"><code><span class="attr">#![feature(concat_idents)]
 
 </span><span class="kw">mod </span>query;
@@ -1162,7 +1172,7 @@
 </span><span class="kw">pub struct </span>If {
     <span class="kw">pub </span>test: Box&lt;ExpressionEnum&gt;,
     <span class="kw">pub </span>body: Vec&lt;ExpressionEnum&gt;,
-    <span class="kw">pub </span>or_else: Vec&lt;ExpressionEnum&gt;,
+    <span class="kw">pub </span>or_else: <span class="prelude-ty">Option</span>&lt;Box&lt;ExpressionEnum&gt;&gt;,
     <span class="kw">pub </span>start_line: usize,
     <span class="kw">pub </span>start_offset: usize,
     <span class="kw">pub </span>end_offset: usize,
@@ -1552,9 +1562,19 @@ pub struct NoneValue {
                             <span class="comment">//dbg!(&amp;args_code);
                         </span>}
                         <span class="kw">let </span>first_line = <span class="kw">if </span>function.is_async {
-                            <span class="macro">format!</span>(<span class="string">"async def {}({}){}:"</span>, function.name, args_code, ret_code)
+                            <span class="macro">format!</span>(
+                                <span class="string">"async def {}({}){}:"</span>,
+                                function.name,
+                                args_code.trim_end_matches(<span class="string">", "</span>),
+                                ret_code
+                            )
                         } <span class="kw">else </span>{
-                            <span class="macro">format!</span>(<span class="string">"def {}({}){}:"</span>, function.name, args_code, ret_code)
+                            <span class="macro">format!</span>(
+                                <span class="string">"def {}({}){}:"</span>,
+                                function.name,
+                                args_code.trim_end_matches(<span class="string">", "</span>),
+                                ret_code
+                            )
                         };
                         code.push(first_line);
                         <span class="kw">for </span>expr <span class="kw">in </span>function.bodys.iter() {

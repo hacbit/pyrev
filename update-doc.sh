@@ -1,10 +1,14 @@
 #!/bin/bash
 
 echo "Updating documentation..."
-runner="cargo doc --no-deps \
-    -p pyrev \
-    -p pyrev_ast \
-    -p pyrev_ast_derive"
+runner="cargo doc --no-deps -p pyrev"
+
+for dep in src/pyrev*
+do
+    if [ -d $dep ]; then
+        runner="$runner -p $(basename $dep)"
+    fi
+done
 
 echo Try run: $runner
 $runner

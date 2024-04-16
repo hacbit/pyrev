@@ -2,10 +2,15 @@
 setlocal enabledelayedexpansion
 
 echo Updating documentation...
-set RUNNER=cargo doc --no-deps ^
-    -p pyrev ^
-    -p pyrev_ast ^
-    -p pyrev_ast_derive
+set RUNNER=cargo doc --no-deps -p pyrev
+
+for /D %%d in (src/pyrev*) do (
+    set FOLDER=%%~nd
+    if "!FOLDER:~0,5!"=="pyrev" (
+        echo Building documentation for !FOLDER!
+        set RUNNER=!RUNNER! -p !FOLDER!
+    )
+)
 
 echo Try run: %RUNNER%
 !RUNNER!

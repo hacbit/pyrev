@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["commit_expr","find_expr_among","fixed_async_object","merge"],"struct":["DecompiledCode"],"trait":["Decompiler"]};

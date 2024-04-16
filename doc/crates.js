@@ -1,1 +1,1 @@
-window.ALL_CRATES = ["pyrev","pyrev_ast","pyrev_ast_derive"];
+window.ALL_CRATES = ["pyrev","pyrev_app","pyrev_ast","pyrev_ast_derive","pyrev_core","pyrev_pyc"];
