@@ -1,4 +1,4 @@
-# Pyrev v1.0.10
+# Pyrev v1.0.11
 
 Reverse tools for bytecode of python
 
@@ -9,7 +9,7 @@ Reverse tools for bytecode of python
 /path/to/pyrev> cargo build --release [--target your_target_os]
 ```
 
-**You can use `build` script to build to your target OS and add it to your PATH.**
+**You can use `build` script to build release to your target OS and add it to your PATH.**
 
 **For Windows:**
 ```cmd
@@ -31,10 +31,13 @@ PS D:\path\to\pyrev> .\build.bat --wsl
 
 ```cmd
 PS D:\path\to\pyrev> pyrev help
-Usage: pyrev.exe [OPTIONS] --file <FILE> [name] [COMMAND]
+A Python bytecode reverse engineering tool.
+
+Usage: pyrev.exe [OPTIONS] [name] [COMMAND]
 
 Commands:
-  test  run the example
+  test  test by your given python code
+  pyc   decompile pyc files
   help  Print this message or the help of the given subcommand(s)
 
 Arguments:
@@ -60,34 +63,50 @@ Try to decompile [Temp file]
 
 ```powershell
 PS D:\path\to\pyrev> ls test/
+
+    Directory: D:\Rust-test\pyrev\test
+
 Mode                 LastWriteTime         Length Name
 ----                 -------------         ------ ----
+d----           2024/4/15    17:42                pyc_test
+-a---           2024/4/13    13:41            980 async.py
+-a---           2024/4/12     2:30          14174 async.txt
 -a---            2024/3/4    17:46            122 attr.py
--a---            2024/3/4    17:46           1742 attr.txt
--a---           2024/3/13    20:27            330 class.py
--a---           2024/3/13    20:27           3874 class.txt
--a---            2024/3/4    23:11            172 container.py
--a---            2024/3/4    23:15           2096 container.txt
--a---           2024/3/14     0:49            254 def.py
--a---           2024/3/14     0:49           5271 def.txt
--a---            2024/3/9     1:35            307 except.py
--a---            2024/3/9     1:35           4395 except.txt
--a---          2023/12/22    12:28            188 for.py
--a---          2023/12/22    12:28           1905 for.txt
--a---           2024/3/10    14:04            119 import.py
--a---           2024/3/10    14:04           1398 import.txt
+-a---           2024/4/12     2:30           1742 attr.txt
+-a---           2024/4/13     0:14            112 branch.py
+-a---            2024/4/6     0:55            768 class.py
+-a---           2024/4/12     2:30           7118 class.txt
+-a---            2024/4/3    14:45            185 container.py
+-a---           2024/4/12     2:30           2200 container.txt
+-a---            2024/4/6     0:12            264 def.py
+-a---           2024/4/12     2:30           5411 def.txt
+-a---           2024/3/27    18:25            414 demo.py
+-a---           2024/4/12     2:30           3150 demo.txt
+-a---            2024/4/3    14:44            320 except.py
+-a---           2024/4/12     2:30           4392 except.txt
+-a---            2024/4/3    14:41            121 for.py
+-a---           2024/4/12     2:30           1803 for.txt
+-a---            2024/4/3    14:42            117 import.py
+-a---           2024/4/12     2:30           1399 import.txt
 -a---            2024/3/2     1:10            376 op.py
--a---            2024/3/2     1:11           8564 op.txt
+-a---           2024/4/12     2:30           8564 op.txt
+-a---           2024/3/19    16:04            119 with.py
+-a---           2024/4/12     2:30           3116 with.txt
+-a---           2024/3/18    18:16            108 yield.py
+-a---           2024/4/12     2:30           2391 yield.txt
 ```
 
 **You can run like `pyrev --file/-f test/import.txt` and compare the result with `import.py` whom generate `import.txt`**
 
 ```powershell
 PS D:\path\to\pyrev> pyrev --file ./test/for.txt
- 1| arr = [1, 3, 5, 7, 9]
- 2| for i, v in enumerate(arr):
- 3|     line = i + 1
- 4|     print(line, v)
+[INFO] Try to decompile test/for.txt
+  1| arr = [1, 3, 5, 7, 9]
+  2| for (i, v) in enumerate(arr):
+  3|     line = i + 1
+  4|     print(line, v)
+  5| print('end')
+  6| print('Test')
 ```
 
 **You can also run the `run-all` script to run all .txt files in test/ dict**
@@ -159,5 +178,5 @@ You can double-click the index.html in doc/
 -   [ ] assertion
 -   [ ] try-except
 -   [x] doc comment
--   [ ] pyc decompile plugin
+-   [x] pyc decompile plugin
 -   [ ] pretty console output plugin

@@ -9,7 +9,7 @@ workspace = { members = [
 [package]
 name = "pyrev"
 authors = ["hacbit <hacbit@foxmail.com>"]
-version = "1.0.10"
+version = "1.0.11"
 edition = "2021"
 description = "A Python bytecode reverse engineering tool."
 build = "build.rs"

@@ -15,18 +15,16 @@ pub mod prelude {
     #[derive(Debug)]
     pub struct Cli {
         plugins: Vec<Box<dyn Plugin>>,
-    }
-
-    impl Default for Cli {
-        fn default() -> Self {
-            Self::new()
-        }
+        names: Vec<String>,
+        cmd: Command,
     }
 
     impl Cli {
-        pub fn new() -> Self {
+        pub fn new(cmd: Command) -> Self {
             Self {
                 plugins: vec![Box::new(DefaultPlugin)],
+                names: vec![],
+                cmd,
             }
         }
 
@@ -41,18 +39,22 @@ pub mod prelude {
         }
 
         pub fn run(&mut self) -> Result<()> {
-            let mut plugins = self.plugins.iter();
-            let mut cmd = plugins.next().unwrap().subcommand();
-
-            for plugin in plugins {
-                cmd = cmd.subcommand(plugin.subcommand());
+            for plugin in self.plugins.iter() {
+                let (cmd, name) = plugin.subcommand(self.cmd.clone());
+                self.names.push(name.to_owned());
+                self.cmd = cmd;
             }
 
-            let matches = cmd.get_matches();
+            let matches = self.cmd.clone().get_matches();
 
-            for plugin in &self.plugins {
-                if let Some(matches) = matches.subcommand_matches(plugin.subcommand().get_name()) {
-                    plugin.run(&matches)?;
+            for (plugin, name) in self.plugins.iter().zip(self.names.iter()) {
+                if let Some((n, matches)) = matches.subcommand() {
+                    if n == name {
+                        return plugin.run(&matches);
+                    }
+                } else {
+                    // 调用的不是子命令
+                    return plugin.run(&matches);
                 }
             }
             Ok(())
@@ -62,9 +64,8 @@ pub mod prelude {
     struct DefaultPlugin;
 
     impl Plugin for DefaultPlugin {
-        fn subcommand(&self) -> Command {
-            command!("pyrev")
-            .arg(arg!([name] "Optional name"))
+        fn subcommand(&self, cmd: Command) -> (Command, &str) {
+            (cmd.arg(arg!([name] "Optional name"))
             .arg(
                 arg!(
                     -f --file <FILE> "specify bytecode files"
@@ -99,7 +100,7 @@ pub mod prelude {
                         )
                         .action(ArgAction::SetTrue),
                     ),
-            )
+            ), "default")
         }
 
         fn run(&self, args: &ArgMatches) -> Result<()> {

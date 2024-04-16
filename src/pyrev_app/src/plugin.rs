@@ -7,7 +7,7 @@ use crate::prelude::Cli;
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 pub trait Plugin {
-    fn subcommand(&self) -> Command;
+    fn subcommand(&self, cmd: Command) -> (Command, &str);
     fn run(&self, args: &ArgMatches) -> Result<()>;
 }
 
@@ -32,6 +32,12 @@ where
 }
 
 pub struct PluginsTupleMarker;
+
+impl<P: 'static + Plugin> Plugins<PluginsTupleMarker> for P {
+    fn add_to_cli(self, cli: &mut Cli) {
+        cli.add_plugin(self);
+    }
+}
 
 macro_rules! impl_plugins_tuples {
     (($($name:ident),*$(,)?)) => {
@@ -60,14 +66,16 @@ mod test {
     struct TestPlugin;
 
     impl Plugin for TestPlugin {
-        fn subcommand(&self) -> Command {
-            Command::new("test").about("this is test subcommand").arg(
-                arg!(
-                    -a --arg <A> "this is an argument"
-                )
-                .action(ArgAction::Set)
-                .value_parser(value_parser!(String)),
-            )
+        fn subcommand(&self, cmd: Command) -> (Command, &str) {
+            (cmd.subcommand(
+                Command::new("test").about("this is test subcommand").arg(
+                    arg!(
+                        -a --arg <A> "this is an argument"
+                    )
+                    .action(ArgAction::Set)
+                    .value_parser(value_parser!(String)),
+                ),
+            ), "test")
         }
 
         fn run(&self, args: &ArgMatches) -> Result<()> {
@@ -80,19 +88,9 @@ mod test {
     }
 
     #[test]
-    fn test_plugin() {
-        let plugin = TestPlugin;
-        let subcommand = plugin.subcommand();
-        let matches = subcommand.get_matches_from(vec!["test", "-a", "hello"]);
-        if let Err(e) = plugin.run(&matches) {
-            eprintln!("{:?}", e);
-        }
-    }
-
-    #[test]
     fn test_params() {
-        let mut params = Cli::new();
-        params.add_plugins((TestPlugin, ));
+        let mut params = Cli::new(command!());
+        params.add_plugins((TestPlugin,));
 
         dbg!(params);
     }

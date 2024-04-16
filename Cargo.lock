@@ -176,7 +176,7 @@ dependencies = [
 
 [[package]]
 name = "pyrev"
-version = "1.0.10"
+version = "1.0.11"
 dependencies = [
  "pyrev_app",
  "pyrev_pyc",
@@ -184,7 +184,7 @@ dependencies = [
 
 [[package]]
 name = "pyrev_app"
-version = "1.0.10"
+version = "1.0.11"
 dependencies = [
  "atty",
  "clap",
@@ -193,7 +193,7 @@ dependencies = [
 
 [[package]]
 name = "pyrev_ast"
-version = "1.0.10"
+version = "1.0.11"
 dependencies = [
  "pyrev_ast_derive",
  "regex",
@@ -201,7 +201,7 @@ dependencies = [
 
 [[package]]
 name = "pyrev_ast_derive"
-version = "1.0.10"
+version = "1.0.11"
 dependencies = [
  "quote",
  "regex",
@@ -210,7 +210,7 @@ dependencies = [
 
 [[package]]
 name = "pyrev_core"
-version = "1.0.10"
+version = "1.0.11"
 dependencies = [
  "atty",
  "colored",
@@ -222,7 +222,7 @@ dependencies = [
 
 [[package]]
 name = "pyrev_pyc"
-version = "0.1.0"
+version = "1.0.11"
 dependencies = [
  "pyrev_app",
  "pyrev_core",

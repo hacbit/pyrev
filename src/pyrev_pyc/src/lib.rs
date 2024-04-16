@@ -71,15 +71,17 @@ pub mod prelude {
     pub struct PycPlugin;
 
     impl Plugin for PycPlugin {
-        fn subcommand(&self) -> Command {
-            Command::new("pyc").about("decompile pyc files").arg(
-                Arg::new("file")
-                    .short('f')
-                    .help("specify a pyc file")
-                    .action(ArgAction::Set)
-                    .required(false)
-                    .value_parser(value_parser!(PathBuf)),
-            )
+        fn subcommand(&self, cmd: Command) -> (Command, &str) {
+            (cmd.subcommand(
+                Command::new("pyc").about("decompile pyc files").arg(
+                    Arg::new("file")
+                        .short('f')
+                        .help("specify a pyc file")
+                        .action(ArgAction::Set)
+                        .required(false)
+                        .value_parser(value_parser!(PathBuf)),
+                ),
+            ), "pyc")
         }
 
         fn run(&self, args: &ArgMatches) -> Result<()> {
