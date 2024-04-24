@@ -3,7 +3,8 @@ workspace = { members = [
     "src/pyrev_ast_derive" , 
     "src/pyrev_core", 
     "src/pyrev_app", 
-    "src/pyrev_pyc"
+    "src/pyrev_pyc",
+    "src/pyrev_pyc_macro",
 ] }
 
 [package]

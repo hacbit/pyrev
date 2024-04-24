@@ -67,15 +67,18 @@ mod test {
 
     impl Plugin for TestPlugin {
         fn subcommand(&self, cmd: Command) -> (Command, &str) {
-            (cmd.subcommand(
-                Command::new("test").about("this is test subcommand").arg(
-                    arg!(
-                        -a --arg <A> "this is an argument"
-                    )
-                    .action(ArgAction::Set)
-                    .value_parser(value_parser!(String)),
+            (
+                cmd.subcommand(
+                    Command::new("test").about("this is test subcommand").arg(
+                        arg!(
+                            -a --arg <A> "this is an argument"
+                        )
+                        .action(ArgAction::Set)
+                        .value_parser(value_parser!(String)),
+                    ),
                 ),
-            ), "test")
+                "test",
+            )
         }
 
         fn run(&self, args: &ArgMatches) -> Result<()> {

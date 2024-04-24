@@ -12,7 +12,7 @@ mod marshal;
 /// opcode
 /// This file implements parsing the opcode(u16/u8) to the opcode name (defined in pyrev_core::opcode)
 /// and the map table is according different python version
-mod opcode;
+// mod opcode;
 
 /// prelude
 /// export the loads function from marshal
@@ -72,16 +72,19 @@ pub mod prelude {
 
     impl Plugin for PycPlugin {
         fn subcommand(&self, cmd: Command) -> (Command, &str) {
-            (cmd.subcommand(
-                Command::new("pyc").about("decompile pyc files").arg(
-                    Arg::new("file")
-                        .short('f')
-                        .help("specify a pyc file")
-                        .action(ArgAction::Set)
-                        .required(false)
-                        .value_parser(value_parser!(PathBuf)),
+            (
+                cmd.subcommand(
+                    Command::new("pyc").about("decompile pyc files").arg(
+                        Arg::new("file")
+                            .short('f')
+                            .help("specify a pyc file")
+                            .action(ArgAction::Set)
+                            .required(false)
+                            .value_parser(value_parser!(PathBuf)),
+                    ),
                 ),
-            ), "pyc")
+                "pyc",
+            )
         }
 
         fn run(&self, args: &ArgMatches) -> Result<()> {

@@ -1352,9 +1352,9 @@ impl ExprParser for Expr {
                         .into());
                     }
                 }
-                Opcode::GetAIter => {
+                Opcode::GetAiter => {
                     let aiter = exprs_stack.pop().ok_or(format!(
-                        "[GetAIter] Stack is empty, deviation is {}",
+                        "[GetAiter] Stack is empty, deviation is {}",
                         instruction.offset,
                     ))?;
 
@@ -1367,7 +1367,7 @@ impl ExprParser for Expr {
                                 .argval
                                 .as_ref()
                                 .ok_or(format!(
-                                    "[GetAIter] No argval, deviation is {}",
+                                    "[GetAiter] No argval, deviation is {}",
                                     next_instruction.offset
                                 ))?
                                 .trim_start_matches("to ")
@@ -1383,7 +1383,7 @@ impl ExprParser for Expr {
                             Ordering::Equal => break,
                             Ordering::Greater => {
                                 return Err(format!(
-                                    "[GetAIter] Send target not found, deviation is {}",
+                                    "[GetAiter] Send target not found, deviation is {}",
                                     next_instruction.offset
                                 )
                                 .into())
@@ -1404,7 +1404,7 @@ impl ExprParser for Expr {
                                         .argval
                                         .as_ref()
                                         .ok_or(format!(
-                                            "[GetAIter] No argval, deviation is {}",
+                                            "[GetAiter] No argval, deviation is {}",
                                             next_instruction.offset
                                         ))?
                                         .clone(),
@@ -1431,7 +1431,7 @@ impl ExprParser for Expr {
                         }
                     } else {
                         return Err(format!(
-                            "[GetAIter] No next instruction, deviation is {}",
+                            "[GetAiter] No next instruction, deviation is {}",
                             instruction.offset,
                         )
                         .into());

@@ -39,8 +39,8 @@ impl OpcodeInstruction {
             "BINARY_SLICE" => Opcode::BinarySlice,
             "STORE_SLICE" => Opcode::StoreSlice,
             "GET_AWAITABLE" => Opcode::GetAwaitable,
-            "GET_AITER" => Opcode::GetAIter,
-            "GET_ANEXT" => Opcode::GetANext,
+            "GET_AITER" => Opcode::GetAiter,
+            "GET_ANEXT" => Opcode::GetAnext,
             "END_ASYNC_FOR" => Opcode::EndAsyncFor,
             "CLEANUP_THROW" => Opcode::CleanupThrow,
             "BEFORE_ASYNC_WITH" => Opcode::BeforeAsyncWith,
@@ -167,9 +167,10 @@ pub enum Opcode {
     // 3.11 added
     Swap, // swap the i element with the top of the stack
     // 3.11 added
-    // Cache,
+    Cache,
 
     // Unary operations
+    UnaryPositive,
     UnaryNegative,
     UnaryNot,
     UnaryInvert,
@@ -192,9 +193,9 @@ pub enum Opcode {
     // 3.5 added, 3.11 changed
     GetAwaitable, // before 3.11, not have argument
     // 3.5 added, 3.7 changed
-    GetAIter, // no return awaitable object from __aiter__ after 3.7
+    GetAiter, // no return awaitable object from __aiter__ after 3.7
     // 3.5 added
-    GetANext,
+    GetAnext,
     // 3.8 added, 3.11 changed
     EndAsyncFor,
     // 3.12
@@ -329,6 +330,6 @@ pub enum Opcode {
     CallIntrinsic1,
     // 3.12 added
     CallIntrinsic2,
-    // fake opcode
+    // others
     // ...
 }

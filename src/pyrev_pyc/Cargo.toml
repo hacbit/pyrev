@@ -11,3 +11,6 @@ path = "../pyrev_core"
 
 [dependencies.pyrev_app]
 path = "../pyrev_app"
+
+[dependencies.pyrev_pyc_macro]
+path = "../pyrev_pyc_macro"
