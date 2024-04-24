@@ -977,9 +977,26 @@ impl ExprParser for Expr {
                         ))?
                         .trim_start_matches("to ")
                         .parse::<usize>()?;
+                    let mut sub_instructions =
+                        &opcode_instructions[offset+1..];
+                    let block_end_idxs = sub_instructions
+                        .iter()
+                        .enumerate()
+                        .filter(|(_,x)| x.offset == jump_target)
+                        .map(|(i,_)| i)
+                        .collect::<Vec<_>>();
+                    let block_end_first_idx = *block_end_idxs.first().ok_or(format!(
+                        "[PopJumpIfTrue] No block end, deviation is {}",
+                        instruction.offset
+                    ))?;
+                    let block_end_last_idx = *block_end_idxs.last().unwrap();
+                    sub_instructions =
+                        &opcode_instructions[offset+1..offset+1+block_end_first_idx];
+                    println!("sub_instructions is {:?}\n",sub_instructions);
+                    let body_expr = Self::parse(sub_instructions)?;
                     exprs_stack.push(ExpressionEnum::If(If {
                         test: Box::new(test),
-                        body: vec![],
+                        body: body_expr.bodys,
                         or_else: Some(Box::new(ExpressionEnum::Jump(Jump {
                             target: jump_target,
                             body: vec![],
@@ -990,7 +1007,9 @@ impl ExprParser for Expr {
                         start_line: instruction.starts_line.unwrap_or_default(),
                         start_offset: instruction.offset,
                         end_offset: instruction.offset,
+                        is_elif: true,
                     }));
+                    offset = offset + block_end_first_idx + 1;
                 }
                 Opcode::PopJumpIfFalse => {
                     if let Some(next_instruction) = opcode_instructions.get(offset + 1) {
@@ -1014,9 +1033,34 @@ impl ExprParser for Expr {
                         ))?
                         .trim_start_matches("to ")
                         .parse::<usize>()?;
+                    let mut sub_instructions =
+                        &opcode_instructions[offset+1..];
+                    let block_end_idxs = sub_instructions
+                        .iter()
+                        .enumerate()
+                        .filter(|(_,x)| x.offset == jump_target)
+                        .map(|(i,_)| i)
+                        .collect::<Vec<_>>();
+                    println!("block_end_idxs is {:?}",block_end_idxs);
+                    println!("jump_target is  {:?}",jump_target);
+
+                    let block_end_first_idx = *block_end_idxs.first().ok_or(format!(
+                        "[PopJumpIfFalse] No block end, deviation is {}",
+                        instruction.offset
+                    ))?;
+
+                    sub_instructions =
+                        &opcode_instructions[offset+1..offset+1+block_end_first_idx];
+
+                    let mut else_instructions = &opcode_instructions[offset+1+block_end_first_idx+1..];
+
+                    println!("offset is {},idx is {}",offset,block_end_first_idx);
+                    println!("sub_instructions is {:?}\n",sub_instructions);
+                    let body_expr = Self::parse(sub_instructions)?;
+                    
                     exprs_stack.push(ExpressionEnum::If(If {
                         test: Box::new(test),
-                        body: vec![],
+                        body: body_expr.bodys,
                         or_else: Some(Box::new(ExpressionEnum::Jump(Jump {
                             target: jump_target,
                             body: vec![],
@@ -1026,8 +1070,10 @@ impl ExprParser for Expr {
                         }))),
                         start_line: instruction.starts_line.unwrap_or_default(),
                         start_offset: instruction.offset,
-                        end_offset: instruction.offset,
+                        end_offset: 0,
+                        is_elif: false,
                     }));
+                    offset = offset + block_end_first_idx + 1;
                 }
                 Opcode::JumpForward => {
                     let jump_target = instruction
