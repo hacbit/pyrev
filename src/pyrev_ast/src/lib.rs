@@ -229,6 +229,7 @@ pub struct If {
     pub start_line: usize,
     pub start_offset: usize,
     pub end_offset: usize,
+    pub is_elif: bool,
 }
 
 /// Jump
@@ -916,6 +917,40 @@ impl ExpressionEnum {
                     }
                 }
                 Ok(code)
+            }
+            ExpressionEnum::If(if_else) => {
+                println!("test is {:?}",if_else.test.as_ref().build()?.join(""));
+                println!("body is {:?}",if_else.body);
+                println!("or_else is {:?}",if_else.or_else);
+                println!("start_line is {:?}",if_else.start_line);
+                println!("start_offset is {:?}",if_else.start_offset);
+                println!("end_offset is {:?}",if_else.end_offset);
+                println!("\n\n");
+                let mut code = Vec::new();
+                code.push(format!("if {} :",if_else.test.as_ref().build()?.join("")));
+                    for expr in if_else.body.iter() {
+                        let expr_code = expr.build()?;
+                        for line in expr_code.iter() {
+                            code.push(format!("    {}",line));
+                        }
+                    }
+
+
+
+                if let Some(or_else) =  if_else.or_else.as_ref(){
+                    code.push(format!("else:"));
+                    
+                    ///body要改成else，但范围控不下来
+                    for expr in if_else.body.iter() {
+                        let expr_code = expr.build()?;
+                        for line in expr_code.iter() {
+                            code.push(format!("    {}",line));
+                        }
+                    }
+                }
+                Ok(code)
+
+
             }
             ExpressionEnum::For(for_expr) => {
                 let iter_code = for_expr.iterator.build()?.join("");
