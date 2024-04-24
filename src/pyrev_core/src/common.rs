@@ -206,6 +206,10 @@ impl TraceBack {
     }
 }
 
+pub trait AsResMut<T> {
+    fn as_res_mut(&self) -> ResMut<T>;
+}
+
 pub struct ResMut<T>(*mut T);
 
 impl<T> ResMut<T> {
@@ -221,6 +225,12 @@ impl<T> ResMut<T> {
             f(&mut *self.0);
         }
         Ok(())
+    }
+}
+
+impl<T> AsResMut<T> for T {
+    fn as_res_mut(&self) -> ResMut<T> {
+        ResMut::new(self)
     }
 }
 

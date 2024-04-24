@@ -223,7 +223,7 @@ pub struct For {
 /// If expression
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
 pub struct If {
-    pub test: Box<ExpressionEnum>,
+    pub test: Option<Box<ExpressionEnum>>,
     pub body: Vec<ExpressionEnum>,
     pub or_else: Option<Box<ExpressionEnum>>,
     pub start_line: usize,
@@ -919,38 +919,42 @@ impl ExpressionEnum {
                 Ok(code)
             }
             ExpressionEnum::If(if_else) => {
-                println!("test is {:?}",if_else.test.as_ref().build()?.join(""));
-                println!("body is {:?}",if_else.body);
-                println!("or_else is {:?}",if_else.or_else);
-                println!("start_line is {:?}",if_else.start_line);
-                println!("start_offset is {:?}",if_else.start_offset);
-                println!("end_offset is {:?}",if_else.end_offset);
+                println!("test is {:?}", if_else.test);
+                println!("body is {:?}", if_else.body);
+                println!("or_else is {:?}", if_else.or_else);
+                println!("start_line is {:?}", if_else.start_line);
+                println!("start_offset is {:?}", if_else.start_offset);
+                println!("end_offset is {:?}", if_else.end_offset);
                 println!("\n\n");
                 let mut code = Vec::new();
-                code.push(format!("if {} :",if_else.test.as_ref().build()?.join("")));
-                    for expr in if_else.body.iter() {
-                        let expr_code = expr.build()?;
-                        for line in expr_code.iter() {
-                            code.push(format!("    {}",line));
-                        }
-                    }
+                if let Some(test) = if_else.test.as_ref() {
+                    let test_code = test.build()?.join("");
+                    code.push(format!("if {}:", test_code));
+                } else {
+                    code.push("else:".to_string());
+                }
 
-
-
-                if let Some(or_else) =  if_else.or_else.as_ref(){
-                    code.push(format!("else:"));
-                    
-                    ///body要改成else，但范围控不下来
-                    for expr in if_else.body.iter() {
-                        let expr_code = expr.build()?;
-                        for line in expr_code.iter() {
-                            code.push(format!("    {}",line));
-                        }
+                for expr in if_else.body.iter() {
+                    let expr_code = expr.build()?;
+                    for line in expr_code.iter() {
+                        code.push(format!("    {}", line));
                     }
                 }
+
+                if let Some(or_else) = if_else.or_else.as_ref() {
+                    let or_else_code = or_else.build()?;
+                    dbg!(&or_else_code);
+                    if or_else_code[0].starts_with("if ") {
+                        // elif
+                        code.push(format!("el{}", or_else_code[0]));
+                        code.extend(or_else_code.into_iter().skip(1));
+                    } else {
+                        // starts with "else:"
+                        code.extend(or_else_code);
+                    }
+                }
+
                 Ok(code)
-
-
             }
             ExpressionEnum::For(for_expr) => {
                 let iter_code = for_expr.iterator.build()?.join("");
