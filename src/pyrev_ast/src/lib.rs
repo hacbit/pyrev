@@ -483,11 +483,15 @@ impl Default for Expr {
 
 impl Expr {
     pub fn new() -> Self {
-        Self { bodys: RefCell::new(Vec::new()) }
+        Self {
+            bodys: RefCell::new(Vec::new()),
+        }
     }
 
     pub fn from(bodys: Vec<ExpressionEnum>) -> Self {
-        Self { bodys: RefCell::new(bodys) }
+        Self {
+            bodys: RefCell::new(bodys),
+        }
     }
 
     pub fn add_expression(&mut self, expr: ExpressionEnum) {

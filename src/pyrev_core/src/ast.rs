@@ -2,7 +2,7 @@ use super::prelude::*;
 use pyrev_ast::*;
 use regex::Regex;
 
-use std::{cell::RefCell, cmp::Ordering};
+use std::cmp::Ordering;
 
 pub trait ExprParser {
     fn parse(opcode_instructions: &[OpcodeInstruction]) -> Result<Box<Self>>;
@@ -969,7 +969,9 @@ impl ExprParser for Expr {
                     exprs_stack.push(test);
 
                     // change now opcode to PopJumpIfFalse, and rollback offset
-                    opcode_instructions[offset].opcode.replace(Opcode::PopJumpIfFalse);
+                    opcode_instructions[offset]
+                        .opcode
+                        .replace(Opcode::PopJumpIfFalse);
 
                     offset -= 1;
                 }
@@ -1015,10 +1017,7 @@ impl ExprParser for Expr {
 
                     // parse 的结果的结构应该类似于 <block> <jump>, ..., <block> [<jump>]
                     let mut else_block_end_offset = jump_target;
-                    let block_jumps = body_expr
-                        .iter()
-                        .filter(|x| x.is_jump())
-                        .collect::<Vec<_>>();
+                    let block_jumps = body_expr.iter().filter(|x| x.is_jump()).collect::<Vec<_>>();
                     // block_jumps 不为空
                     if !block_jumps.is_empty() {
                         else_block_end_offset = block_jumps.last().unwrap().unwrap_jump().target;
@@ -1048,7 +1047,8 @@ impl ExprParser for Expr {
                         else_block_end_offset,
                         instruction.offset
                     ))?;
-                    let branches_instructions = &opcode_instructions[offset + 1..else_block_end_idx];
+                    let branches_instructions =
+                        &opcode_instructions[offset + 1..else_block_end_idx];
 
                     let branches_expr = Self::parse(branches_instructions)?;
 
@@ -1066,7 +1066,6 @@ impl ExprParser for Expr {
                             if_expr.body = bodys;
                         }
                     }
-
                 }
                 Opcode::JumpForward => {
                     let jump_target = instruction
