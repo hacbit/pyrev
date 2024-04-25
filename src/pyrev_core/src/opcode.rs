@@ -1,6 +1,8 @@
+use std::cell::RefCell;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct OpcodeInstruction {
-    pub opcode: Opcode,
+    pub opcode: RefCell<Opcode>,
     pub opname: String,
     pub arg: Option<usize>,
     pub argval: Option<String>,
@@ -141,7 +143,7 @@ impl OpcodeInstruction {
             _ => Opcode::None,
         };
         Self {
-            opcode,
+            opcode: opcode.into(),
             opname: opname.to_string(),
             arg,
             argval,
@@ -150,6 +152,10 @@ impl OpcodeInstruction {
             is_jump_target: false,
             positions: vec![],
         }
+    }
+
+    pub fn opcode(&self) -> Opcode {
+        self.opcode.borrow().clone()
     }
 }
 

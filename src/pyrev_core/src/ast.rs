@@ -2,7 +2,7 @@ use super::prelude::*;
 use pyrev_ast::*;
 use regex::Regex;
 
-use std::cmp::Ordering;
+use std::{cell::RefCell, cmp::Ordering};
 
 pub trait ExprParser {
     fn parse(opcode_instructions: &[OpcodeInstruction]) -> Result<Box<Self>>;
@@ -21,7 +21,8 @@ impl ExprParser for Expr {
                 .get(offset)
                 .ok_or("[Parse] No instruction")?;
 
-            match instruction.opcode {
+            let opcode = instruction.opcode();
+            match opcode {
                 Opcode::LoadConst | Opcode::LoadName | Opcode::LoadGlobal => {
                     exprs_stack.push(ExpressionEnum::BaseValue(BaseValue {
                         value: instruction
@@ -949,7 +950,7 @@ impl ExprParser for Expr {
                 Opcode::PopJumpIfTrue => {
                     if let Some(next_instruction) = opcode_instructions.get(offset + 1) {
                         // if next instruction is LoadAssertionError, then it's an assert
-                        if next_instruction.opcode == Opcode::LoadAssertionError {
+                        if next_instruction.opcode() == Opcode::LoadAssertionError {
                             offset += 1;
                             continue;
                         }
@@ -968,18 +969,14 @@ impl ExprParser for Expr {
                     exprs_stack.push(test);
 
                     // change now opcode to PopJumpIfFalse, and rollback offset
-                    opcode_instructions.get(offset).unwrap()
-                        .as_res_mut()
-                        // undefined behavior
-                        // 防止 release 模式下修改被优化掉导致死循环
-                        .patch_by(#[inline(never)] |o| o.opcode = Opcode::PopJumpIfFalse)?;
+                    opcode_instructions[offset].opcode.replace(Opcode::PopJumpIfFalse);
 
                     offset -= 1;
                 }
                 Opcode::PopJumpIfFalse => {
                     if let Some(next_instruction) = opcode_instructions.get(offset + 1) {
                         // if next instruction is LoadAssertionError, then it's an assert
-                        if next_instruction.opcode == Opcode::LoadAssertionError {
+                        if next_instruction.opcode() == Opcode::LoadAssertionError {
                             offset += 1;
                             continue;
                         }
@@ -1019,7 +1016,6 @@ impl ExprParser for Expr {
                     // parse 的结果的结构应该类似于 <block> <jump>, ..., <block> [<jump>]
                     let mut else_block_end_offset = jump_target;
                     let block_jumps = body_expr
-                        .bodys
                         .iter()
                         .filter(|x| x.is_jump())
                         .collect::<Vec<_>>();
@@ -1036,7 +1032,7 @@ impl ExprParser for Expr {
 
                     let mut if_expr = If {
                         test: Some(Box::new(test)),
-                        body: body_expr.bodys,
+                        body: body_expr.bodys.into_inner(),
                         or_else: None,
                         start_line: instruction.starts_line.unwrap_or_default(),
                         start_offset: instruction.offset,
@@ -1056,17 +1052,18 @@ impl ExprParser for Expr {
 
                     let branches_expr = Self::parse(branches_instructions)?;
 
-                    if let Some(first_expr) = branches_expr.bodys.first() {
+                    let bodys = branches_expr.bodys.into_inner();
+                    if let Some(first_expr) = bodys.first() {
                         if first_expr.is_if() {
                             // elif 分支
-                            assert!(branches_expr.bodys.len() == 1);
+                            assert!(bodys.len() == 1);
 
                             let first = first_expr.clone();
                             if_expr.or_else = Some(Box::new(first));
                         } else {
                             // else 分支
                             if_expr.or_else = None;
-                            if_expr.body = branches_expr.bodys;
+                            if_expr.body = bodys;
                         }
                     }
 
@@ -1140,7 +1137,7 @@ impl ExprParser for Expr {
                     ))?;
                     if let Some(store_name_instruction) = opcode_instructions[offset..]
                         .iter()
-                        .find(|x| x.opcode == Opcode::StoreName)
+                        .find(|x| x.opcode() == Opcode::StoreName)
                     {
                         let alias = store_name_instruction.argval.as_ref().ok_or(format!(
                             "[CheckExcMatch] No argval, deviation is {}",
@@ -1182,8 +1179,8 @@ impl ExprParser for Expr {
                         ..Default::default()
                     };
                     if let Some(next_instruction) = opcode_instructions.get(offset + 1) {
-                        if next_instruction.opcode == Opcode::StoreName
-                            || next_instruction.opcode == Opcode::StoreFast
+                        if next_instruction.opcode() == Opcode::StoreName
+                            || next_instruction.opcode() == Opcode::StoreFast
                         {
                             let name = next_instruction.argval.as_ref().ok_or(format!(
                                 "[BeforeWith] No argval, deviation is {}",
@@ -1229,7 +1226,7 @@ impl ExprParser for Expr {
                         //dbg!(&sub_instructions);
                     }
                     let sub_expr = Self::parse(sub_instructions)?;
-                    with.body = sub_expr.bodys;
+                    with.body = sub_expr.bodys.into_inner();
                     // skip the offset to the end of with block
                     offset += 2 + block_end_last_idx;
 
@@ -1250,7 +1247,7 @@ impl ExprParser for Expr {
                     // find SEND instruction
                     let mut send_to = 0;
                     while let Some(next_instruction) = opcode_instructions.get(offset + 1) {
-                        if next_instruction.opcode == Opcode::Send {
+                        if next_instruction.opcode() == Opcode::Send {
                             offset += 1;
                             send_to = next_instruction
                                 .argval
@@ -1284,8 +1281,8 @@ impl ExprParser for Expr {
 
                     // check has alias
                     if let Some(next_instruction) = opcode_instructions.get(offset + 1) {
-                        if next_instruction.opcode == Opcode::StoreName
-                            || next_instruction.opcode == Opcode::StoreFast
+                        if next_instruction.opcode() == Opcode::StoreName
+                            || next_instruction.opcode() == Opcode::StoreFast
                         {
                             let name = next_instruction.argval.as_ref().ok_or(format!(
                                 "[BeforeAsyncWith] No argval, deviation is {}",
@@ -1327,7 +1324,7 @@ impl ExprParser for Expr {
                         //dbg!(&sub_instructions);
                     }
                     let sub_expr = Self::parse(sub_instructions)?;
-                    async_with.body = sub_expr.bodys;
+                    async_with.body = sub_expr.bodys.into_inner();
                     // skip the offset to the end of with block
                     offset += 2 + block_end_last_idx;
 
@@ -1353,8 +1350,8 @@ impl ExprParser for Expr {
                         ))?
                         .parse::<usize>()?;
                     if let Some(next_instruction) = opcode_instructions.get(offset + 1) {
-                        if next_instruction.opcode == Opcode::StoreName
-                            || next_instruction.opcode == Opcode::StoreFast
+                        if next_instruction.opcode() == Opcode::StoreName
+                            || next_instruction.opcode() == Opcode::StoreFast
                         {
                             exprs_stack.push(ExpressionEnum::For(For {
                                 iterator: Box::new(iter),
@@ -1403,7 +1400,7 @@ impl ExprParser for Expr {
                     // find SEND instruction
                     let mut send_to = 0;
                     while let Some(next_instruction) = opcode_instructions.get(offset + 1) {
-                        if next_instruction.opcode == Opcode::Send {
+                        if next_instruction.opcode() == Opcode::Send {
                             offset += 1;
                             send_to = next_instruction
                                 .argval
@@ -1436,8 +1433,8 @@ impl ExprParser for Expr {
                     }
 
                     if let Some(next_instruction) = opcode_instructions.get(offset + 1) {
-                        if next_instruction.opcode == Opcode::StoreName
-                            || next_instruction.opcode == Opcode::StoreFast
+                        if next_instruction.opcode() == Opcode::StoreName
+                            || next_instruction.opcode() == Opcode::StoreFast
                         {
                             exprs_stack.push(ExpressionEnum::For(For {
                                 iterator: Box::new(aiter),
@@ -1513,7 +1510,7 @@ impl ExprParser for Expr {
                     // find SEND instruction
                     let mut send_to = 0;
                     while let Some(next_instruction) = opcode_instructions.get(offset + 1) {
-                        if next_instruction.opcode == Opcode::Send {
+                        if next_instruction.opcode() == Opcode::Send {
                             offset += 1;
                             send_to = next_instruction
                                 .argval
@@ -1560,7 +1557,7 @@ impl ExprParser for Expr {
                                 "[UnpackSequence] No next instruction, diviation is {}",
                                 instruction.offset
                             ))?;
-                        match next_instruction.opcode {
+                        match next_instruction.opcode() {
                             Opcode::StoreName | Opcode::StoreFast => {
                                 let name = next_instruction
                                     .argval
@@ -1612,7 +1609,7 @@ impl ExprParser for Expr {
                             _ => {
                                 return Err(format!(
                                 "[UnpackSequence] Expect StoreName, StoreFast or UnpackSequence, but got {:?}",
-                                next_instruction.opcode
+                                next_instruction.opcode()
                             )
                                 .into())
                             }
@@ -1643,7 +1640,7 @@ impl ExprParser for Expr {
             offset += 1;
         }
 
-        Ok(Box::new(Self { bodys: exprs_stack }))
+        Ok(Box::new(Self::from(exprs_stack)))
     }
 }
 
@@ -1651,7 +1648,7 @@ pub fn get_trace(opcode_instructions: &[OpcodeInstruction]) -> Result<TraceBack>
     let mut traceback = TraceBack::default();
 
     for instruction in opcode_instructions {
-        match instruction.opcode {
+        match instruction.opcode() {
             Opcode::StoreFast => {
                 let arg = instruction.arg.as_ref().ok_or(format!(
                     "[Trace] No arg, deviation is {}",
@@ -1730,7 +1727,7 @@ mod tests {
     fn test_parse_expr() {
         let instructions = [
             OpcodeInstruction {
-                opcode: Opcode::LoadConst,
+                opcode: Opcode::LoadConst.into(),
                 opname: "LOAD_CONST".into(),
                 arg: Some(0),
                 argval: Some("'a'".into()),
@@ -1740,7 +1737,7 @@ mod tests {
                 positions: vec![],
             },
             OpcodeInstruction {
-                opcode: Opcode::LoadName,
+                opcode: Opcode::LoadName.into(),
                 opname: "LOAD_NAME".into(),
                 arg: Some(0),
                 argval: Some("int".into()),
@@ -1750,7 +1747,7 @@ mod tests {
                 positions: vec![],
             },
             OpcodeInstruction {
-                opcode: Opcode::LoadConst,
+                opcode: Opcode::LoadConst.into(),
                 opname: "LOAD_CONST".into(),
                 arg: Some(1),
                 argval: Some("'return'".into()),
@@ -1760,7 +1757,7 @@ mod tests {
                 positions: vec![],
             },
             OpcodeInstruction {
-                opcode: Opcode::LoadName,
+                opcode: Opcode::LoadName.into(),
                 opname: "LOAD_NAME".into(),
                 arg: Some(0),
                 argval: Some("int".into()),
@@ -1770,7 +1767,7 @@ mod tests {
                 positions: vec![],
             },
             OpcodeInstruction {
-                opcode: Opcode::BuildTuple,
+                opcode: Opcode::BuildTuple.into(),
                 opname: "BUILD_TUPLE".into(),
                 arg: Some(4),
                 argval: None,
@@ -1780,7 +1777,7 @@ mod tests {
                 positions: vec![],
             },
             OpcodeInstruction {
-                opcode: Opcode::LoadConst,
+                opcode: Opcode::LoadConst.into(),
                 opname: "LOAD_CONST".into(),
                 arg: Some(2),
                 argval: Some(
@@ -1792,7 +1789,7 @@ mod tests {
                 positions: vec![],
             },
             OpcodeInstruction {
-                opcode: Opcode::MakeFunction,
+                opcode: Opcode::MakeFunction.into(),
                 opname: "MAKE_FUNCTION".into(),
                 arg: Some(4),
                 argval: Some("annotations".into()),
@@ -1802,7 +1799,7 @@ mod tests {
                 positions: vec![],
             },
             OpcodeInstruction {
-                opcode: Opcode::StoreName,
+                opcode: Opcode::StoreName.into(),
                 opname: "STORE_NAME".into(),
                 arg: Some(1),
                 argval: Some("test".into()),
@@ -1816,7 +1813,7 @@ mod tests {
         assert_eq!(
             Expr::parse(&instructions).unwrap(),
             Box::new(Expr {
-                bodys: [ExpressionEnum::Function(Function {
+                bodys: vec![ExpressionEnum::Function(Function {
                     mark: "<code object test at 0x00000279922BDB80, file \"test/def.py\", line 1>"
                         .into(),
                     name: "test".into(),
@@ -1851,7 +1848,7 @@ mod tests {
     #[test]
     fn test_query() {
         let expr = Box::new(Expr {
-            bodys: [ExpressionEnum::Assign(Assign {
+            bodys: vec![ExpressionEnum::Assign(Assign {
                 target: Box::new(ExpressionEnum::BaseValue(BaseValue {
                     value: "test".into(),
                     ..Default::default()

@@ -3,6 +3,8 @@
 mod query;
 mod querymutable;
 
+use std::cell::RefCell;
+
 pub use pyrev_ast_derive::*;
 pub use query::*;
 pub use querymutable::*;
@@ -391,10 +393,25 @@ impl Query for bool {
     }
 }
 
+impl<R> Query for RefCell<R> {
+    fn query<T>(&self) -> Vec<&T> {
+        vec![]
+    }
+
+    fn query_singleton<T: std::fmt::Debug + Expression + 'static>(&self) -> Result<&T> {
+        let result = self.query::<T>();
+        if result.len() == 1 {
+            Ok(result[0])
+        } else {
+            Err("Query error: Not singleton".into())
+        }
+    }
+}
+
 /// 只是对外提供一个ExpressionEnum的封装 (单纯不想使用`Vec<ExpressionEnum>`而已 )
 #[derive(Clone, Debug, PartialEq, Eq, Query)]
 pub struct Expr {
-    pub bodys: Vec<ExpressionEnum>,
+    pub bodys: RefCell<Vec<ExpressionEnum>>,
 }
 
 impl Class {
@@ -466,15 +483,23 @@ impl Default for Expr {
 
 impl Expr {
     pub fn new() -> Self {
-        Self { bodys: Vec::new() }
+        Self { bodys: RefCell::new(Vec::new()) }
+    }
+
+    pub fn from(bodys: Vec<ExpressionEnum>) -> Self {
+        Self { bodys: RefCell::new(bodys) }
     }
 
     pub fn add_expression(&mut self, expr: ExpressionEnum) {
-        self.bodys.push(expr);
+        self.bodys.get_mut().push(expr);
     }
 
     pub fn extend(&mut self, expr: Expr) {
-        self.bodys.extend(expr.bodys);
+        self.bodys.get_mut().extend(expr.bodys.into_inner());
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = ExpressionEnum> {
+        self.bodys.borrow().clone().into_iter()
     }
 }
 

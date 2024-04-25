@@ -206,34 +206,6 @@ impl TraceBack {
     }
 }
 
-pub trait AsResMut<T> {
-    fn as_res_mut(&self) -> ResMut<T>;
-}
-
-pub struct ResMut<T>(*mut T);
-
-impl<T> ResMut<T> {
-    pub fn new(t: &T) -> Self {
-        Self(t as *const T as *mut T)
-    }
-
-    pub fn patch_by<F>(&self, f: F) -> Result<()>
-    where
-        F: FnOnce(&mut T),
-    {
-        unsafe {
-            f(&mut *self.0);
-        }
-        Ok(())
-    }
-}
-
-impl<T> AsResMut<T> for T {
-    fn as_res_mut(&self) -> ResMut<T> {
-        ResMut::new(self)
-    }
-}
-
 #[macro_export]
 macro_rules! info {
     ($($arg:tt)*) => {

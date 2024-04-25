@@ -33,7 +33,7 @@ impl Decompiler for CodeObjectMap {
         }
         fixed_async_object(&mut main_expr, &exprs_map)?;
 
-        for (i, instruction) in main_expr.bodys.iter().enumerate() {
+        for (i, instruction) in main_expr.iter().enumerate() {
             let code = instruction
                 .build()?
                 .iter()
@@ -88,7 +88,8 @@ fn merge(mark: &str, maps: &HashMap<String, (Expr, TraceBack)>) -> Result<Expr> 
                     .ok_or(format!("No {} expr", &function.mark))?
                     .0
                     .bodys
-                    .clone();
+                    .clone()
+                    .into_inner();
 
                 function.with_mut().patch_by(|f| {
                     f.bodys = new_bodys;
@@ -166,7 +167,8 @@ fn merge(mark: &str, maps: &HashMap<String, (Expr, TraceBack)>) -> Result<Expr> 
                     .ok_or(format!("No {} expr", &class.mark))?
                     .0
                     .bodys
-                    .clone();
+                    .clone()
+                    .into_inner();
 
                 class.with_mut().patch_by(|c| {
                     c.members = new_members;
@@ -206,7 +208,7 @@ fn find_expr_among(
 ) -> Result<(Vec<ExpressionEnum>, Vec<usize>)> {
     let mut res = Vec::new();
     let mut want_to_remove = Vec::new();
-    for (i, e) in expr.bodys.iter().enumerate() {
+    for (i, e) in expr.iter().enumerate() {
         let (start, end) = e.get_offset();
         #[cfg(debug_assertions)]
         {
@@ -222,9 +224,7 @@ fn find_expr_among(
 
 fn commit_expr(expr: &Expr, want_to_remove: &[usize]) -> Result<()> {
     for idx in want_to_remove.iter().rev() {
-        ResMut::new(expr).patch_by(|e| {
-            e.bodys.remove(*idx);
-        })?;
+        expr.bodys.borrow_mut().remove(*idx);
     }
     Ok(())
 }
