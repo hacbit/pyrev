@@ -1,5 +1,8 @@
 use crate::Expression;
-use std::any::{Any, TypeId};
+use std::{
+    any::{Any, TypeId},
+    cell::RefCell,
+};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -103,5 +106,17 @@ impl<T: Query> Query for Option<T> {
             Some(t) => t.query::<U>(),
             None => vec![],
         }
+    }
+}
+
+impl Query for bool {
+    fn query<T: std::fmt::Debug + Expression + 'static>(&self) -> Vec<&T> {
+        vec![]
+    }
+}
+
+impl<T: Query> Query for RefCell<T> {
+    fn query<U: std::fmt::Debug + Expression + 'static>(&self) -> Vec<&U> {
+        vec![]
     }
 }

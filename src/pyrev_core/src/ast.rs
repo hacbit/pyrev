@@ -845,7 +845,10 @@ impl ExprParser for Expr {
                     if let ExpressionEnum::Import(import) = value {
                         if import.bk_module.is_none() {
                             //没from
-                            import.with_mut().patch_by(|i| i.fragment = None).unwrap();
+                            import
+                                .with_mut_unchecked()
+                                .patch_by(|mut i| i.fragment = None)
+                                .unwrap();
                             exprs_stack.push(ExpressionEnum::Import(import))
                         } else {
                             //有from
@@ -860,8 +863,8 @@ impl ExprParser for Expr {
                                     .clone(),
                             );
                             import
-                                .with_mut()
-                                .patch_by(|i| i.fragment = new_fragment)
+                                .with_mut_unchecked()
+                                .patch_by(|mut i| i.fragment = new_fragment)
                                 .unwrap();
                             exprs_stack.push(ExpressionEnum::Import(import))
                         }
@@ -1109,8 +1112,8 @@ impl ExprParser for Expr {
                         if let Some(expr) = exprs_stack.pop() {
                             if let Ok(assert) = expr.query_singleton::<Assert>() {
                                 assert
-                                    .with_mut()
-                                    .patch_by(|a| a.msg = Some(Box::new(exception)))?;
+                                    .with_mut_unchecked()
+                                    .patch_by(|mut a| a.msg = Some(Box::new(exception)))?;
                             }
                             exprs_stack.push(expr);
                         } else {
@@ -1480,7 +1483,7 @@ impl ExprParser for Expr {
                     while let Some(expr) = exprs_stack.pop() {
                         if let ExpressionEnum::For(async_for) = expr {
                             async_for_block.reverse();
-                            async_for.with_mut().patch_by(|f| {
+                            async_for.with_mut_unchecked().patch_by(|mut f| {
                                 f.body = async_for_block;
                             })?;
                             exprs_stack.push(ExpressionEnum::For(async_for));
@@ -1568,7 +1571,7 @@ impl ExprParser for Expr {
                                     .clone();
                                 if let Some(ExpressionEnum::Container(sub_seq)) = sequence.last() {
                                     if sub_seq.values.len() < sub_seq.values.capacity() {
-                                        sub_seq.with_mut().patch_by(|container| {
+                                        sub_seq.with_mut_unchecked().patch_by(|mut container| {
                                             container.values.push(ExpressionEnum::BaseValue(
                                                 BaseValue {
                                                     value: name,
@@ -1616,7 +1619,7 @@ impl ExprParser for Expr {
                         offset += 1;
                     }
                     if let Some(ExpressionEnum::For(for_expr)) = exprs_stack.last() {
-                        for_expr.with_mut().patch_by(|f| {
+                        for_expr.with_mut_unchecked().patch_by(|mut f| {
                             f.items = Box::new(ExpressionEnum::Container(Container {
                                 values: sequence,
                                 start_offset: instruction.offset,

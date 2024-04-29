@@ -60,7 +60,7 @@ fn fixed_async_object(
             let function_query = main_expr.query::<Function>();
             for function in function_query {
                 if &function.mark == mark {
-                    function.with_mut().patch_by(|f| {
+                    function.with_mut_unchecked().patch_by(|mut f| {
                         f.is_async = true;
                     })?;
                 }
@@ -91,7 +91,7 @@ fn merge(mark: &str, maps: &HashMap<String, (Expr, TraceBack)>) -> Result<Expr> 
                     .clone()
                     .into_inner();
 
-                function.with_mut().patch_by(|f| {
+                function.with_mut_unchecked().patch_by(|mut f| {
                     f.bodys = new_bodys;
                     traceback
                         .get_locals()
@@ -137,7 +137,7 @@ fn merge(mark: &str, maps: &HashMap<String, (Expr, TraceBack)>) -> Result<Expr> 
                 }
             }
 
-            function.with_mut().patch_by(|f| {
+            function.with_mut_unchecked().patch_by(|mut f| {
                 f.args.clear();
                 for (arg, (idx, anno)) in function_args.iter() {
                     f.args.push(FastVariable {
@@ -149,8 +149,8 @@ fn merge(mark: &str, maps: &HashMap<String, (Expr, TraceBack)>) -> Result<Expr> 
                 }
             })?;
             function
-                .with_mut()
-                .patch_by(|f| f.args.sort_by(|a, b| a.index.cmp(&b.index)))?;
+                .with_mut_unchecked()
+                .patch_by(|mut f| f.args.sort_by(|a, b| a.index.cmp(&b.index)))?;
 
             #[cfg(debug_assertions)]
             {
@@ -170,7 +170,7 @@ fn merge(mark: &str, maps: &HashMap<String, (Expr, TraceBack)>) -> Result<Expr> 
                     .clone()
                     .into_inner();
 
-                class.with_mut().patch_by(|c| {
+                class.with_mut_unchecked().patch_by(|mut c| {
                     c.members = new_members;
                 })?;
 
@@ -185,7 +185,7 @@ fn merge(mark: &str, maps: &HashMap<String, (Expr, TraceBack)>) -> Result<Expr> 
             if for_loop.body.is_empty() {
                 let (new_body, want_to_remove) =
                     find_expr_among(this_expr, for_loop.from, for_loop.to)?;
-                for_loop.with_mut().patch_by(|f| {
+                for_loop.with_mut_unchecked().patch_by(|mut f| {
                     f.body = new_body;
                 })?;
                 want_to_removes.extend(want_to_remove);

@@ -387,27 +387,6 @@ impl Query for ContainerType {
     }
 }
 
-impl Query for bool {
-    fn query<T: std::fmt::Debug + Expression + 'static>(&self) -> Vec<&T> {
-        vec![]
-    }
-}
-
-impl<R> Query for RefCell<R> {
-    fn query<T>(&self) -> Vec<&T> {
-        vec![]
-    }
-
-    fn query_singleton<T: std::fmt::Debug + Expression + 'static>(&self) -> Result<&T> {
-        let result = self.query::<T>();
-        if result.len() == 1 {
-            Ok(result[0])
-        } else {
-            Err("Query error: Not singleton".into())
-        }
-    }
-}
-
 /// 只是对外提供一个ExpressionEnum的封装 (单纯不想使用`Vec<ExpressionEnum>`而已 )
 #[derive(Clone, Debug, PartialEq, Eq, Query)]
 pub struct Expr {
