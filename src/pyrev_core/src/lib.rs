@@ -15,10 +15,10 @@ pub mod ast;
 
 #[allow(unused)]
 pub mod prelude {
-    pub use super::ast::*;
-    pub use super::common::*;
+    pub use super::ast::{ExprParser, get_trace};
+    pub use super::common::{IStream, OStream, OrderMap, Result, TraceBack, Local, Colorize};
     pub use super::decompile::{DecompiledCode, Decompiler};
-    pub use super::opcode::*;
-    pub use super::parse_opcode::*;
+    pub use super::opcode::{Opcode, OpcodeInstruction};
+    pub use super::parse_opcode::OpcodeParser;
     pub use crate::{error, info, warn};
 }
