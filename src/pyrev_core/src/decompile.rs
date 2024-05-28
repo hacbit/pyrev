@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::fmt::Debug;
 
-use crate::parse_opcode::{CodeObjectMap, LineNumber};
+use crate::parse_opcode::LineNumber;
 
 use super::prelude::*;
 use pyrev_ast::*;
