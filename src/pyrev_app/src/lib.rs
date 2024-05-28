@@ -138,3 +138,17 @@ pub mod prelude {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::prelude::*;
+
+    #[test]
+    fn test() {
+        let path = "test/yield.txt";
+        App::new()
+            .insert_resource(path)
+            .run()
+            .output();
+    }
+}

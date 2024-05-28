@@ -495,16 +495,29 @@ impl ExpressionEnum {
                 code.push(format!("class {}:", class.name));
 
                 let mut class_members = class.members.iter();
-                #[cfg(debug_assertions)]
-                {
-                    assert!(class.members.iter().take(2).all(|m| m.is_assign()));
+                let filter_members = ["__module__", "__qualname__"];
+
+                let mut next_expr = class_members.next();
+                // expect to skip the __module__ and __qualname__ assignment
+                loop {
+                    if let Some(ExpressionEnum::Assign(assign)) = next_expr {
+                        if let ExpressionEnum::BaseValue(name) = assign.target.as_ref() {
+                            if filter_members.contains(&name.value.as_str()) {
+                                next_expr = class_members.next();
+                            } else {
+                                break;
+                            }
+                        }
+                    } else {
+                        // unexpected
+                        // but no warning
+                        break;
+                    }
                 }
-                class_members.next();
-                class_members.next();
 
                 // check whether the docstring is exist
                 let mut has_doc = false;
-                let next_expr = class_members.next();
+
                 if let Some(ExpressionEnum::Assign(assign)) = next_expr {
                     if let ExpressionEnum::BaseValue(name) = assign.target.as_ref() {
                         if name.value == "__doc__" {
@@ -520,7 +533,7 @@ impl ExpressionEnum {
                         }
                     }
                 }
-                let re = Regex::new(r"def [A-Za-z_]+\((?P<args>[\S_]*)\)").unwrap();
+                let re = Regex::new(r"def [A-Za-z_]+\((?P<args>[\S_]*)\)")?;
                 let add_self_to_no_arg_func = |line: String| {
                     if let Some(caps) = re.captures(&line) {
                         if let Some(args) = caps.name("args") {
@@ -538,12 +551,20 @@ impl ExpressionEnum {
                 };
 
                 if !has_doc {
-                    let expr_code = next_expr.unwrap().build()?;
-                    for line in expr_code {
-                        code.push(format!("    {}", add_self_to_no_arg_func(line)));
+                    if let Some(expr) = next_expr {
+                        let expr_code = expr.build()?;
+                        for line in expr_code {
+                            code.push(format!("    {}", add_self_to_no_arg_func(line)));
+                        }
+                        if !code.last().unwrap().trim().is_empty() {
+                            code.push("".to_string());
+                        }
                     }
-                    if !code.last().unwrap().trim().is_empty() {
-                        code.push("".to_string());
+                    // if None
+                    // it may be an empty class
+                    // it doesn't report error
+                    else {
+                        code.push("    pass".to_string());
                     }
                 }
 

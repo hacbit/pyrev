@@ -29,7 +29,7 @@ path = "src/pyrev_pyc"
 # rustflags = ["-D", "warnings"]
 panic = "unwind"
 lto = true
-opt-level = 3
+debug = true
 
 [profile.release]
 panic = "abort"
