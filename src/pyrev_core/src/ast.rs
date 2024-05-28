@@ -1001,20 +1001,17 @@ impl ExprParser for Expr {
                         .trim_start_matches("to ")
                         .parse::<usize>()?;
                     let mut sub_instructions = &opcode_instructions[offset + 1..];
-                    let block_end_idxs = sub_instructions
+                    // find <if> block end index in sub_instructions
+                    // and will split sub_instructions at this index
+                    let block_end_first_idx = sub_instructions
                         .iter()
-                        .enumerate()
-                        .filter(|(_, x)| x.offset == jump_target)
-                        .map(|(i, _)| i)
-                        .collect::<Vec<_>>();
-
-                    let block_end_first_idx = *block_end_idxs.first().ok_or(format!(
+                        .position(|x| x.offset == jump_target)
+                        .ok_or(format!(
                         "[PopJumpIfFalse] No block end, deviation is {}",
                         instruction.offset
                     ))?;
 
-                    sub_instructions =
-                        &opcode_instructions[offset + 1..offset + 1 + block_end_first_idx];
+                    sub_instructions = &sub_instructions[..block_end_first_idx];
 
                     let body_expr = Self::parse(sub_instructions)?;
 
