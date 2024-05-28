@@ -9,22 +9,30 @@ Reverse tools for bytecode of python
 /path/to/pyrev> cargo build --release [--target your_target_os]
 ```
 
-**You can use `build` script to build release to your target OS and add it to your PATH.**
+**You can use `build` script to build release to your target OS and copy it to default path (`.cargo/bin/`).**
 
 **For Windows:**
+
 ```cmd
 PS D:\path\to\pyrev> .\build.bat
 ```
 
-*If you use WSL, you can use the follow command in windows terminal to build for linux:*
+*If you use WSL, you can use the follow command in windows terminal（not in WSL) to build for linux:*
+
 ```cmd
 PS D:\path\to\pyrev> .\build.bat --wsl
 ```
 
 **For Linux:**
+
 ```shell
 /path/to/pyrev> ./build.sh
 ```
+
+
+
+**If you only want to build and test all tests and doc-test, you also type command `cargo make`**
+
 
 
 ## Usage
@@ -57,7 +65,6 @@ Try to decompile [Temp file]
   1| a.b.c()
   2| print()
 ```
-
 
 ## Test
 
@@ -123,6 +130,7 @@ PS D:\path\to\pyrev> .\run-all.bat [--release]
 
 **You can add your custom test file to test/ dict and run the `get-dis` script to generate the .txt file**
 **Windows:**
+
 ```powershell
 PS D:\path\to\pyrev> .\get-dis.bat
 This script will delete all .txt files in test/
@@ -164,7 +172,7 @@ Done!
 
 run the `update-doc` script to generate doc
 
-You can double-click the index.html in doc/
+You can double-click the index.html in doc/ to open in browser
 
 
 

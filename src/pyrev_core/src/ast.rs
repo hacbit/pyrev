@@ -1034,7 +1034,7 @@ impl ExprParser for Expr {
 
                     let mut if_expr = If {
                         test: Some(Box::new(test)),
-                        body: body_expr.bodys.into_inner(),
+                        body: body_expr.bodys,
                         or_else: None,
                         start_line: instruction.starts_line.unwrap_or_default(),
                         start_offset: instruction.offset,
@@ -1055,7 +1055,7 @@ impl ExprParser for Expr {
 
                     let branches_expr = Self::parse(branches_instructions)?;
 
-                    let bodys = branches_expr.bodys.into_inner();
+                    let bodys = branches_expr.bodys;
                     if let Some(first_expr) = bodys.first() {
                         if first_expr.is_if() {
                             // elif 分支
@@ -1228,7 +1228,7 @@ impl ExprParser for Expr {
                         //dbg!(&sub_instructions);
                     }
                     let sub_expr = Self::parse(sub_instructions)?;
-                    with.body = sub_expr.bodys.into_inner();
+                    with.body = sub_expr.bodys;
                     // skip the offset to the end of with block
                     offset += 2 + block_end_last_idx;
 
@@ -1326,7 +1326,7 @@ impl ExprParser for Expr {
                         //dbg!(&sub_instructions);
                     }
                     let sub_expr = Self::parse(sub_instructions)?;
-                    async_with.body = sub_expr.bodys.into_inner();
+                    async_with.body = sub_expr.bodys;
                     // skip the offset to the end of with block
                     offset += 2 + block_end_last_idx;
 

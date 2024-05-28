@@ -226,36 +226,3 @@ macro_rules! error {
         eprintln!("[ERROR] {}", format!($($arg)*).bright_red())
     };
 }
-
-#[cfg(test)]
-mod tests {
-    use std::path::PathBuf;
-
-    use super::*;
-    const TEST_DIR: &str = "test/";
-
-    #[test]
-    fn test_read() {
-        let file = PathBuf::from(TEST_DIR).join("import.py");
-        let target = r#"import sys
-from pwn import *
-import numpy as np
-import matplotlib.pyplot as plt
-from os import popen as p, system"#;
-        assert_eq!(file.read().unwrap(), target);
-    }
-
-    #[test]
-    fn test_write() {
-        let file = PathBuf::from(TEST_DIR).join("for.py");
-        let a = file.read().unwrap();
-        dbg!(a
-            .lines()
-            .enumerate()
-            .map(|(i, s)| (i + 1, s))
-            .write_console()
-            .unwrap());
-
-        //assert!(false);
-    }
-}

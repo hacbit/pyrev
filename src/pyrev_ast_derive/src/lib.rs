@@ -86,6 +86,7 @@ fn camel_to_snake<S: AsRef<str>>(s: S) -> String {
         .to_lowercase()
 }
 
+/// Implement the is_xxx function for each variant
 #[proc_macro_derive(Is)]
 pub fn derive_is(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
@@ -116,6 +117,7 @@ pub fn derive_is(input: TokenStream) -> TokenStream {
     }
 }
 
+/// Implement the unwrap_xxx function for each variant
 #[proc_macro_derive(Unwrap)]
 pub fn derive_unwrap(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
@@ -149,6 +151,9 @@ pub fn derive_unwrap(input: TokenStream) -> TokenStream {
     }
 }
 
+/// Implement the get_offset function for each variant
+///
+/// the structure must have start_offset and end_offset fields
 #[proc_macro_derive(GetOffset)]
 pub fn derive_get_offset(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);

@@ -146,9 +146,6 @@ mod tests {
     #[test]
     fn test() {
         let path = "test/yield.txt";
-        App::new()
-            .insert_resource(path)
-            .run()
-            .output();
+        App::new().insert_resource(path).run().output();
     }
 }

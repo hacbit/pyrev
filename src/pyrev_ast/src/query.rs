@@ -1,8 +1,5 @@
 use crate::Expression;
-use std::{
-    any::{Any, TypeId},
-    cell::RefCell,
-};
+use std::any::{Any, TypeId};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -29,16 +26,16 @@ impl<T: 'static> Queryable for T {
 /// ```
 /// use pyrev_ast::*;
 /// use pyrev_ast_derive::*;
-/// #[derive(Query, Debug)]
+/// #[derive(Query, Debug, Expression)]
 /// struct A {
 ///     b: B,
 ///     c: C,
 /// }
-/// #[derive(Query, Debug)]
+/// #[derive(Query, Debug, Expression)]
 /// struct B {
 ///     d: String,
 /// }
-/// #[derive(Query, Debug, PartialEq)]
+/// #[derive(Query, Debug, PartialEq, Expression)]
 /// struct C {
 ///     e: usize,
 /// }
@@ -111,12 +108,6 @@ impl<T: Query> Query for Option<T> {
 
 impl Query for bool {
     fn query<T: std::fmt::Debug + Expression + 'static>(&self) -> Vec<&T> {
-        vec![]
-    }
-}
-
-impl<T: Query> Query for RefCell<T> {
-    fn query<U: std::fmt::Debug + Expression + 'static>(&self) -> Vec<&U> {
         vec![]
     }
 }

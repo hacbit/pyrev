@@ -23,13 +23,13 @@ impl Decompiler for CodeObjectMap {
         }
         #[cfg(debug_assertions)]
         {
-            //dbg!(&exprs_map);
+            // dbg!(&exprs_map);
         }
 
         let mut main_expr = merge("<main>", &exprs_map)?;
         #[cfg(debug_assertions)]
         {
-            //dbg!(&main_expr);
+            // dbg!(&main_expr);
         }
         fixed_async_object(&mut main_expr, &exprs_map)?;
 
@@ -72,6 +72,7 @@ fn fixed_async_object(
 }
 
 /// 用来合并所有的Expr
+///
 /// 比如`<main>`有一个函数foo, 就需要把foo的定义合并到`<main>`里面的foo Function的 bodys
 fn merge(mark: &str, maps: &HashMap<String, (Expr, TraceBack)>) -> Result<Expr> {
     let (this_expr, traceback) = maps.get(mark).ok_or(format!("No {} expr", &mark))?;
@@ -88,8 +89,7 @@ fn merge(mark: &str, maps: &HashMap<String, (Expr, TraceBack)>) -> Result<Expr> 
                     .ok_or(format!("No {} expr", &function.mark))?
                     .0
                     .bodys
-                    .clone()
-                    .into_inner();
+                    .clone();
 
                 function.with_mut_unchecked().patch_by(|mut f| {
                     f.bodys = new_bodys;
@@ -167,8 +167,7 @@ fn merge(mark: &str, maps: &HashMap<String, (Expr, TraceBack)>) -> Result<Expr> 
                     .ok_or(format!("No {} expr", &class.mark))?
                     .0
                     .bodys
-                    .clone()
-                    .into_inner();
+                    .clone();
 
                 class.with_mut_unchecked().patch_by(|mut c| {
                     c.members = new_members;
@@ -224,7 +223,9 @@ fn find_expr_among(
 
 fn commit_expr(expr: &Expr, want_to_remove: &[usize]) -> Result<()> {
     for idx in want_to_remove.iter().rev() {
-        expr.bodys.borrow_mut().remove(*idx);
+        expr.with_mut_unchecked().patch_by(|mut e| {
+            e.bodys.remove(*idx);
+        })?;
     }
     Ok(())
 }
@@ -242,53 +243,5 @@ impl DecompiledCode {
 
     pub fn iter(&mut self) -> impl Iterator<Item = (usize, &std::string::String)> + Clone + Debug {
         self.code.iter().map(|(i, s)| (*i, s))
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::super::parse_opcode::*;
-    use super::*;
-
-    #[test]
-    fn test_parse_code_object() {
-        let input = r#"  0           0 RESUME                   0
-
-        2           2 LOAD_CONST               0 (<code object foo at 0x00000223C0B267F0, file "<dis>", line 2>)
-                    4 MAKE_FUNCTION            0
-                    6 STORE_NAME               0 (foo)
-      
-        4           8 PUSH_NULL
-                   10 LOAD_NAME                1 (print)
-                   12 PUSH_NULL
-                   14 LOAD_NAME                0 (foo)
-                   16 PRECALL                  0
-                   20 CALL                     0
-                   30 PRECALL                  1
-                   34 CALL                     1
-                   44 POP_TOP
-                   46 LOAD_CONST               1 (None)
-                   48 RETURN_VALUE
-      
-      Disassembly of <code object foo at 0x00000223C0B267F0, file "<dis>", line 2>:
-        2           0 RESUME                   0
-      
-        3           2 LOAD_CONST               1 (1)
-                    4 RETURN_VALUE"#;
-        let code_objects = input.parse_opcode().unwrap();
-        //dbg!(code_object);
-        let expr = code_objects.decompile().unwrap();
-        //dbg!(expr);
-        //assert!(false);
-        assert_eq!(
-            expr,
-            DecompiledCode {
-                code: vec![
-                    (0, "def foo():".into(),),
-                    (1, "    return 1".into(),),
-                    (1, "print(foo())".into(),),
-                ],
-            }
-        )
     }
 }

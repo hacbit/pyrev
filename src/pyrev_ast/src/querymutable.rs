@@ -6,6 +6,9 @@ use std::{
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
+/// Unchecked mutable query result
+///
+/// It'll try to get the mutable ptr from the query const reference
 pub struct QueryResMut<T>
 where
     T: Queryable + Sized,

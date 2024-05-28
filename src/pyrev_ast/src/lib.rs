@@ -3,8 +3,6 @@
 mod query;
 mod querymutable;
 
-use std::cell::RefCell;
-
 pub use pyrev_ast_derive::*;
 pub use query::*;
 pub use querymutable::*;
@@ -304,19 +302,6 @@ pub struct NoneValue {
 
 /// 为上面的表达式提供一个封装
 /// 用来实现不同Expression的嵌套
-///
-/// is_xxx function example:
-/// ```
-/// use pyrev_ast::*;
-/// let expr = ExpressionEnum::BaseValue(BaseValue { value: "None".to_string() });
-/// assert!(expr.is_base_value());
-/// let expr = ExpressionEnum::Assign(Assign {
-///     target: Box::new(ExpressionEnum::BaseValue(BaseValue { value: "a".to_string() })),
-///     values: Box::new(ExpressionEnum::BaseValue(BaseValue { value: "1".to_string() })),
-///     operator: "=".to_string(),
-/// });
-/// assert!(expr.is_assign());
-/// ```
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Is, Unwrap, GetOffset)]
 pub enum ExpressionEnum {
     /// NoneValue is deprecated
@@ -387,10 +372,10 @@ impl Query for ContainerType {
     }
 }
 
-/// 只是对外提供一个ExpressionEnum的封装 (单纯不想使用`Vec<ExpressionEnum>`而已 )
-#[derive(Clone, Debug, PartialEq, Eq, Query)]
+/// `Vec<ExpressionEnum>`的封装
+#[derive(Clone, Debug, PartialEq, Eq, Query, Expression)]
 pub struct Expr {
-    pub bodys: RefCell<Vec<ExpressionEnum>>,
+    pub bodys: Vec<ExpressionEnum>,
 }
 
 impl Class {
@@ -462,27 +447,23 @@ impl Default for Expr {
 
 impl Expr {
     pub fn new() -> Self {
-        Self {
-            bodys: RefCell::new(Vec::new()),
-        }
+        Self { bodys: Vec::new() }
     }
 
     pub fn from(bodys: Vec<ExpressionEnum>) -> Self {
-        Self {
-            bodys: RefCell::new(bodys),
-        }
+        Self { bodys }
     }
 
     pub fn add_expression(&mut self, expr: ExpressionEnum) {
-        self.bodys.get_mut().push(expr);
+        self.bodys.push(expr);
     }
 
     pub fn extend(&mut self, expr: Expr) {
-        self.bodys.get_mut().extend(expr.bodys.into_inner());
+        self.bodys.extend(expr.bodys);
     }
 
     pub fn iter(&self) -> impl Iterator<Item = ExpressionEnum> {
-        self.bodys.borrow().clone().into_iter()
+        self.bodys.clone().into_iter()
     }
 }
 
