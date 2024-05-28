@@ -229,7 +229,6 @@ pub struct If {
     pub start_line: usize,
     pub start_offset: usize,
     pub end_offset: usize,
-    pub is_elif: bool,
 }
 
 /// Jump
@@ -603,7 +602,7 @@ impl ExpressionEnum {
                             .join("");
                         #[cfg(debug_assertions)]
                         {
-                            dbg!(&lambda_body);
+                            // dbg!(&lambda_body);
                         }
                         let lambda_body = lambda_body.trim_start_matches("return ");
                         if lambda_body.starts_with("yield") {
@@ -929,13 +928,6 @@ impl ExpressionEnum {
                 Ok(code)
             }
             ExpressionEnum::If(if_else) => {
-                println!("test is {:?}", if_else.test);
-                println!("body is {:?}", if_else.body);
-                println!("or_else is {:?}", if_else.or_else);
-                println!("start_line is {:?}", if_else.start_line);
-                println!("start_offset is {:?}", if_else.start_offset);
-                println!("end_offset is {:?}", if_else.end_offset);
-                println!("\n\n");
                 let mut code = Vec::new();
                 if let Some(test) = if_else.test.as_ref() {
                     let test_code = test.build()?.join("");

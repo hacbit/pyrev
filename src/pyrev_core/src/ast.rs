@@ -1007,65 +1007,65 @@ impl ExprParser for Expr {
                         .iter()
                         .position(|x| x.offset == jump_target)
                         .ok_or(format!(
-                        "[PopJumpIfFalse] No block end, deviation is {}",
-                        instruction.offset
-                    ))?;
+                            "[PopJumpIfFalse] No block end, deviation is {}",
+                            instruction.offset
+                        ))?;
 
                     sub_instructions = &sub_instructions[..block_end_first_idx];
 
-                    let body_expr = Self::parse(sub_instructions)?;
-
-                    // parse 的结果的结构应该类似于 <block> <jump>, ..., <block> [<jump>]
-                    let mut else_block_end_offset = jump_target;
-                    let block_jumps = body_expr.iter().filter(|x| x.is_jump()).collect::<Vec<_>>();
-                    // block_jumps 不为空
-                    if !block_jumps.is_empty() {
-                        else_block_end_offset = block_jumps.last().unwrap().unwrap_jump().target;
-                        assert!(
-                            block_jumps
-                                .iter()
-                                .all(|x| x.unwrap_jump().target == else_block_end_offset),
-                            "Expect all jump target in block_jumps are equal"
-                        );
-                    }
-
+                    let sub_expr = Self::parse(sub_instructions)?;
+                    // if-expr of this branch
                     let mut if_expr = If {
                         test: Some(Box::new(test)),
-                        body: body_expr.bodys,
-                        or_else: None,
+                        body: sub_expr.bodys,
                         start_line: instruction.starts_line.unwrap_or_default(),
                         start_offset: instruction.offset,
-                        end_offset: else_block_end_offset,
-                        is_elif: false,
+                        end_offset: sub_instructions.last().unwrap().offset,
+                        ..Default::default()
                     };
 
                     offset = offset + block_end_first_idx;
 
-                    // get if other branch
-                    let else_block_end_idx = opcode_instructions.iter().position(|x| x.offset == else_block_end_offset).ok_or(format!(
-                        "[PopJumpIfFalse] Jump target not found, expected offset {}, deviation is {}",
-                        else_block_end_offset,
-                        instruction.offset
-                    ))?;
-                    let branches_instructions =
-                        &opcode_instructions[offset + 1..else_block_end_idx];
+                    // get jump target
+                    let next_block_jump_target = if let ExpressionEnum::Jump(this_block_jumps) =
+                        if_expr.body.last().ok_or(format!(
+                            "[PopJumpIfFalse] No last expr, deviation is {}",
+                            instruction.offset
+                        ))? {
+                        this_block_jumps.target
+                    } else {
+                        return Err("[PopJumpIfFalse] Expect Jump in last expr".into());
+                    };
 
-                    let branches_expr = Self::parse(branches_instructions)?;
+                    // If find the jump target in the rest instructions, then it's an elif or else
+                    // if not, that may be the end of parent if-expr
+                    if let Some(next_block_end_idx) = opcode_instructions
+                        .iter()
+                        .position(|x| x.offset == next_block_jump_target)
+                    {
+                        let remain_instructions =
+                            &opcode_instructions[offset + 1..next_block_end_idx];
 
-                    let bodys = branches_expr.bodys;
-                    if let Some(first_expr) = bodys.first() {
-                        if first_expr.is_if() {
-                            // elif 分支
-                            assert!(bodys.len() == 1);
+                        let remain_expr = Self::parse(remain_instructions)?;
 
-                            let first = first_expr.clone();
-                            if_expr.or_else = Some(Box::new(first));
-                        } else {
-                            // else 分支
-                            if_expr.or_else = None;
-                            if_expr.body = bodys;
+                        if let Some(remain_first_expr) = remain_expr.bodys.first() {
+                            if remain_first_expr.is_if() {
+                                if_expr.or_else = Some(Box::new(remain_first_expr.to_owned()));
+                            } else {
+                                if_expr.or_else = Some(Box::new(ExpressionEnum::If(If {
+                                    body: remain_expr.bodys,
+                                    start_line: remain_instructions.first().unwrap().starts_line.unwrap_or_default(),
+                                    start_offset: remain_instructions.first().unwrap().offset,
+                                    end_offset: remain_instructions.last().unwrap().offset,
+                                    ..Default::default()
+                                })));
+
+                                offset = next_block_end_idx;
+                            }
                         }
                     }
+
+                    exprs_stack.push(ExpressionEnum::If(if_expr));
                 }
                 Opcode::JumpForward => {
                     let jump_target = instruction
