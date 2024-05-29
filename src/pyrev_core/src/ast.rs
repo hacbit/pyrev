@@ -991,6 +991,8 @@ impl ExprParser for Expr {
                         "[PopJumpIfFalse] Stack is empty, deviation is {}",
                         instruction.offset
                     ))?;
+                    // if test false, then jump to target
+                    // now offset + 1 to target is this branch block
                     let jump_target = instruction
                         .argval
                         .as_ref()
@@ -1027,7 +1029,7 @@ impl ExprParser for Expr {
                     offset = offset + block_end_first_idx;
 
                     // get jump target
-                    let next_block_jump_target = if let ExpressionEnum::Jump(this_block_jumps) =
+                    let else_block_end = if let ExpressionEnum::Jump(this_block_jumps) =
                         if_expr.body.last().ok_or(format!(
                             "[PopJumpIfFalse] No last expr, deviation is {}",
                             instruction.offset
@@ -1039,33 +1041,66 @@ impl ExprParser for Expr {
 
                     // If find the jump target in the rest instructions, then it's an elif or else
                     // if not, that may be the end of parent if-expr
-                    if let Some(next_block_end_idx) = opcode_instructions
+                    if let Some(else_block_end_idx) = opcode_instructions
                         .iter()
-                        .position(|x| x.offset == next_block_jump_target)
+                        .position(|x| x.offset == else_block_end)
                     {
                         let remain_instructions =
-                            &opcode_instructions[offset + 1..next_block_end_idx];
+                            &opcode_instructions[offset + 1..else_block_end_idx];
 
-                        let remain_expr = Self::parse(remain_instructions)?;
-
-                        if let Some(remain_first_expr) = remain_expr.bodys.first() {
-                            if remain_first_expr.is_if() {
-                                if_expr.or_else = Some(Box::new(remain_first_expr.to_owned()));
-                            } else {
-                                if_expr.or_else = Some(Box::new(ExpressionEnum::If(If {
-                                    body: remain_expr.bodys,
-                                    start_line: remain_instructions.first().unwrap().starts_line.unwrap_or_default(),
+                        let remain_exprs = Self::parse(remain_instructions)?;
+                        // dbg!(&remain_exprs.bodys);
+                        let mut remain_exprs = remain_exprs.bodys.into_iter();
+                        let remain_first_expr = remain_exprs.next();
+                        if let Some(ExpressionEnum::If(mut remain_first_expr)) = remain_first_expr {
+                            // if have unused exprs in remain_exprs, then it's an else
+                            if remain_exprs.len() > 0 {
+                                let else_expr = If {
+                                    test: None,
+                                    body: remain_exprs.collect(),
+                                    start_line: remain_instructions
+                                        .first()
+                                        .unwrap()
+                                        .starts_line
+                                        .unwrap_or_default(),
                                     start_offset: remain_instructions.first().unwrap().offset,
                                     end_offset: remain_instructions.last().unwrap().offset,
                                     ..Default::default()
-                                })));
-
-                                offset = next_block_end_idx;
+                                };
+                                remain_first_expr.or_else =
+                                    Some(Box::new(ExpressionEnum::If(else_expr)));
                             }
+
+                            if_expr.or_else = Some(Box::new(ExpressionEnum::If(remain_first_expr)));
+                        } else {
+                            if_expr.or_else = Some(Box::new(ExpressionEnum::If(If {
+                                body: remain_first_expr.into_iter().chain(remain_exprs).collect(),
+                                start_line: remain_instructions
+                                    .first()
+                                    .unwrap()
+                                    .starts_line
+                                    .unwrap_or_default(),
+                                start_offset: remain_instructions.first().unwrap().offset,
+                                end_offset: remain_instructions.last().unwrap().offset,
+                                ..Default::default()
+                            })));
                         }
+
+                        offset = else_block_end_idx;
                     }
 
-                    exprs_stack.push(ExpressionEnum::If(if_expr));
+                    // if the exprs_stack last expr is If, then it may be an elif/else
+                    if let Some(ExpressionEnum::If(parent_if)) = exprs_stack.last_mut() {
+                        if parent_if.or_else.is_none() && parent_if.test.is_some() {
+                            parent_if.or_else = Some(Box::new(ExpressionEnum::If(if_expr)));
+                        } else {
+                            // if the exprs_stack last expr is not If, then it's an if
+                            exprs_stack.push(ExpressionEnum::If(if_expr));
+                        }
+                    } else {
+                        // if the exprs_stack last expr is not If, then it's an if
+                        exprs_stack.push(ExpressionEnum::If(if_expr));
+                    }
                 }
                 Opcode::JumpForward => {
                     let jump_target = instruction
