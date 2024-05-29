@@ -1,6 +1,13 @@
 # Pyrev v1.0.11
 
-Reverse tools for bytecode of python
+A Python bytecode reversing tool built in pure Rust
+
+
+## Effect Picture
+
+<img src="README/image-20240529195825965.png" alt="image-20240529195825965" style="zoom:75%;" />
+
+<img src="README/image-20240529195951378.png" alt="image-20240529195951378" style="zoom:75%;" />
 
 
 ## Build
@@ -178,7 +185,7 @@ You can double-click the index.html in doc/ to open in browser
 
 ## Todo List
 
--   [ ] if-else
+-   [x] if-else
 -   [x] for
 -   [ ] while
 -   [x] async
