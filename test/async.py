@@ -13,7 +13,6 @@ class AIter:
             i = self.ls[self.index]
             self.index += 1
             return i
-        print("End of iteration")
         raise StopAsyncIteration
 
 class ACtxMgr:

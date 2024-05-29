@@ -106,11 +106,6 @@ impl ExprParser for Expr {
                         ))?
                         .clone();
 
-                    #[cfg(debug_assertions)]
-                    {
-                        //println!("StoreName argval is {}", name);
-                    }
-
                     let value = exprs_stack.pop().ok_or(format!(
                         "[Store] Stack is empty, deviation is {}",
                         instruction.offset
@@ -274,15 +269,16 @@ impl ExprParser for Expr {
                     // and the target is the same as the left of the binary operation
                     // then we can ignore the target and just return the binary operation
                     if let ExpressionEnum::BinaryOperation(BinaryOperation {
-                        left,
-                        operator,
-                        ..
+                        left, operator, ..
                     }) = value.clone()
                     {
                         if let ExpressionEnum::Attribute(Attribute { parent, attr, .. }) = *left {
                             // expect an attribute expression
                             let target = target.unwrap_attribute();
-                            if parent == target.parent && attr == target.attr && operator.ends_with('=') {
+                            if parent == target.parent
+                                && attr == target.attr
+                                && operator.ends_with('=')
+                            {
                                 // it will continue soon
                                 // so move (instead clone) the value to the exprs_stack
                                 exprs_stack.push(value);
@@ -1188,12 +1184,24 @@ impl ExprParser for Expr {
                     if expr.is_base_value() {
                         let exception = expr;
                         if let Some(expr) = exprs_stack.pop() {
+                            let mut has_assert = false;
                             if let Ok(assert) = expr.query_singleton::<Assert>() {
+                                has_assert = true;
                                 assert
                                     .with_mut_unchecked()
-                                    .patch_by(|mut a| a.msg = Some(Box::new(exception)))?;
+                                    .patch_by(|mut a| a.msg = Some(Box::new(exception.clone())))?;
                             }
                             exprs_stack.push(expr);
+
+                            // if hasn't assert, then it just a raise
+                            if !has_assert {
+                                exprs_stack.push(ExpressionEnum::Raise(Raise {
+                                    exception: Box::new(exception),
+                                    start_line: instruction.starts_line.unwrap_or_default(),
+                                    start_offset: instruction.offset,
+                                    end_offset: instruction.offset,
+                                }))
+                            }
                         } else {
                             exprs_stack.push(ExpressionEnum::Raise(Raise {
                                 exception: Box::new(exception),
@@ -1215,14 +1223,18 @@ impl ExprParser for Expr {
                         "[CheckExcMatch] Stack is empty, deviation is {}",
                         instruction.offset
                     ))?;
-                    if let Some(store_name_instruction) = opcode_instructions[offset..]
+                    if let Some(store_name_instruction_idx) = opcode_instructions[offset..]
                         .iter()
-                        .find(|x| x.opcode() == Opcode::StoreName)
+                        .position(|x| x.opcode() == Opcode::StoreName)
                     {
+                        let store_name_instruction =
+                            &opcode_instructions[offset + store_name_instruction_idx];
                         let alias = store_name_instruction.argval.as_ref().ok_or(format!(
                             "[CheckExcMatch] No argval, deviation is {}",
                             instruction.offset
                         ))?;
+
+                        offset += store_name_instruction_idx;
 
                         exprs_stack.push(ExpressionEnum::Except(Except {
                             exception: Box::new(ExpressionEnum::Alias(Alias {
@@ -1718,7 +1730,7 @@ impl ExprParser for Expr {
                         "[Copy] No arg, deviation is {}",
                         instruction.offset
                     ))?;
-                    
+
                     if count <= exprs_stack.len() {
                         let copy_exprs = exprs_stack
                             .iter()
