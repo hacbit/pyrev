@@ -260,17 +260,39 @@ impl ExprParser for Expr {
                         "[StoreAttr] Stack is empty, deviation is {}",
                         instruction.offset
                     ))?;
-                    exprs_stack.push(ExpressionEnum::Assign(Assign {
-                        target: Box::new(ExpressionEnum::Attribute(Attribute {
-                            parent: Box::new(parent),
-                            attr: Box::new(ExpressionEnum::BaseValue(BaseValue {
-                                value: attr.clone(),
-                                ..Default::default()
-                            })),
-                            start_offset: instruction.offset,
-                            end_offset: instruction.offset,
+                    let target = ExpressionEnum::Attribute(Attribute {
+                        parent: Box::new(parent),
+                        attr: Box::new(ExpressionEnum::BaseValue(BaseValue {
+                            value: attr.clone(),
                             ..Default::default()
                         })),
+                        start_offset: instruction.offset,
+                        end_offset: instruction.offset,
+                        ..Default::default()
+                    });
+                    // if the value is a binary operation and it's a self-assign operation like +=, -=, etc.
+                    // and the target is the same as the left of the binary operation
+                    // then we can ignore the target and just return the binary operation
+                    if let ExpressionEnum::BinaryOperation(BinaryOperation {
+                        left,
+                        operator,
+                        ..
+                    }) = value.clone()
+                    {
+                        if let ExpressionEnum::Attribute(Attribute { parent, attr, .. }) = *left {
+                            // expect an attribute expression
+                            let target = target.unwrap_attribute();
+                            if parent == target.parent && attr == target.attr && operator.ends_with('=') {
+                                // it will continue soon
+                                // so move (instead clone) the value to the exprs_stack
+                                exprs_stack.push(value);
+                                offset += 1;
+                                continue;
+                            }
+                        }
+                    }
+                    exprs_stack.push(ExpressionEnum::Assign(Assign {
+                        target: Box::new(target),
                         values: Box::new(value),
                         operator: "=".to_string(),
                         start_line: instruction.starts_line.unwrap_or_default(),
@@ -700,6 +722,23 @@ impl ExprParser for Expr {
                         ..Default::default()
                     }))
                 }
+                Opcode::BinarySubscr => {
+                    let index = exprs_stack.pop().ok_or(format!(
+                        "[BinarySubscr] Stack is empty, deviation is {}",
+                        instruction.offset
+                    ))?;
+                    let target = exprs_stack.pop().ok_or(format!(
+                        "[BinarySubscr] Stack is empty, deviation is {}",
+                        instruction.offset
+                    ))?;
+                    exprs_stack.push(ExpressionEnum::Subscr(Subscr {
+                        target: Box::new(target),
+                        index: Box::new(index),
+                        start_offset: instruction.offset,
+                        end_offset: instruction.offset,
+                        ..Default::default()
+                    }));
+                }
                 Opcode::UnaryInvert => {
                     let target = exprs_stack.pop().ok_or(format!(
                         "[UnaryInvert] Stack is empty, deviation is {}",
@@ -1036,7 +1075,14 @@ impl ExprParser for Expr {
                         ))? {
                         this_block_jumps.target
                     } else {
-                        return Err("[PopJumpIfFalse] Expect Jump in last expr".into());
+                        // if not have jump target in the block last
+                        // it may only one branch (no elif/else)
+                        // then the jump target is the end of this block
+                        // build this block and continue
+                        exprs_stack.push(ExpressionEnum::If(if_expr));
+
+                        offset += 1;
+                        continue;
                     };
 
                     // If find the jump target in the rest instructions, then it's an elif or else
@@ -1667,7 +1713,49 @@ impl ExprParser for Expr {
                         .into());
                     }
                 }
-
+                Opcode::Copy => {
+                    let count = instruction.arg.ok_or(format!(
+                        "[Copy] No arg, deviation is {}",
+                        instruction.offset
+                    ))?;
+                    
+                    if count <= exprs_stack.len() {
+                        let copy_exprs = exprs_stack
+                            .iter()
+                            .skip(exprs_stack.len() - count)
+                            .cloned()
+                            .collect::<Vec<_>>();
+                        exprs_stack.extend(copy_exprs);
+                    } else {
+                        return Err(format!(
+                            "[Copy] Stack is empty, deviation is {}",
+                            instruction.offset
+                        )
+                        .into());
+                    }
+                }
+                Opcode::Swap => {
+                    let count = instruction.arg.ok_or(format!(
+                        "[Swap] No arg, deviation is {}",
+                        instruction.offset
+                    ))?;
+                    if count <= exprs_stack.len() {
+                        let mut swap_exprs = exprs_stack
+                            .iter()
+                            .skip(exprs_stack.len() - count)
+                            .cloned()
+                            .collect::<Vec<_>>();
+                        swap_exprs.reverse();
+                        exprs_stack.truncate(exprs_stack.len() - count);
+                        exprs_stack.extend(swap_exprs);
+                    } else {
+                        return Err(format!(
+                            "[Swap] Stack is empty, deviation is {}",
+                            instruction.offset
+                        )
+                        .into());
+                    }
+                }
                 _ => {}
             }
 

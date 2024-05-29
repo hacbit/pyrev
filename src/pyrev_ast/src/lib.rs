@@ -178,6 +178,17 @@ pub struct BinaryOperation {
     pub end_offset: usize,
 }
 
+/// 下标
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
+pub struct Subscr {
+    pub index: Box<ExpressionEnum>,
+    pub target: Box<ExpressionEnum>,
+    pub start_line: usize,
+    pub start_offset: usize,
+    pub end_offset: usize,
+}
+
+/// 一元操作
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
 pub struct UnaryOperation {
     pub target: Box<ExpressionEnum>,
@@ -322,6 +333,7 @@ pub enum ExpressionEnum {
     FormatValue(FormatValue),
     Format(Format),
     BinaryOperation(BinaryOperation),
+    Subscr(Subscr),
     UnaryOperation(UnaryOperation),
     Call(Call),
     With(With),
@@ -887,6 +899,11 @@ impl ExpressionEnum {
                     }
                 }
                 Ok(code)
+            }
+            ExpressionEnum::Subscr(subscr) => {
+                let index_code = subscr.index.build()?.join("");
+                let target_code = subscr.target.build()?.join("");
+                Ok(vec![format!("{}[{}]", target_code, index_code)])
             }
             ExpressionEnum::Slice(slice) => {
                 let origin_code = slice.origin.build()?;
