@@ -1,4 +1,4 @@
-# Pyrev v1.0.12
+# Pyrev v1.0.13
 
 A Python bytecode reversing tool built in pure Rust
 
@@ -23,7 +23,7 @@ A Python bytecode reversing tool built in pure Rust
 PS D:\path\to\pyrev> .\build.bat
 ```
 
-*If you use WSL, you can use the follow command in windows terminal（not in WSL) to build for linux:*
+*If you use WSL, you can use the follow command in windows terminal (not in WSL) to build for linux:*
 
 ```cmd
 PS D:\path\to\pyrev> .\build.bat --wsl
@@ -184,7 +184,7 @@ You can double-click the index.html in doc/ to open in browser
 
 ## Todo List
 
--   [x] if-else
+-   [x] if-else (unsound)
 -   [x] for
 -   [ ] while
 -   [x] async
@@ -192,5 +192,5 @@ You can double-click the index.html in doc/ to open in browser
 -   [ ] assertion
 -   [ ] try-except
 -   [x] doc comment
--   [x] pyc decompile plugin
+-   [x] pyc decompile plugin (unsound)
 -   [ ] pretty console output plugin
