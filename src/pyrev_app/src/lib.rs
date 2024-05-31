@@ -50,7 +50,7 @@ pub mod prelude {
             for (plugin, name) in self.plugins.iter().zip(self.names.iter()) {
                 if let Some((n, matches)) = matches.subcommand() {
                     if n == name {
-                        return plugin.run(&matches);
+                        return plugin.run(matches);
                     }
                 } else {
                     // 调用的不是子命令

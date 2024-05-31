@@ -1037,19 +1037,290 @@ impl ExprParser for Expr {
                         ))?
                         .trim_start_matches("to ")
                         .parse::<usize>()?;
-                    let mut sub_instructions = &opcode_instructions[offset + 1..];
-                    // find <if> block end index in sub_instructions
-                    // and will split sub_instructions at this index
-                    let block_end_first_idx = sub_instructions
+
+                    // judge whether the if-expr have multiple test
+                    // if the jump_target points to the previous opcode is PopJumpIfFalse or similar
+                    // then it may have multiple test
+                    // and then need to use 'or' / 'and' to combine them
+                    // and update the jump target to the end of the block
+                    let jump_target_idx = opcode_instructions
                         .iter()
                         .position(|x| x.offset == jump_target)
                         .ok_or(format!(
-                            "[PopJumpIfFalse] No block end, deviation is {}",
+                            "[PopJumpIfFalse] No jump target {}, deviation is {}",
+                            jump_target, instruction.offset
+                        ))?;
+                    let prev_instruction =
+                        opcode_instructions.get(jump_target_idx - 1).ok_or(format!(
+                            "[PopJumpIfFalse] No prev instruction, deviation is {}",
                             instruction.offset
                         ))?;
+                    let pop_jump = [
+                        Opcode::PopJumpIfFalse,
+                        Opcode::PopJumpIfTrue,
+                        Opcode::PopJumpIfNone,
+                        Opcode::PopJumpIfNotNone,
+                    ];
+                    let (test, block_end_idx) = if pop_jump.contains(&prev_instruction.opcode()) {
+                        // if prev opcode is contained in pop_jump
+                        // it may have multiple test
+                        // and then we need to get all test
+                        //
+                        // position the last test
+                        // iterate from this, get the jump target each PopJump opcode
+                        // and set the iterate end when the jump target previous opcode is not PopJump opcode
+                        // that means the last test (position is the offset which is the PopJump opcode, not jump target)
+                        let mut _idx = offset + 1;
+                        let mut last_test_idx = offset;
+                        let mut block_end_idx = jump_target_idx;
+                        let mut exprs_and_jumps = vec![(test.clone(), jump_target, offset)];
+                        while let Some(prev_instruction) = opcode_instructions.get(_idx) {
+                            if _idx >= block_end_idx {
+                                break;
+                            }
 
+                            if pop_jump.contains(&prev_instruction.opcode()) {
+                                let this_test_instructions =
+                                    &opcode_instructions[last_test_idx + 1.._idx];
+
+                                let mut this_test_expr = Self::parse(this_test_instructions)?.bodys;
+                                assert!(this_test_expr.len() == 1);
+                                let mut this_test_expr = this_test_expr.pop().unwrap();
+                                let this_jump_target = prev_instruction
+                                    .argval
+                                    .as_ref()
+                                    .ok_or(format!(
+                                        "[PopJumpIfFalse] No argval, deviation is {}",
+                                        instruction.offset
+                                    ))?
+                                    .trim_start_matches("to ")
+                                    .parse::<usize>()?;
+
+                                this_test_expr.set_offset(
+                                    opcode_instructions[exprs_and_jumps.last().unwrap().2 + 1]
+                                        .offset,
+                                    opcode_instructions[_idx].offset,
+                                );
+                                exprs_and_jumps.push((this_test_expr, this_jump_target, _idx));
+
+                                last_test_idx = _idx;
+                                block_end_idx = opcode_instructions
+                                    .iter()
+                                    .position(|x| x.offset == this_jump_target)
+                                    .ok_or(format!(
+                                        "[PopJumpIfFalse] No jump target, deviation is {}",
+                                        instruction.offset
+                                    ))?;
+                            }
+
+                            _idx += 1;
+                        }
+
+                        // dbg!(&exprs_and_jumps);
+
+                        let block_start_idx = exprs_and_jumps.last().unwrap().2 + 1;
+                        // println!("block_start_idx: {}, block_end_idx: {}", block_start_idx, block_end_idx);
+                        #[cfg(debug_assertions)]
+                        {
+                            assert!(
+                                block_start_idx <= block_end_idx,
+                                "block_start_idx: {}, offset: {}",
+                                block_start_idx,
+                                offset
+                            );
+                        }
+
+                        offset = block_start_idx - 1;
+                        // combine all test
+                        let combined_test = exprs_and_jumps.first().unwrap().0.clone();
+
+                        pub fn combine(
+                            combined_test: ExpressionEnum,
+                            opcode_instructions: &[OpcodeInstruction],
+                            exprs_and_jumps: &[(ExpressionEnum, usize, usize)],
+                            arr_start_idx: usize,
+                            arr_end_idx: usize,
+                            block_start_idx: usize,
+                            block_end_idx: usize,
+                        ) -> ExpressionEnum {
+                            // this idx is the index of the exprs_and_jumps (not the opcode_instructions)
+                            let this_idx = arr_start_idx;
+                            let this_jump_target = exprs_and_jumps[this_idx].1;
+                            // this _idx is the index of the exprs_and_jumps (not the opcode_instructions)
+                            if let Some(_idx) = exprs_and_jumps
+                                .iter()
+                                .position(|x| x.0.get_offset().0 == this_jump_target)
+                            {
+                                // if find the jump target in the exprs_and_jumps
+
+                                // cannot jump to the next test
+                                // due to the next test may be run after this test
+                                // it's unnecessary to jump
+                                assert_ne!(
+                                    this_idx + 1,
+                                    _idx,
+                                    "[PopJumpIfFalse] The next test is the jump target, which is not expected"
+                                );
+
+                                if this_idx + 2 == _idx {
+                                    // if skip one test, then use 'and' to combine this test and the skip test
+                                    // and use 'or' to combine the result with the next by the next test
+                                    let next_test = exprs_and_jumps[this_idx + 1].0.clone();
+                                    let combined_and_test =
+                                        ExpressionEnum::BinaryOperation(BinaryOperation {
+                                            left: Box::new(combined_test),
+                                            right: Box::new(next_test),
+                                            operator: "and".to_string(),
+                                            start_offset: opcode_instructions[block_start_idx]
+                                                .offset,
+                                            end_offset: opcode_instructions[_idx].offset,
+                                            ..Default::default()
+                                        });
+
+                                    // the next test of the next test
+                                    let next_test = exprs_and_jumps[_idx].0.clone();
+                                    ExpressionEnum::BinaryOperation(BinaryOperation {
+                                        left: Box::new(combined_and_test),
+                                        right: Box::new(next_test),
+                                        operator: "or".to_string(),
+                                        start_offset: opcode_instructions[block_start_idx].offset,
+                                        end_offset: opcode_instructions[_idx].offset,
+                                        ..Default::default()
+                                    })
+                                } else {
+                                    // if skip more than one test
+                                    // it means the previous test is 'and' with all of tests between this and the test pointed by _idx
+                                    // and use 'or' to combine the result with the later test
+                                    let first_and_test = combine(
+                                        combined_test.clone(),
+                                        opcode_instructions,
+                                        exprs_and_jumps,
+                                        this_idx,
+                                        _idx - 1,
+                                        block_start_idx,
+                                        block_end_idx,
+                                    );
+
+                                    ExpressionEnum::BinaryOperation(BinaryOperation {
+                                        left: Box::new(first_and_test),
+                                        right: Box::new(combined_test),
+                                        operator: "and".to_string(),
+                                        start_offset: opcode_instructions[block_start_idx].offset,
+                                        end_offset: opcode_instructions[_idx].offset,
+                                        ..Default::default()
+                                    })
+                                }
+                            } else if this_jump_target
+                                == opcode_instructions[block_start_idx].offset
+                            {
+                                // if the jump target is the start of the block
+                                // it means this test is the first test in the current exprs_and_jumps
+                                // and is 'or' with all of later tests
+                                let this_test = exprs_and_jumps[this_idx].0.clone();
+
+                                let later_test_combined = combine(
+                                    this_test.clone(),
+                                    opcode_instructions,
+                                    exprs_and_jumps,
+                                    this_idx + 1,
+                                    arr_end_idx,
+                                    block_start_idx,
+                                    block_end_idx,
+                                );
+
+                                ExpressionEnum::BinaryOperation(BinaryOperation {
+                                    left: Box::new(this_test.clone()),
+                                    right: Box::new(later_test_combined),
+                                    operator: "or".to_string(),
+                                    start_offset: opcode_instructions[block_start_idx].offset,
+                                    end_offset: opcode_instructions[block_end_idx].offset,
+                                    ..Default::default()
+                                })
+                            } else {
+                                // jump to the end of the block
+                                // it means this test is `and` with all of later tests
+                                let this_test = exprs_and_jumps[this_idx].0.clone();
+
+                                if this_idx + 1 == arr_end_idx {
+                                    let next_test = exprs_and_jumps[this_idx + 1].0.clone();
+                                    ExpressionEnum::BinaryOperation(BinaryOperation {
+                                        left: Box::new(this_test.clone()),
+                                        right: Box::new(next_test),
+                                        operator: "and".to_string(),
+                                        start_offset: opcode_instructions[block_start_idx].offset,
+                                        end_offset: opcode_instructions[block_end_idx].offset,
+                                        ..Default::default()
+                                    })
+                                } else {
+                                    let later_test_combined = combine(
+                                        this_test.clone(),
+                                        opcode_instructions,
+                                        exprs_and_jumps,
+                                        this_idx + 1,
+                                        arr_end_idx,
+                                        block_start_idx,
+                                        block_end_idx,
+                                    );
+
+                                    ExpressionEnum::BinaryOperation(BinaryOperation {
+                                        left: Box::new(this_test),
+                                        right: Box::new(later_test_combined),
+                                        operator: "and".to_string(),
+                                        start_offset: opcode_instructions[block_start_idx].offset,
+                                        end_offset: opcode_instructions[block_end_idx].offset,
+                                        ..Default::default()
+                                    })
+                                }
+                            }
+                        }
+
+                        (
+                            combine(
+                                combined_test,
+                                opcode_instructions,
+                                &exprs_and_jumps,
+                                0,
+                                exprs_and_jumps.len() - 1,
+                                block_start_idx,
+                                block_end_idx,
+                            ),
+                            Some(block_end_idx),
+                        )
+                    } else {
+                        // if the jump target previous opcode is not PopJump opcode
+                        // then it's a single test
+                        (test, None)
+                    };
+
+                    let mut sub_instructions = &opcode_instructions[offset + 1..];
+
+                    let block_end_first_idx = if let Some(block_end_idx) = block_end_idx {
+                        block_end_idx - offset - 1
+                    } else {
+                        // find <if> block end index in sub_instructions
+                        // and will split sub_instructions at this index
+                        let block_end_first_idx = sub_instructions
+                            .iter()
+                            .position(|x| x.offset == jump_target);
+
+                        if let Some(block_end_first_idx) = block_end_first_idx {
+                            block_end_first_idx
+                        } else {
+                            // if none, then it may be a nested if-expr
+                            // sub-if mustn't jump further than parent-if
+                            // so if the sub-if jump target is greater than parent-if jump target
+                            // then we can use 'or' / 'and' to combine them
+                            // and the jump target is the end of the parent-if block
+                            //
+                            // In now version, we will change the sub-if jump target to parent-if jump target
+                            // In other words, the block_end_first_idx default is the end of the parent-if block
+                            sub_instructions.len().checked_sub(1).unwrap_or_default()
+                        }
+                    };
+
+                    // split the sub_instructions at block_end_first_idx
                     sub_instructions = &sub_instructions[..block_end_first_idx];
-
+                    // dbg!(&sub_instructions);
                     let sub_expr = Self::parse(sub_instructions)?;
                     // if-expr of this branch
                     let mut if_expr = If {
@@ -1061,17 +1332,44 @@ impl ExprParser for Expr {
                         ..Default::default()
                     };
 
-                    offset = offset + block_end_first_idx;
+                    offset += block_end_first_idx;
+
+                    /* dbg!(offset, opcode_instructions[offset].offset);
+                    dbg!(&if_expr.body); */
 
                     // get jump target
-                    let else_block_end = if let ExpressionEnum::Jump(this_block_jumps) =
+                    // it is the next one of the last instruction of the block
+                    let else_block_end_later = if let ExpressionEnum::Jump(this_block_jumps) =
                         if_expr.body.last().ok_or(format!(
                             "[PopJumpIfFalse] No last expr, deviation is {}",
                             instruction.offset
                         ))? {
                         this_block_jumps.target
+                    } else if let ExpressionEnum::Return(_) = if_expr.body.last().unwrap() {
+                        // if the last instruction is Return
+                        // find the next jump or return as else block end
+                        let else_block_end_later_idx = opcode_instructions
+                            .iter()
+                            .skip(offset + 1)
+                            .position(|x| {
+                                x.opcode() == Opcode::JumpForward
+                                    || x.opcode() == Opcode::ReturnValue
+                            })
+                            .map(|x| x + offset + 1);
+                        if let Some(else_block_end_later_idx) = else_block_end_later_idx {
+                            opcode_instructions[else_block_end_later_idx].offset
+                        } else {
+                            // if not have jump target and Return in the block last
+                            // it may only one branch (no elif/else)
+                            // then the jump target is the end of this block
+                            // build this block and continue
+                            exprs_stack.push(ExpressionEnum::If(if_expr));
+
+                            offset += 1;
+                            continue;
+                        }
                     } else {
-                        // if not have jump target in the block last
+                        // if not have jump target and Return in the block last
                         // it may only one branch (no elif/else)
                         // then the jump target is the end of this block
                         // build this block and continue
@@ -1085,7 +1383,7 @@ impl ExprParser for Expr {
                     // if not, that may be the end of parent if-expr
                     if let Some(else_block_end_idx) = opcode_instructions
                         .iter()
-                        .position(|x| x.offset == else_block_end)
+                        .position(|x| x.offset == else_block_end_later)
                     {
                         let remain_instructions =
                             &opcode_instructions[offset + 1..else_block_end_idx];
@@ -1116,6 +1414,7 @@ impl ExprParser for Expr {
                             if_expr.or_else = Some(Box::new(ExpressionEnum::If(remain_first_expr)));
                         } else {
                             if_expr.or_else = Some(Box::new(ExpressionEnum::If(If {
+                                test: None,
                                 body: remain_first_expr.into_iter().chain(remain_exprs).collect(),
                                 start_line: remain_instructions
                                     .first()
@@ -1128,15 +1427,20 @@ impl ExprParser for Expr {
                             })));
                         }
 
-                        offset = else_block_end_idx;
+                        offset = else_block_end_idx - 1;
                     }
 
                     // if the exprs_stack last expr is If, then it may be an elif/else
                     if let Some(ExpressionEnum::If(parent_if)) = exprs_stack.last_mut() {
-                        if parent_if.or_else.is_none() && parent_if.test.is_some() {
+                        if parent_if.or_else.is_none()
+                            && parent_if.test.is_some()
+                            && !parent_if.body.is_empty()
+                            && (parent_if.body.last().unwrap().is_jump()
+                                || parent_if.body.last().unwrap().is_return())
+                        {
                             parent_if.or_else = Some(Box::new(ExpressionEnum::If(if_expr)));
                         } else {
-                            // if the exprs_stack last expr is not If, then it's an if
+                            // if the exprs_stack last expr is not If and body last not jump, then it's an if
                             exprs_stack.push(ExpressionEnum::If(if_expr));
                         }
                     } else {
@@ -1845,6 +2149,18 @@ pub fn get_trace(opcode_instructions: &[OpcodeInstruction]) -> Result<TraceBack>
             Opcode::ReturnGenerator => {
                 // mark this block is async
                 traceback.mark_async();
+            }
+            Opcode::PopJumpIfFalse | Opcode::PopJumpIfTrue => {
+                let jump_target = instruction
+                    .argval
+                    .as_ref()
+                    .ok_or(format!(
+                        "[Trace] No argval, deviation is {}",
+                        instruction.offset
+                    ))?
+                    .trim_start_matches("to ")
+                    .parse::<usize>()?;
+                traceback.insert_jump(instruction.offset, jump_target);
             }
             _ => {}
         }

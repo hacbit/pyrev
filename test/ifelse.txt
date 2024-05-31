@@ -6,12 +6,12 @@
   2           6 LOAD_NAME                0 (a)
               8 LOAD_CONST               1 (100)
              10 COMPARE_OP               0 (<)
-             16 POP_JUMP_FORWARD_IF_FALSE    83 (to 184)
+             16 POP_JUMP_FORWARD_IF_FALSE    81 (to 180)
 
   3          18 LOAD_NAME                0 (a)
              20 LOAD_CONST               2 (10)
              22 COMPARE_OP               5 (>=)
-             28 POP_JUMP_FORWARD_IF_TRUE    12 (to 54)
+             28 POP_JUMP_FORWARD_IF_TRUE    13 (to 56)
 
   4          30 PUSH_NULL
              32 LOAD_NAME                1 (print)
@@ -19,78 +19,52 @@
              36 PRECALL                  1
              40 CALL                     1
              50 POP_TOP
-             52 JUMP_FORWARD            94 (to 242)
+             52 LOAD_CONST               9 (None)
+             54 RETURN_VALUE
 
-  5     >>   54 LOAD_NAME                0 (a)
-             56 LOAD_CONST               2 (10)
-             58 COMPARE_OP               2 (==)
-             64 POP_JUMP_FORWARD_IF_FALSE    12 (to 90)
+  5     >>   56 LOAD_NAME                0 (a)
+             58 LOAD_CONST               2 (10)
+             60 COMPARE_OP               2 (==)
+             66 POP_JUMP_FORWARD_IF_FALSE    13 (to 94)
 
-  6          66 PUSH_NULL
-             68 LOAD_NAME                1 (print)
-             70 LOAD_CONST               4 ('a == 10')
-             72 PRECALL                  1
-             76 CALL                     1
-             86 POP_TOP
-             88 JUMP_FORWARD            76 (to 242)
+  6          68 PUSH_NULL
+             70 LOAD_NAME                1 (print)
+             72 LOAD_CONST               4 ('a == 10')
+             74 PRECALL                  1
+             78 CALL                     1
+             88 POP_TOP
+             90 LOAD_CONST               9 (None)
+             92 RETURN_VALUE
 
-  7     >>   90 LOAD_NAME                0 (a)
-             92 LOAD_CONST               5 (50)
-             94 COMPARE_OP               0 (<)
-            100 POP_JUMP_FORWARD_IF_FALSE    18 (to 138)
-            102 LOAD_NAME                0 (a)
-            104 LOAD_CONST               6 (20)
-            106 COMPARE_OP               4 (>)
-            112 POP_JUMP_FORWARD_IF_FALSE    12 (to 138)
+  7     >>   94 LOAD_NAME                0 (a)
+             96 LOAD_CONST               5 (50)
+             98 COMPARE_OP               0 (<)
+            104 POP_JUMP_FORWARD_IF_FALSE    13 (to 132)
 
-  8         114 PUSH_NULL
-            116 LOAD_NAME                1 (print)
-            118 LOAD_CONST               7 ('20 < a < 50')
-            120 PRECALL                  1
-            124 CALL                     1
-            134 POP_TOP
-            136 JUMP_FORWARD            52 (to 242)
+  8         106 PUSH_NULL
+            108 LOAD_NAME                1 (print)
+            110 LOAD_CONST               6 ('20 < a < 50')
+            112 PRECALL                  1
+            116 CALL                     1
+            126 POP_TOP
+            128 LOAD_CONST               9 (None)
+            130 RETURN_VALUE
 
- 10     >>  138 PUSH_NULL
-            140 LOAD_NAME                1 (print)
-            142 LOAD_CONST               8 ('10 < a <= 20')
-            144 PRECALL                  1
-            148 CALL                     1
-            158 POP_TOP
+ 10     >>  132 PUSH_NULL
+            134 LOAD_NAME                1 (print)
+            136 LOAD_CONST               7 ('10 < a <= 20')
+            138 PRECALL                  1
+            142 CALL                     1
+            152 POP_TOP
 
- 11         160 PUSH_NULL
-            162 LOAD_NAME                1 (print)
-            164 LOAD_CONST               9 ('or a >= 50')
-            166 PRECALL                  1
-            170 CALL                     1
-            180 POP_TOP
-            182 JUMP_FORWARD            29 (to 242)
+ 11         154 PUSH_NULL
+            156 LOAD_NAME                1 (print)
+            158 LOAD_CONST               8 ('or a >= 50')
+            160 PRECALL                  1
+            164 CALL                     1
+            174 POP_TOP
+            176 LOAD_CONST               9 (None)
+            178 RETURN_VALUE
 
- 12     >>  184 LOAD_NAME                0 (a)
-            186 LOAD_CONST               1 (100)
-            188 COMPARE_OP               2 (==)
-            194 POP_JUMP_FORWARD_IF_FALSE    12 (to 220)
-
- 13         196 PUSH_NULL
-            198 LOAD_NAME                1 (print)
-            200 LOAD_CONST              10 ('a == 100')
-            202 PRECALL                  1
-            206 CALL                     1
-            216 POP_TOP
-            218 JUMP_FORWARD            11 (to 242)
-
- 15     >>  220 PUSH_NULL
-            222 LOAD_NAME                1 (print)
-            224 LOAD_CONST              11 ('a > 100')
-            226 PRECALL                  1
-            230 CALL                     1
-            240 POP_TOP
-
- 16     >>  242 PUSH_NULL
-            244 LOAD_NAME                1 (print)
-            246 LOAD_NAME                0 (a)
-            248 PRECALL                  1
-            252 CALL                     1
-            262 POP_TOP
-            264 LOAD_CONST              12 (None)
-            266 RETURN_VALUE
+  2     >>  180 LOAD_CONST               9 (None)
+            182 RETURN_VALUE

@@ -192,6 +192,26 @@ impl TraceBack {
         &mut self.locals
     }
 
+    pub fn insert_jump(&mut self, start: usize, jump_target: usize) {
+        self.jumps.insert(start, jump_target);
+    }
+
+    pub fn get_jump(&self, start: &usize) -> Option<&usize> {
+        self.jumps.get(start)
+    }
+
+    pub fn get_mut_jump(&mut self, start: &usize) -> Option<&mut usize> {
+        self.jumps.get_mut(start)
+    }
+
+    pub fn get_jumps(&self) -> &OrderMap<usize, usize> {
+        &self.jumps
+    }
+
+    pub fn get_mut_jumps(&mut self) -> &mut OrderMap<usize, usize> {
+        &mut self.jumps
+    }
+
     pub fn extend(&mut self, tb: Self) {
         self.locals.extend(tb.locals);
         self.jumps.extend(tb.jumps);
