@@ -3,11 +3,6 @@
 A Python bytecode reversing tool built in pure Rust
 
 
-## Effect Picture
-
-<img src="README/image-20240529195825965.png" alt="image-20240529195825965" style="zoom: 50%;" />
-
-<img src="README/image-20240529195951378.png" alt="image-20240529195951378" style="zoom: 50%;" />
 
 ## Build
 
