@@ -4,6 +4,16 @@ A Python bytecode reversing tool built in pure Rust
 
 
 
+**!!! Rust nightly is recommended**
+
+**use this command to switch to the `nightly` (it may not compile, if it is `stable`)**
+
+```powershell
+rustup default nightly
+```
+
+
+
 ## Build
 
 ```shell
