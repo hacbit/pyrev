@@ -1343,7 +1343,9 @@ impl ExprParser for Expr {
                         if_expr.body.last().ok_or(format!(
                             "[PopJumpIfFalse] No last expr, deviation is {}",
                             instruction.offset
-                        ))? {
+                        ))?
+                        && !this_block_jumps.is_backward
+                    {
                         this_block_jumps.target
                     } else if let ExpressionEnum::Return(_) = if_expr.body.last().unwrap() {
                         // if the last instruction is Return
@@ -1460,7 +1462,25 @@ impl ExprParser for Expr {
                         .parse::<usize>()?;
                     exprs_stack.push(ExpressionEnum::Jump(Jump {
                         target: jump_target,
-                        body: vec![],
+                        start_line: instruction.starts_line.unwrap_or_default(),
+                        start_offset: instruction.offset,
+                        end_offset: instruction.offset,
+                        ..Default::default()
+                    }));
+                }
+                Opcode::JumpBackward => {
+                    let jump_target = instruction
+                        .argval
+                        .as_ref()
+                        .ok_or(format!(
+                            "[JumpBackward] No argval, deviation is {}",
+                            instruction.offset
+                        ))?
+                        .trim_start_matches("to ")
+                        .parse::<usize>()?;
+                    exprs_stack.push(ExpressionEnum::Jump(Jump {
+                        target: jump_target,
+                        is_backward: true,
                         start_line: instruction.starts_line.unwrap_or_default(),
                         start_offset: instruction.offset,
                         end_offset: instruction.offset,

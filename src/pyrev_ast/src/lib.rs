@@ -246,7 +246,7 @@ pub struct If {
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
 pub struct Jump {
     pub target: usize,
-    pub body: Vec<ExpressionEnum>,
+    pub is_backward: bool,
     pub start_line: usize,
     pub start_offset: usize,
     pub end_offset: usize,
@@ -954,9 +954,15 @@ impl ExpressionEnum {
                 }
 
                 for expr in if_else.body.iter() {
-                    let expr_code = expr.build()?;
-                    for line in expr_code.iter() {
-                        code.push(format!("    {}", line));
+                    if let ExpressionEnum::Jump(jump) = expr {
+                        if jump.is_backward {
+                            code.push("    continue".to_string());
+                        }
+                    } else {
+                        let expr_code = expr.build()?;
+                        for line in expr_code.iter() {
+                            code.push(format!("    {}", line));
+                        }
                     }
                 }
 

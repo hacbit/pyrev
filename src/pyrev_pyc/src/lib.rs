@@ -1,14 +1,5 @@
 //! Pyrev plugin for pyc parser
 
-/// object
-/// This file is to define the PyObject
-mod object;
-
-/// marshal
-/// This file is rewritten from the marshal module in Python
-/// It only supports the marshal.load function
-mod marshal;
-
 /// opcode
 /// This file implements parsing the opcode(u16/u8) to the opcode name (defined in pyrev_core::opcode)
 /// and the map table is according different python version
@@ -62,11 +53,9 @@ mod marshal;
 /// export some Python Object definition in object.rs
 /// you can use enum variant in PyObject no long need to use PyObject::xxx
 pub mod prelude {
-    use std::path::PathBuf;
-
-    pub use crate::marshal::loads;
-    pub use crate::object::{Code, PyLong, PyObject::*};
     pub use pyrev_app::prelude::*;
+    use pyrev_marshal::loads;
+    use std::path::PathBuf;
 
     pub struct PycPlugin;
 

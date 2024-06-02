@@ -1,4 +1,4 @@
-# Pyrev v1.0.13
+# Pyrev v1.1.0-alpha
 
 A Python bytecode reversing tool built in pure Rust
 

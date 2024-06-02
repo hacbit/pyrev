@@ -20,6 +20,68 @@ pub enum PyObject {
     Code(Box<Code>),
 }
 
+impl PyObject {
+    pub fn is_null(&self) -> bool {
+        matches!(self, PyObject::Null)
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &PyObject> {
+        match self {
+            PyObject::Tuple(v) | PyObject::List(v) | PyObject::Set(v) => v.iter(),
+            _ => panic!("iter() called on non-iterable object"),
+        }
+    }
+
+    pub fn into_iter(self) -> impl Iterator<Item = PyObject> {
+        match self {
+            PyObject::Tuple(v) | PyObject::List(v) | PyObject::Set(v) => v.into_iter(),
+            _ => panic!("into_iter() called on non-iterable object"),
+        }
+    }
+
+    pub fn iter_keys(&self) -> impl Iterator<Item = &PyObject> {
+        match self {
+            PyObject::Dict(v) => v.iter().map(|(k, _)| k),
+            _ => panic!("keys() called on non-dict object"),
+        }
+    }
+
+    pub fn into_iter_keys(self) -> impl Iterator<Item = PyObject> {
+        match self {
+            PyObject::Dict(v) => v.into_iter().map(|(k, _)| k),
+            _ => panic!("keys() called on non-dict object"),
+        }
+    }
+
+    pub fn iter_values(&self) -> impl Iterator<Item = &PyObject> {
+        match self {
+            PyObject::Dict(v) => v.iter().map(|(_, v)| v),
+            _ => panic!("values() called on non-dict object"),
+        }
+    }
+
+    pub fn into_iter_values(self) -> impl Iterator<Item = PyObject> {
+        match self {
+            PyObject::Dict(v) => v.into_iter().map(|(_, v)| v),
+            _ => panic!("values() called on non-dict object"),
+        }
+    }
+
+    pub fn iter_items(&self) -> impl Iterator<Item = (&PyObject, &PyObject)> {
+        match self {
+            PyObject::Dict(v) => v.iter().map(|(k, v)| (k, v)),
+            _ => panic!("items() called on non-dict object"),
+        }
+    }
+
+    pub fn into_iter_items(self) -> impl Iterator<Item = (PyObject, PyObject)> {
+        match self {
+            PyObject::Dict(v) => v.into_iter(),
+            _ => panic!("items() called on non-dict object"),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Hash)]
 pub struct PyLong {
     pub sign: bool,

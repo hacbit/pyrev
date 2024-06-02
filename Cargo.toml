@@ -1,28 +1,28 @@
 workspace = { members = [ 
     "src/pyrev_ast", 
-    "src/pyrev_ast_derive" , 
+    "src/pyrev_ast_derive", 
     "src/pyrev_core", 
     "src/pyrev_app", 
+    "src/pyrev_marshal",
+    "src/pyrev_object",
     "src/pyrev_pyc",
     "src/pyrev_pyc_macro",
+    "src/pyrev_pyinstaller",
 ] }
 
 [package]
 name = "pyrev"
 authors = ["hacbit <hacbit@foxmail.com>"]
-version = "1.0.13"
+version = "1.1.0"
 edition = "2021"
 description = "A Python bytecode reverse engineering tool."
 build = "build.rs"
 license = "MIT"
 
 [dependencies]
-
-[dependencies.pyrev_app]
-path = "src/pyrev_app"
-
-[dependencies.pyrev_pyc]
-path = "src/pyrev_pyc"
+pyrev_app = { path = "src/pyrev_app" }
+pyrev_pyc = { path = "src/pyrev_pyc" }
+pyrev_pyinstaller = { path = "src/pyrev_pyinstaller" }
 
 [profile.dev]
 # Uncomment the following lines to allow clippy to break your build.

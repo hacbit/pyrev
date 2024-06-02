@@ -4,67 +4,43 @@
               4 STORE_NAME               0 (a)
 
   2           6 LOAD_NAME                0 (a)
-              8 LOAD_CONST               1 (100)
-             10 COMPARE_OP               0 (<)
-             16 POP_JUMP_FORWARD_IF_FALSE    81 (to 180)
+              8 LOAD_CONST               1 (10)
+             10 COMPARE_OP               4 (>)
+             16 POP_JUMP_FORWARD_IF_FALSE    12 (to 42)
 
-  3          18 LOAD_NAME                0 (a)
-             20 LOAD_CONST               2 (10)
-             22 COMPARE_OP               5 (>=)
-             28 POP_JUMP_FORWARD_IF_TRUE    13 (to 56)
+  3          18 PUSH_NULL
+             20 LOAD_NAME                1 (print)
+             22 LOAD_CONST               2 ('aaaa')
+             24 PRECALL                  1
+             28 CALL                     1
+             38 POP_TOP
+             40 JUMP_FORWARD            29 (to 100)
 
-  4          30 PUSH_NULL
-             32 LOAD_NAME                1 (print)
-             34 LOAD_CONST               3 ('a < 10')
-             36 PRECALL                  1
-             40 CALL                     1
-             50 POP_TOP
-             52 LOAD_CONST               9 (None)
-             54 RETURN_VALUE
+  4     >>   42 LOAD_NAME                0 (a)
+             44 LOAD_CONST               1 (10)
+             46 COMPARE_OP               0 (<)
+             52 POP_JUMP_FORWARD_IF_FALSE    12 (to 78)
 
-  5     >>   56 LOAD_NAME                0 (a)
-             58 LOAD_CONST               2 (10)
-             60 COMPARE_OP               2 (==)
-             66 POP_JUMP_FORWARD_IF_FALSE    13 (to 94)
+  5          54 PUSH_NULL
+             56 LOAD_NAME                1 (print)
+             58 LOAD_CONST               3 ('bbbb')
+             60 PRECALL                  1
+             64 CALL                     1
+             74 POP_TOP
+             76 JUMP_FORWARD            11 (to 100)
 
-  6          68 PUSH_NULL
-             70 LOAD_NAME                1 (print)
-             72 LOAD_CONST               4 ('a == 10')
-             74 PRECALL                  1
-             78 CALL                     1
-             88 POP_TOP
-             90 LOAD_CONST               9 (None)
-             92 RETURN_VALUE
+  7     >>   78 PUSH_NULL
+             80 LOAD_NAME                1 (print)
+             82 LOAD_CONST               4 ('cccc')
+             84 PRECALL                  1
+             88 CALL                     1
+             98 POP_TOP
 
-  7     >>   94 LOAD_NAME                0 (a)
-             96 LOAD_CONST               5 (50)
-             98 COMPARE_OP               0 (<)
-            104 POP_JUMP_FORWARD_IF_FALSE    13 (to 132)
-
-  8         106 PUSH_NULL
-            108 LOAD_NAME                1 (print)
-            110 LOAD_CONST               6 ('20 < a < 50')
-            112 PRECALL                  1
-            116 CALL                     1
-            126 POP_TOP
-            128 LOAD_CONST               9 (None)
-            130 RETURN_VALUE
-
- 10     >>  132 PUSH_NULL
-            134 LOAD_NAME                1 (print)
-            136 LOAD_CONST               7 ('10 < a <= 20')
-            138 PRECALL                  1
-            142 CALL                     1
-            152 POP_TOP
-
- 11         154 PUSH_NULL
-            156 LOAD_NAME                1 (print)
-            158 LOAD_CONST               8 ('or a >= 50')
-            160 PRECALL                  1
-            164 CALL                     1
-            174 POP_TOP
-            176 LOAD_CONST               9 (None)
-            178 RETURN_VALUE
-
-  2     >>  180 LOAD_CONST               9 (None)
-            182 RETURN_VALUE
+  8     >>  100 PUSH_NULL
+            102 LOAD_NAME                1 (print)
+            104 LOAD_CONST               5 ('dddd')
+            106 PRECALL                  1
+            110 CALL                     1
+            120 POP_TOP
+            122 LOAD_CONST               6 (None)
+            124 RETURN_VALUE

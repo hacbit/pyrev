@@ -11,7 +11,7 @@
              16 PRECALL                  1
              20 CALL                     1
              30 GET_ITER
-        >>   32 FOR_ITER                22 (to 78)
+        >>   32 FOR_ITER                40 (to 114)
              34 UNPACK_SEQUENCE          2
              38 STORE_NAME               2 (i)
              40 STORE_NAME               3 (v)
@@ -21,27 +21,44 @@
              46 BINARY_OP                0 (+)
              50 STORE_NAME               4 (line)
 
-  4          52 PUSH_NULL
-             54 LOAD_NAME                5 (print)
-             56 LOAD_NAME                4 (line)
-             58 LOAD_NAME                3 (v)
-             60 PRECALL                  2
-             64 CALL                     2
-             74 POP_TOP
-             76 JUMP_BACKWARD           23 (to 32)
+  4          52 LOAD_NAME                4 (line)
+             54 LOAD_CONST               2 (2)
+             56 BINARY_OP                6 (%)
+             60 LOAD_CONST               3 (0)
+             62 COMPARE_OP               2 (==)
+             68 POP_JUMP_FORWARD_IF_FALSE     1 (to 72)
 
-  6     >>   78 PUSH_NULL
-             80 LOAD_NAME                5 (print)
-             82 LOAD_CONST               2 ('end')
-             84 PRECALL                  1
-             88 CALL                     1
-             98 POP_TOP
+  5          70 JUMP_BACKWARD           20 (to 32)
 
-  7         100 PUSH_NULL
-            102 LOAD_NAME                5 (print)
-            104 LOAD_CONST               3 ('Test')
-            106 PRECALL                  1
-            110 CALL                     1
-            120 POP_TOP
-            122 LOAD_CONST               4 (None)
-            124 RETURN_VALUE
+  6     >>   72 LOAD_NAME                4 (line)
+             74 LOAD_CONST               4 (3)
+             76 COMPARE_OP               2 (==)
+             82 POP_JUMP_FORWARD_IF_FALSE     2 (to 88)
+
+  7          84 POP_TOP
+             86 JUMP_FORWARD            13 (to 114)
+
+  8     >>   88 PUSH_NULL
+             90 LOAD_NAME                5 (print)
+             92 LOAD_NAME                4 (line)
+             94 LOAD_NAME                3 (v)
+             96 PRECALL                  2
+            100 CALL                     2
+            110 POP_TOP
+            112 JUMP_BACKWARD           41 (to 32)
+
+ 10     >>  114 PUSH_NULL
+            116 LOAD_NAME                5 (print)
+            118 LOAD_CONST               5 ('end')
+            120 PRECALL                  1
+            124 CALL                     1
+            134 POP_TOP
+
+ 11         136 PUSH_NULL
+            138 LOAD_NAME                5 (print)
+            140 LOAD_CONST               6 ('Test')
+            142 PRECALL                  1
+            146 CALL                     1
+            156 POP_TOP
+            158 LOAD_CONST               7 (None)
+            160 RETURN_VALUE

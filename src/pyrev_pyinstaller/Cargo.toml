@@ -1,11 +1,13 @@
 [package]
-name = "pyrev_pyc"
+name = "pyrev_pyinstaller"
 version = "1.1.0"
 edition = "2021"
 
 [dependencies]
+byteorder = "1.5.0"
+flate2 = "1.0.30"
 pyrev_core = { path = "../pyrev_core" }
 pyrev_app = { path = "../pyrev_app" }
-pyrev_pyc_macro = { path = "../pyrev_pyc_macro" }
 pyrev_object = { path = "../pyrev_object" }
 pyrev_marshal = { path = "../pyrev_marshal" }
+uuid = { version = "1.8.0", features = ["v4"] }
