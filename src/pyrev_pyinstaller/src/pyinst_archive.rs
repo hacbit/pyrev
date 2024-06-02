@@ -68,9 +68,6 @@ impl PyInstArchive {
     }
 
     pub fn close(&mut self) -> Result<()> {
-        if let Some(file) = self.file_ptr.as_ref() {
-            file.sync_all()?;
-        }
         self.file_ptr = None;
         Ok(())
     }
@@ -211,6 +208,8 @@ impl PyInstArchive {
             std::fs::create_dir(&extraction_dir)?;
         }
 
+        std::env::set_current_dir(&extraction_dir)?;
+
         if let Some(file) = self.file_ptr.as_mut() {
             for entry in &self.toc {
                 let base_path = if let Some(path) = Path::new(&entry.name).parent() {
@@ -220,7 +219,7 @@ impl PyInstArchive {
                     continue;
                 };
 
-                if !base_path.exists() {
+                if !base_path.as_os_str().is_empty() && !base_path.exists() {
                     std::fs::create_dir_all(base_path)?;
                 }
 
@@ -241,9 +240,7 @@ impl PyInstArchive {
                     );
                 }
 
-                let mut file_path = extraction_dir.clone();
-                file_path.push(&entry.name);
-                File::create(&file_path)?.write_all(&data)?;
+                File::create(&entry.name)?.write_all(&data)?;
 
                 if entry.compress_type == b's' {
                     info!("Possible entry point: {}", entry.name);
@@ -263,8 +260,6 @@ pub fn extract_pyz(pyz_name: &str, python_version: u32) -> Result<()> {
         std::fs::create_dir(&dir_name)?;
     }
 
-    std::env::set_current_dir(&dir_name)?;
-
     let mut pyz_file = File::open(&pyz_name)?;
     let mut pyz_magic = [0u8; 4];
     pyz_file.read_exact(&mut pyz_magic)?;
@@ -272,9 +267,6 @@ pub fn extract_pyz(pyz_name: &str, python_version: u32) -> Result<()> {
 
     let mut pyc_header = [0u8; 4];
     pyz_file.read_exact(&mut pyc_header)?;
-
-    // compare the header with the magic number
-    // todo
 
     let toc_pos = pyz_file.read_u32::<BigEndian>()?;
     pyz_file.seek(SeekFrom::Start(toc_pos as u64))?;
@@ -308,6 +300,8 @@ pub fn extract_pyz(pyz_name: &str, python_version: u32) -> Result<()> {
         matches!(pyobject, PyObject::Dict(_)),
         "Invalid TOC, expected a dict"
     );
+
+    info!("Found {} files in PYZ archive", pyobject.len());
 
     for (key, value) in pyobject.into_iter_items() {
         let (_ispkg, pos, length) = if let PyObject::Tuple(pytuple) = value {
@@ -355,7 +349,13 @@ pub fn extract_pyz(pyz_name: &str, python_version: u32) -> Result<()> {
         };
 
         let dest_name = dir_name.join(file_name.replace("..", "__"));
-        let dest_dir_name = dest_name.parent().unwrap();
+        let dest_dir_name = if let Some(dir) = dest_name.parent() {
+            dir
+        } else {
+            error!("Invalid path: {}", file_name);
+            continue;
+        };
+
         if !dest_dir_name.exists() {
             std::fs::create_dir_all(dest_dir_name)?;
         }
@@ -367,7 +367,7 @@ pub fn extract_pyz(pyz_name: &str, python_version: u32) -> Result<()> {
         let mut decoded_data = Vec::new();
         decoder.read_to_end(&mut decoded_data)?;
 
-        let mut pyc_file = File::create(dest_name.join(".pyc"))?;
+        let mut pyc_file = File::create(format!("{}.pyc", dest_name.display()))?;
         pyc_file.write(&pyc_header)?;
         pyc_file.write(b"\0\0\0\0")?;
         if python_version >= 33 {

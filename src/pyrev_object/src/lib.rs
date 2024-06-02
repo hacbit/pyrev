@@ -80,6 +80,14 @@ impl PyObject {
             _ => panic!("items() called on non-dict object"),
         }
     }
+
+    pub fn len(&self) -> usize {
+        match self {
+            PyObject::Tuple(v) | PyObject::List(v) | PyObject::Set(v) => v.len(),
+            PyObject::Dict(v) => v.len(),
+            _ => panic!("len() called on non-iterable object"),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Hash)]
