@@ -4,6 +4,14 @@ A Python bytecode reversing tool built in pure Rust
 
 
 
+## Update
+
+**2024/6/2: Added PyInstallerPlugin which can extract pyinstaller archive**
+
+
+
+
+
 **!!! Rust nightly is recommended**
 
 **use this command to switch to the `nightly` (it may not compile, if it is `stable`)**
@@ -55,9 +63,10 @@ A Python bytecode reverse engineering tool.
 Usage: pyrev.exe [OPTIONS] [name] [COMMAND]
 
 Commands:
-  test  test by your given python code
-  pyc   decompile pyc files
-  help  Print this message or the help of the given subcommand(s)
+  test         test by your given python code
+  pyc          decompile pyc files
+  pyinstaller  extract and analyze PyInstaller archives
+  help         Print this message or the help of the given subcommand(s)
 
 Arguments:
   [name]  Optional name
@@ -199,3 +208,4 @@ You can double-click the index.html in doc/ to open in browser
 -   [x] doc comment
 -   [x] pyc decompile plugin (unsound)
 -   [ ] pretty console output plugin
+-   [x] pyinstaller archive extractor
