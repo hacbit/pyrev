@@ -140,16 +140,9 @@ pub fn derive_unwrap(input: TokenStream) -> TokenStream {
             }
         });
 
-        let variant_names = data_enum.variants.iter().map(|variant| {
-            let variant_name = &variant.ident;
-            quote! {}
-        });
-
         let gen = quote! {
             impl #name {
                 #(#functions)*
-
-
             }
         };
         gen.into()
@@ -195,6 +188,32 @@ pub fn derive_get_offset(input: TokenStream) -> TokenStream {
                     }
                 }
             }
+        };
+        gen.into()
+    } else {
+        panic!("only support enum")
+    }
+}
+
+/// Implement From<T: Expression> for expression enum
+#[proc_macro_derive(FromExpression)]
+pub fn derive_from_expression(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    let name = &input.ident;
+    if let Data::Enum(data_enum) = input.data {
+        let from_variants = data_enum.variants.iter().map(|variant| {
+            let variant_name = &variant.ident;
+            quote! {
+                impl From<#variant_name> for #name {
+                    fn from(inner: #variant_name) -> Self {
+                        #name::#variant_name(inner)
+                    }
+                }
+            }
+        });
+
+        let gen = quote! {
+            #(#from_variants)*
         };
         gen.into()
     } else {

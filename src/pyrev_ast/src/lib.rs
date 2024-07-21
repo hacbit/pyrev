@@ -3,8 +3,6 @@
 mod query;
 mod querymutable;
 
-use std::any::TypeId;
-
 pub use pyrev_ast_derive::*;
 pub use query::*;
 pub use querymutable::*;
@@ -314,9 +312,9 @@ pub struct NoneValue {
 
 /// 为上面的表达式提供一个封装
 /// 用来实现不同Expression的嵌套
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Is, Unwrap, Offset)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Is, Unwrap, Offset, FromExpression)]
 pub enum ExpressionEnum {
-    /// NoneValue is deprecated
+    // NoneValue is deprecated
     // NoneValue(NoneValue),
     Import(Import),
     Class(Class),

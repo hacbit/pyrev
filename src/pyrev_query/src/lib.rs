@@ -2,10 +2,7 @@
 //! And provides the safety query for the expressions.
 
 use pyrev_ast::*;
-use std::{
-    any::{Any, TypeId},
-    collections::HashMap,
-};
+use std::{any::TypeId, collections::HashMap};
 
 /// QueryId is a marker for a query. It can be an integer or a string.
 ///
@@ -16,30 +13,33 @@ pub struct QueryId {
     ///
     /// It is unique in each DataMap.
     /// However, the same ID may exist in different DataMaps
-    id: i32,
+    id: usize,
+    /// A type marker.
+    /// It is used to distinguish the same ID in different DataMaps.
+    marker: TypeId,
 }
 
 impl QueryId {
     /// Create a new QueryId instance.
     #[inline]
-    pub(crate) fn new(id: i32) -> Self {
-        QueryId { id }
+    pub(crate) fn new(id: usize, marker: TypeId) -> Self {
+        QueryId { id, marker }
     }
 }
 
 /// Holds all the datas and their associated query ids.
 pub(crate) struct DataMap<T> {
     map: HashMap<QueryId, T>,
-    id_generator: i32,
+    id_generator: usize,
 }
 
-impl<T> DataMap<T> {
+impl<T: 'static> DataMap<T> {
     /// Create a new Resources instance.
     #[inline]
     pub(crate) fn new() -> Self {
         Self {
             map: HashMap::new(),
-            id_generator: i32::MIN,
+            id_generator: usize::MAX,
         }
     }
 
@@ -47,9 +47,9 @@ impl<T> DataMap<T> {
     /// Returns the query id associated with the data.
     #[inline]
     pub(crate) fn add(&mut self, data: T) -> QueryId {
-        let query_id = QueryId::new(self.id_generator);
+        let query_id = QueryId::new(self.id_generator, TypeId::of::<T>());
         self.map.insert(query_id, data);
-        self.id_generator += 1;
+        self.id_generator -= 1;
         query_id
     }
 
@@ -192,7 +192,7 @@ impl Map {
 
     /// Get the data associated with the query id.
     #[inline]
-    pub fn get_single<T: Expression + Any + 'static>(
+    pub fn get_single<T: Expression + 'static>(
         &self,
         query_id: QueryId,
     ) -> Option<&ExpressionEnum> {
@@ -201,7 +201,7 @@ impl Map {
 
     /// Get the mutable reference to the data associated with the query id.
     #[inline]
-    pub fn get_single_mut<T: Expression + Any + 'static>(
+    pub fn get_single_mut<T: Expression + 'static>(
         &mut self,
         query_id: QueryId,
     ) -> Option<&mut ExpressionEnum> {
@@ -209,7 +209,7 @@ impl Map {
     }
 
     /// Add a new data to the resources.
-    /// 
+    ///
     /// Returns the query id associated with the data.
     #[inline]
     pub fn add<T: Expression + 'static>(&mut self, data: ExpressionEnum) -> Result<QueryId, ()> {
@@ -217,7 +217,7 @@ impl Map {
     }
 
     /// Remove the data associated with the query id.
-    /// 
+    ///
     /// Returns the old data.
     #[inline]
     pub fn remove<T: Expression + 'static>(&mut self, query_id: QueryId) -> Option<ExpressionEnum> {
@@ -225,7 +225,7 @@ impl Map {
     }
 
     /// Replace the data associated with the query id.
-    /// 
+    ///
     /// Returns the old data.
     #[inline]
     pub fn replace<T: Expression + 'static>(
@@ -234,5 +234,35 @@ impl Map {
         data: ExpressionEnum,
     ) -> Option<ExpressionEnum> {
         self.query_map_mut::<T>()?.replace(query_id, data)
+    }
+}
+
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_data_map() {
+        let mut map = Map::new();
+
+        let func = Function {
+            name: "test".to_string(),
+            args: Vec::new(),
+            bodys: Vec::new(),
+            ..Default::default()
+        };
+
+        let query_id = map.add::<Function>(func.into()).unwrap();
+
+        let q_funcs = map.query::<Function>().collect::<Vec<_>>();
+
+        dbg!(&q_funcs);
+
+        let q_func = map.get_single::<Function>(query_id).unwrap();
+
+        dbg!(q_func);
+
+        assert_eq!(q_func, q_funcs[0].1);
     }
 }
