@@ -254,6 +254,7 @@ dependencies = [
  "atty",
  "clap",
  "pyrev_core",
+ "pyrev_query",
 ]
 
 [[package]]
@@ -326,6 +327,13 @@ dependencies = [
  "pyrev_marshal",
  "pyrev_object",
  "uuid",
+]
+
+[[package]]
+name = "pyrev_query"
+version = "0.1.0"
+dependencies = [
+ "pyrev_ast",
 ]
 
 [[package]]

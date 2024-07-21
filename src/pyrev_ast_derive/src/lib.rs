@@ -140,9 +140,16 @@ pub fn derive_unwrap(input: TokenStream) -> TokenStream {
             }
         });
 
+        let variant_names = data_enum.variants.iter().map(|variant| {
+            let variant_name = &variant.ident;
+            quote! {}
+        });
+
         let gen = quote! {
             impl #name {
                 #(#functions)*
+
+
             }
         };
         gen.into()

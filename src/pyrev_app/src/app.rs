@@ -1,16 +1,20 @@
 use pyrev_core::prelude::*;
+use pyrev_query::Map;
 use std::collections::HashMap;
 use std::path::PathBuf;
 
+/// The main struct of the application.
 pub struct App {
-    // files order
+    /// files order
     files: Vec<PathBuf>,
-    // the resource of the bytecode
+    /// the resource of the bytecode
     resources: HashMap<PathBuf, CodeObjectMap>,
-    // the out file name
+    /// the out file name
     output_files: Vec<PathBuf>,
-    // the output of the decompiled code
+    /// the output of the decompiled code
     output: Vec<Result<DecompiledCode>>,
+    /// the expression map
+    map: Map,
 }
 
 impl Default for App {
@@ -27,6 +31,7 @@ impl App {
             resources: HashMap::new(),
             output_files: Vec::new(),
             output: Vec::new(),
+            map: Map::new(),
         }
     }
 

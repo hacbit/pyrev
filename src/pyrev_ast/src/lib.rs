@@ -3,6 +3,8 @@
 mod query;
 mod querymutable;
 
+use std::any::TypeId;
+
 pub use pyrev_ast_derive::*;
 pub use query::*;
 pub use querymutable::*;

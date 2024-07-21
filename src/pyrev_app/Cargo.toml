@@ -12,3 +12,6 @@ features = ["derive", "cargo"]
 
 [dependencies.pyrev_core]
 path = "../pyrev_core"
+
+[dependencies.pyrev_query]
+path = "../pyrev_query"
