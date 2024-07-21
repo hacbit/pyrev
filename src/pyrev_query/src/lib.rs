@@ -2,7 +2,9 @@
 //! And provides the safety query for the expressions.
 
 use pyrev_ast::*;
-use std::{any::TypeId, collections::HashMap};
+use std::{
+    any::TypeId, collections::{HashMap, HashSet}, marker::PhantomData
+};
 
 /// QueryId is a marker for a query. It can be an integer or a string.
 ///
@@ -10,27 +12,45 @@ use std::{any::TypeId, collections::HashMap};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct QueryId {
     /// The id of the query.
-    ///
-    /// It is unique in each DataMap.
-    /// However, the same ID may exist in different DataMaps
     id: usize,
     /// A type marker.
-    /// It is used to distinguish the same ID in different DataMaps.
-    marker: TypeId,
+    type_id: *mut TypeId,
+    /// To mark the ownership of the type_id.
+    _marker: PhantomData<*mut TypeId>,
 }
 
 impl QueryId {
     /// Create a new QueryId instance.
+    /// 
+    /// # Safety
     #[inline]
-    pub(crate) fn new(id: usize, marker: TypeId) -> Self {
-        QueryId { id, marker }
+    pub(crate) fn new(id: usize, type_id: TypeId) -> Self {
+        QueryId {
+            id,
+            type_id: unsafe { std::mem::transmute(Box::new(type_id)) },
+            _marker: PhantomData,
+        }
+    }
+
+    /// Get the type id of the query id.
+    #[inline]
+    pub fn type_id(&self) -> TypeId {
+        unsafe { *self.type_id }
+    }
+
+    /// Update the type id of the query id.
+    #[inline]
+    pub fn set_type_id(&self, type_id: TypeId) {
+        unsafe {
+            *self.type_id = type_id;
+        }
     }
 }
 
 /// Holds all the datas and their associated query ids.
+#[derive(Debug)]
 pub(crate) struct DataMap<T> {
     map: HashMap<QueryId, T>,
-    id_generator: usize,
 }
 
 impl<T: 'static> DataMap<T> {
@@ -39,18 +59,21 @@ impl<T: 'static> DataMap<T> {
     pub(crate) fn new() -> Self {
         Self {
             map: HashMap::new(),
-            id_generator: usize::MAX,
         }
     }
 
     /// Add a new data to the resources.
     /// Returns the query id associated with the data.
     #[inline]
-    pub(crate) fn add(&mut self, data: T) -> QueryId {
-        let query_id = QueryId::new(self.id_generator, TypeId::of::<T>());
-        self.map.insert(query_id, data);
-        self.id_generator -= 1;
-        query_id
+    pub(crate) fn add(&mut self, query_id: QueryId, data: T) -> Option<T> {
+        self.map.insert(query_id, data)
+    }
+
+    /// Set the data associated with the query id.
+    /// Returns the old data.
+    #[inline]
+    pub(crate) fn set_by_id(&mut self, query_id: QueryId, data: T) -> Option<T> {
+        self.map.insert(query_id, data)
     }
 
     /// Remove the data associated with the query id.
@@ -71,12 +94,6 @@ impl<T: 'static> DataMap<T> {
         self.map.get_mut(&query_id)
     }
 
-    /// Replace the data associated with the query id.
-    #[inline]
-    pub(crate) fn replace(&mut self, query_id: QueryId, data: T) -> Option<T> {
-        self.map.insert(query_id, data)
-    }
-
     /// Get the iterator of the data.
     #[inline]
     pub(crate) fn iter(&self) -> impl Iterator<Item = (QueryId, &T)> {
@@ -92,9 +109,14 @@ impl<T: 'static> DataMap<T> {
 
 /// The expressions holder.
 /// It provides a DataMap for each type of expression.
+#[derive(Debug)]
 pub struct Map {
     /// The map of the expressions.
     maps: HashMap<TypeId, DataMap<ExpressionEnum>>,
+    /// The id generator.
+    id_generator: usize,
+    /// The set of the existing query ids.
+    ids: HashSet<usize>,
 }
 
 /// Add the expressions type to the map.
@@ -152,14 +174,18 @@ impl Map {
             }
         );
 
-        Self { maps }
+        Self {
+            maps,
+            id_generator: usize::MAX,
+            ids: HashSet::new(),
+        }
     }
 
-    /// Query the expressions of the type T.
+    /// Query the expressions by the type id.
     /// Returns the DataMap
     #[inline]
-    pub(crate) fn query_map<T: Expression + 'static>(&self) -> Option<&DataMap<ExpressionEnum>> {
-        self.maps.get(&TypeId::of::<T>())
+    pub(crate) fn query_map(&self, type_id: TypeId) -> Option<&DataMap<ExpressionEnum>> {
+        self.maps.get(&type_id)
     }
 
     /// Get the iterator of the data.
@@ -167,17 +193,18 @@ impl Map {
     pub fn query<T: Expression + 'static>(
         &self,
     ) -> impl Iterator<Item = (QueryId, &ExpressionEnum)> {
-        self.query_map::<T>()
+        self.query_map(TypeId::of::<T>())
             .and_then(|map| Some(map.iter()))
             .expect("No such query")
     }
 
     /// Query the mutable expressions of the type T.
     #[inline]
-    pub(crate) fn query_map_mut<T: Expression + 'static>(
+    pub(crate) fn query_map_mut(
         &mut self,
+        type_id: TypeId,
     ) -> Option<&mut DataMap<ExpressionEnum>> {
-        self.maps.get_mut(&TypeId::of::<T>())
+        self.maps.get_mut(&type_id)
     }
 
     /// Get the mutable iterator of the data.
@@ -185,58 +212,75 @@ impl Map {
     pub fn query_mut<T: Expression + 'static>(
         &mut self,
     ) -> impl Iterator<Item = (QueryId, &mut ExpressionEnum)> {
-        self.query_map_mut::<T>()
+        self.query_map_mut(TypeId::of::<T>())
             .and_then(|map| Some(map.iter_mut()))
             .expect("No such query")
     }
 
     /// Get the data associated with the query id.
     #[inline]
-    pub fn get_single<T: Expression + 'static>(
-        &self,
-        query_id: QueryId,
-    ) -> Option<&ExpressionEnum> {
-        self.query_map::<T>()?.get(query_id)
+    pub fn get_single(&self, query_id: QueryId) -> Option<&ExpressionEnum> {
+        self.query_map(query_id.type_id())?.get(query_id)
     }
 
     /// Get the mutable reference to the data associated with the query id.
     #[inline]
-    pub fn get_single_mut<T: Expression + 'static>(
-        &mut self,
-        query_id: QueryId,
-    ) -> Option<&mut ExpressionEnum> {
-        self.query_map_mut::<T>()?.get_mut(query_id)
+    pub fn get_single_mut(&mut self, query_id: QueryId) -> Option<&mut ExpressionEnum> {
+        self.query_map_mut(query_id.type_id())?.get_mut(query_id)
     }
 
     /// Add a new data to the resources.
     ///
-    /// Returns the query id associated with the data.
-    #[inline]
-    pub fn add<T: Expression + 'static>(&mut self, data: ExpressionEnum) -> Result<QueryId, ()> {
-        Ok(self.query_map_mut::<T>().ok_or(())?.add(data))
+    /// And return a new query id associated with the data.
+    pub fn add<T: Expression + 'static>(&mut self, data: ExpressionEnum) -> Option<QueryId> {
+        self.id_generator = self.id_generator.wrapping_add(1);
+        let id = self.id_generator;
+        assert!(self.ids.contains(&id) == false);
+        self.ids.insert(id);
+        let query_id = QueryId::new(id, TypeId::of::<T>());
+        self.query_map_mut(query_id.type_id())?.add(query_id, data);
+        Some(query_id)
     }
 
     /// Remove the data associated with the query id.
     ///
     /// Returns the old data.
     #[inline]
-    pub fn remove<T: Expression + 'static>(&mut self, query_id: QueryId) -> Option<ExpressionEnum> {
-        self.query_map_mut::<T>()?.remove(query_id)
+    pub fn remove(&mut self, query_id: QueryId) -> Option<ExpressionEnum> {
+        self.query_map_mut(query_id.type_id())?.remove(query_id)
     }
 
-    /// Replace the data associated with the query id.
+    /// Set the data associated with the query id.
     ///
-    /// Returns the old data.
-    #[inline]
-    pub fn replace<T: Expression + 'static>(
+    /// Returns new query id which is marked with the type of U and the old data.
+    /// 
+    /// # Example
+    /// ```rust
+    /// use pyrev_query::*;
+    /// use pyrev_ast::*;
+    /// 
+    /// let mut map = Map::new();
+    /// let func = Function::default();
+    /// let query_id = map.add::<Function>(func.clone().into()).expect("Failed to add");
+    /// let base = BaseValue::default();
+    /// let old_data = map.replace::<BaseValue>(query_id, base.into()).expect("Failed to replace");
+    /// assert_eq!(old_data.unwrap_function(), func);
+    /// let data = map.query::<Function>().collect::<Vec<_>>();
+    /// assert_eq!(data.len(), 0);
+    /// let data = map.query::<BaseValue>().collect::<Vec<_>>();
+    /// assert_eq!(data.len(), 1);
+    /// ```
+    pub fn replace<U: Expression + 'static>(
         &mut self,
         query_id: QueryId,
         data: ExpressionEnum,
     ) -> Option<ExpressionEnum> {
-        self.query_map_mut::<T>()?.replace(query_id, data)
+        let old_data = self.remove(query_id);
+        query_id.set_type_id(TypeId::of::<U>());
+        self.query_map_mut(query_id.type_id())?.set_by_id(query_id, data);
+        old_data
     }
 }
-
 
 #[cfg(test)]
 mod test {
@@ -246,23 +290,22 @@ mod test {
     fn test_data_map() {
         let mut map = Map::new();
 
-        let func = Function {
-            name: "test".to_string(),
-            args: Vec::new(),
-            bodys: Vec::new(),
-            ..Default::default()
-        };
+        let func = Function::default();
+        let base = BaseValue::default();
 
         let query_id = map.add::<Function>(func.into()).unwrap();
 
-        let q_funcs = map.query::<Function>().collect::<Vec<_>>();
+        // map.replace::<Function>(query_id, func2.into());
 
-        dbg!(&q_funcs);
+        let data = map.query::<Function>().collect::<Vec<_>>();
+        dbg!(data);
 
-        let q_func = map.get_single::<Function>(query_id).unwrap();
+        map.replace::<BaseValue>(query_id, base.into());
 
-        dbg!(q_func);
+        let data = map.query::<Function>().collect::<Vec<_>>();
+        dbg!(data);
 
-        assert_eq!(q_func, q_funcs[0].1);
+        let data = map.query::<BaseValue>().collect::<Vec<_>>();
+        dbg!(data);
     }
 }
