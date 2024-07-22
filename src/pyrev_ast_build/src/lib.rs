@@ -2,6 +2,8 @@
 
 #![feature(concat_idents)]
 
+use std::any::TypeId;
+
 use pyrev_ast::*;
 use pyrev_query::*;
 use regex::Regex;
@@ -159,6 +161,432 @@ pub fn build(map: &Map, expression: &ExpressionEnum) -> Option<Vec<String>> {
                 }
                 if !codes.last().unwrap().trim().is_empty() {
                     codes.push("".to_string());
+                }
+            }
+        }
+        ExpressionEnum::Function(function) => {
+            let mut args_code = String::new();
+            let mut ret_code = String::new();
+            let mut defaults_iter = function.defaults.iter();
+            let mut default_offset = function.args.len() - function.defaults.len();
+            for (arg, anno) in function.args_iter() {
+                if arg == "return" {
+                    ret_code.push_str(&format!(
+                        " -> {}",
+                        anno.as_ref().map_or("None".to_string(), |a| a.to_string())
+                    ));
+                    continue;
+                }
+
+                if anno.is_none() {
+                    args_code.push_str(arg);
+                } else {
+                    args_code.push_str(&format!("{}: {}", arg, anno.as_ref()?));
+                }
+
+                if default_offset == 0 {
+                    args_code.push_str(&format!(
+                        " = {}",
+                        defaults_iter.next()?
+                    ));
+                } else {
+                    // There are no parameters with default values yet.
+                    default_offset -= 1;
+                }
+
+                args_code.push_str(", ");
+            }
+
+            match function.name.as_str() {
+                "<lambda>" => {
+                    let lambda_args = args_code.trim_end_matches(", ");
+                    let lambda_body = build_helper(map, function.bodys.first()?)?.join("");
+                    let lambda_body = lambda_body.trim_start_matches("return ");
+
+                    if lambda_body.starts_with("yield") {
+                        codes.push(format!(
+                            "lambda {}: ({})",
+                            lambda_args,
+                            lambda_body
+                        ));
+                    } else {
+                        codes.push(format!(
+                            "lambda {}: {}",
+                            lambda_args,
+                            lambda_body
+                        ));
+                    }
+                }
+                "<listcomp>" => {
+                    codes.push(format!(
+                        "[{} for {} in {}]",
+                        build_helper(map, function.bodys.first()?)?.join(""),
+                        args_code.trim_end_matches(", "),
+                        build_helper(map, function.bodys.get(1)?)?.join("")
+                    ))
+                }
+                _ => {
+                    let first_line = if function.is_async {
+                        format!(
+                            "async def {}({}){}:",
+                            function.name,
+                            args_code.trim_end_matches(", "),
+                            ret_code
+                        )
+                    } else {
+                        format!(
+                            "def {}({}){}:",
+                            function.name,
+                            args_code.trim_end_matches(", "),
+                            ret_code
+                        )
+                    };
+
+                    codes.push(first_line);
+                    for expr_id in function.bodys.iter() {
+                        let expr_code = build_helper(map, expr_id)?;
+                        for line in expr_code {
+                            codes.push(format!("    {}", line));
+                        }
+                    }
+
+                    if codes.len() == 1 {
+                        codes.push("    pass".to_string());
+                    }
+                    codes.push("".to_string());
+                }
+            }
+        }
+        ExpressionEnum::FastVariable(fast_var) => {
+            if fast_var.name == "None" {
+                codes.push("".to_string())
+            } else if fast_var.name == "0" {
+                // do nothing
+            } else {
+                codes.push(fast_var.name.clone())
+            }
+        }
+        ExpressionEnum::Return(ret) => {
+            let value_code = build_helper_some(map, ret.value)?.join("");
+
+            if !value_code.is_empty() {
+                codes.push(format!("return {}", value_code))
+            }
+        }
+        ExpressionEnum::Yield(y) => {
+            let value_code = build_helper_some(map, y.value)?.join("");
+
+            if !value_code.is_empty() {
+                codes.push(format!("yield {}", value_code))
+            }
+        }
+        ExpressionEnum::Assign(assign) => {
+            let target_code = build_helper_some(map, assign.target)?.join("");
+            let value_code = build_helper_some(map, assign.value)?.join("");
+
+            codes.push(format! {
+                "{} {} {}",
+                target_code,
+                assign.operator,
+                value_code
+            })
+        }
+        ExpressionEnum::Alias(alias) => {
+            let target_code = build_helper_some(map, alias.target)?.join("");
+            let alias_code = build_helper_some(map, alias.alias)?.join("");
+            codes.push(format!("{} as {}", target_code, alias_code))
+        }
+        ExpressionEnum::Try(t) => {
+            for id in t.body.iter() {
+                let expr_code = build_helper(map, id)?;
+                for line in expr_code {
+                    codes.push(format!("    {}", line));
+                }
+            }
+
+            for except in t.except.iter() {
+                let expr_code = build_helper(map, except)?;
+                codes.extend(expr_code);
+            }
+
+            if let Some(id) = t.finally {
+                let expr_code = build_helper(map, &id)?;
+                codes.extend(expr_code);
+            }
+        }
+        ExpressionEnum::Except(except) => {
+            let exception_code = build_helper_some(map, except.exception)?.join("");
+            
+            if exception_code.is_empty() {
+                codes.push("except:".to_string())
+            } else {
+                codes.push(format!("except {}:", exception_code))
+            }
+
+            for id in except.body.iter() {
+                let expr_code = build_helper(map, id)?;
+                for line in expr_code {
+                    codes.push(format!("    {}", line));
+                }
+            }
+        }
+        ExpressionEnum::Finally(finally) => {
+            codes.push("finally:".to_string());
+            for id in finally.body.iter() {
+                let expr_code = build_helper(map, id)?;
+                for line in expr_code {
+                    codes.push(format!("    {}", line));
+                }
+            }
+        }
+        ExpressionEnum::Assert(assert) => {
+            let test_code = build_helper_some(map, assert.test)?.join("");
+            let msg_code = build_helper_some(map, assert.msg)?.join("");
+
+            if msg_code.is_empty() {
+                codes.push(format!("assert {}", test_code))
+            } else {
+                codes.push(format!("assert {}, {}", test_code, msg_code))
+            }
+        }
+        ExpressionEnum::Raise(raise) => {
+            let exception_code = build_helper_some(map, raise.exception)?.join("");
+
+            codes.push(format!("raise {}", exception_code))
+        }
+        ExpressionEnum::Await(a) => {
+            let awaitable_code = build_helper_some(map, a.awaitable_expr)?.join("");
+
+            codes.push(format!("await {}", awaitable_code))
+        }
+        ExpressionEnum::BaseValue(base) => {
+            if base.value == "None" {
+                codes.push("".to_string())
+            } else {
+                codes.push(base.value.clone())
+            }
+        }
+        ExpressionEnum::Call(call) => {
+            let func_code = build_helper_some(map, call.func)?.join("");
+            let mut args_code = vec![];
+
+            for id in call.args.iter() {
+                let arg_code = build_helper(map, id)?.join("");
+                args_code.push(arg_code);
+            }
+
+            if func_code.starts_with("lambda ") {
+                codes.push(format!("({})({})", func_code, args_code.join(", ").trim_end_matches(", ")))
+            } else {
+                codes.push(format!("{}({})", func_code, args_code.join(", ").trim_end_matches(", ")))
+            }
+        }
+        ExpressionEnum::FormatValue(format_value) => {
+            let value_code = build_helper_some(map, format_value.value)?.join("");
+
+            codes.push(value_code)
+        }
+        ExpressionEnum::Format(format) => {
+            let mut format_string = String::new();
+
+            for val in format.format_values.iter() {
+                let val_code = build_helper(map, val)?.join("");
+                
+                if val.type_id() == TypeId::of::<FormatValue>() {
+                    format_string.push_str(&format!("{{{}}}", val_code))
+                } else {
+                    format_string.push_str(val_code.trim_matches('\''))
+                }
+            }
+
+            codes.push(format!(
+                "f\"{}\"",
+                format_string.replace('"', "\\\"")
+            ))
+        }
+        ExpressionEnum::BinaryOperation(bin_op) => {
+            let left_code = build_helper_some(map, bin_op.left)?.join("");
+            let right_code = build_helper_some(map, bin_op.right)?.join("");
+
+            codes.push(format!("{} {} {}", left_code, bin_op.operator, right_code))
+        }
+        ExpressionEnum::UnaryOperation(unary_op) => {
+            let operant_code = build_helper_some(map, unary_op.target)?.join("");
+
+            codes.push(format!(
+                "{}{}",
+                match unary_op.unary_type {
+                    UnaryType::Negative => "-",
+                    UnaryType::Invert => "~",
+                    UnaryType::Not => "not ",
+                    UnaryType::Positive => unreachable!(),
+                },
+                operant_code
+            ))
+        }
+        ExpressionEnum::Import(import) => {
+            if import.bk_module.is_none() {
+                // no have from
+                if import.alias.is_none() {
+                    codes.push(format!("import {}", import.module))
+                } else {
+                    codes.push(format!(
+                        "import {} as {}",
+                        import.module,
+                        import.alias.as_ref()?.trim_end_matches(", ")
+                    ))
+                }
+            } else {
+                // have from
+                codes.push(format!(
+                    "from {} import {}",
+                    import.module,
+                    import.bk_module.as_ref()?.trim_end_matches(", ")
+                ))
+            }
+        }
+        ExpressionEnum::Container(container) => {
+            let mut value_codes = vec![];
+            for id in container.values.iter() {
+                let val_code = build_helper(map, id)?;
+                value_codes.extend(val_code);
+            }
+
+            value_codes.iter_mut().for_each(|s| {
+                if s.is_empty() {
+                    *s = "None".to_string()
+                }
+            });
+
+            match container.container_type {
+                ContainerType::List => {
+                    codes.push(format!("[{}]", value_codes.join(", ")))
+                }
+                ContainerType::Tuple => {
+                    codes.push(format!("({})", value_codes.join(", ")))
+                }
+                ContainerType::Set => {
+                    codes.push(format!("{{{}}}", value_codes.join(", ")))
+                }
+                ContainerType::Dict => {
+                    let mut kv_codes = vec![];
+
+                    for (k, v) in value_codes.iter().enumerate() {
+                        if k % 2 == 0 {
+                            kv_codes.push(format!(
+                                "{}: {}",
+                                v,
+                                value_codes.get(k + 1)?
+                            ))
+                        }
+                    }
+
+                    codes.push(format!("{{{}}}", kv_codes.join(", ")))
+                }
+            }
+        }
+        ExpressionEnum::Subscr(subscr) => {
+            let idx_code = build_helper_some(map, subscr.index)?.join("");
+            let target_code = build_helper_some(map, subscr.target)?.join("");
+
+            codes.push(format!("{}[{}]", target_code, idx_code))
+        }
+        ExpressionEnum::Slice(slice) => {
+            let origin_code = build_helper_some(map, slice.origin)?.join("");
+            let slice_code = slice
+                .slice
+                .iter()
+                .map(|s| Some(build_helper(map, s)?.join("")))
+                .collect::<Option<Vec<_>>>()?
+                .join(":");
+
+            codes.push(format!(
+                "{}[{}]",
+                origin_code,
+                slice_code
+            ))
+        }
+        ExpressionEnum::Attribute(attr) => {
+            let parent_code = build_helper_some(map, attr.parent)?.join("");
+            let attr_code = build_helper_some(map, attr.attr)?.join("");
+
+            codes.push(format!("{}.{}", parent_code, attr_code))
+        }
+        ExpressionEnum::With(with) => {
+            let item_code = build_helper_some(map, with.item)?.join("");
+            let first_line = if with.is_async {
+                format!("async with {}:", item_code)
+            } else {
+                format!("with {}:", item_code)
+            };
+
+            codes.push(first_line);
+
+            if with.body.is_empty() {
+                codes.push("    pass".to_string())
+            } else {
+                for id in with.body.iter() {
+                    let expr_code = build_helper(map, id)?;
+                    for line in expr_code {
+                        codes.push(format!("    {}", line));
+                    }
+                }
+            }
+        }
+        ExpressionEnum::If(if_else) => {
+            if let Some(id) = if_else.test.as_ref() {
+                let test_code = build_helper(map, id)?.join("");
+                codes.push(format!("if {}:", test_code))
+            } else {
+                codes.push("else:".to_string())
+            }
+
+            for id in if_else.body.iter() {
+                if let Some(jump) = helper!(map, Some(id), as_ref_jump) {
+                    if jump.is_backward {
+                        codes.push("    continue".to_string())
+                    }
+                } else {
+                    let expr_code = build_helper(map, id)?;
+                    for line in expr_code {
+                        codes.push(format!("    {}", line));
+                    }
+                }
+            }
+
+            if let Some(or_else) = if_else.or_else.as_ref() {
+                let or_else_code = build_helper(map, or_else)?;
+                
+                if or_else_code.first()?.starts_with("if ") {
+                    // elif
+                    codes.push(format!("el{}", or_else_code.first()?));
+                    codes.extend(or_else_code.into_iter().skip(1))
+                } else {
+                    // starts with 'else'
+                    codes.extend(or_else_code);
+                }
+            }
+        }
+        ExpressionEnum::For(f) => {
+            let iter_code = build_helper_some(map, f.iterator)?.join("");
+            let item_code = build_helper_some(map, f.items)?.join("");
+
+            let first_line = if f.is_async {
+                format!("async for {} in {}:", item_code, iter_code)
+            } else {
+                format!("for {} in {}:", item_code, iter_code)
+            };
+
+            codes.push(first_line);
+
+            if f.body.is_empty() {
+                codes.push("    pass".to_string())
+            } else {
+                for id in f.body.iter() {
+                    let expr_code = build_helper(map, id)?;
+                    for line in expr_code {
+                        codes.push(format!("    {}", line));
+                    }
                 }
             }
         }
