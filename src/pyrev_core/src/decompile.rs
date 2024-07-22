@@ -15,10 +15,11 @@ pub trait Decompiler {
 impl Decompiler for CodeObjectMap {
     /// 从字节码对象映射表中解析为AST, 然后再从AST解析为代码
     fn decompile(&self) -> Result<DecompiledCode> {
+        todo!();
         let mut decompiled_code = DecompiledCode::default();
         let mut exprs_map = HashMap::new();
         for (mark, code_object) in self.iter() {
-            let expr = Expr::parse(code_object)?;
+            let expr = todo!();
             let trace = get_trace(code_object)?;
 
             exprs_map.insert(mark.clone(), (*expr, trace));
