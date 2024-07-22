@@ -7,4 +7,5 @@ edition = "2021"
 
 [dependencies]
 pyrev_ast_derive = { path = "../pyrev_ast_derive" }
+pyrev_query_inner = { path = "../pyrev_query_inner" }
 regex = "1.10.2"

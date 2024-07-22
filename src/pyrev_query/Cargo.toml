@@ -4,4 +4,5 @@ version = "1.1.0"
 edition = "2021"
 
 [dependencies]
+pyrev_query_inner = { path = "../pyrev_query_inner" }
 pyrev_ast = { path = "../pyrev_ast" }

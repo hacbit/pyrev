@@ -262,6 +262,7 @@ name = "pyrev_ast"
 version = "1.1.0"
 dependencies = [
  "pyrev_ast_derive",
+ "pyrev_query_inner",
  "regex",
 ]
 
@@ -334,7 +335,12 @@ name = "pyrev_query"
 version = "1.1.0"
 dependencies = [
  "pyrev_ast",
+ "pyrev_query_inner",
 ]
+
+[[package]]
+name = "pyrev_query_inner"
+version = "1.1.0"
 
 [[package]]
 name = "quote"

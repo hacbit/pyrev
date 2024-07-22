@@ -7,7 +7,7 @@ workspace = { members = [
     "src/pyrev_object",
     "src/pyrev_pyc",
     "src/pyrev_pyc_macro",
-    "src/pyrev_pyinstaller", "src/pyrev_query",
+    "src/pyrev_pyinstaller", "src/pyrev_query", "src/pyrev_query_inner",
 ] }
 
 [package]
