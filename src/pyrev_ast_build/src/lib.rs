@@ -1,13 +1,13 @@
 //! This crate provides some utilities for building the AST to a Python code.
 
-#![feature(concat_idents)]
-
 use std::any::TypeId;
 
 use pyrev_ast::*;
 use pyrev_query::*;
 use regex::Regex;
 
+/// A helper function to get the expression from the map by query id.
+#[inline]
 pub fn get_helper<'a>(
     map: &'a Map,
     expr_id: Option<&QueryId>,
@@ -15,6 +15,8 @@ pub fn get_helper<'a>(
     expr_id.and_then(|id| map.get_single(*id))
 }
 
+/// A helper function to get the mutable expression from the map by optional query id.
+#[inline]
 pub fn get_mut_helper<'a>(
     map: &'a mut Map,
     expr_id: Option<&QueryId>,
@@ -58,16 +60,21 @@ macro_rules! helper_mut {
     };
 }
 
+/// A helper function to build the Python code from the expression by optional query id.
+#[inline]
 pub fn build_helper_some(map: &Map, id: Option<QueryId>) -> Option<Vec<String>> {
     let expr = map.get_single(id?)?;
     build(map, expr)
 }
 
+/// A helper function to build the Python code from the expression by query id.
+#[inline]
 pub fn build_helper(map: &Map, id: &QueryId) -> Option<Vec<String>> {
     let expr = map.get_single(*id)?;
     build(map, expr)
 }
 
+/// build ast to python code
 pub fn build(map: &Map, expression: &ExpressionEnum) -> Option<Vec<String>> {
     let mut codes = vec![];
     match expression {
