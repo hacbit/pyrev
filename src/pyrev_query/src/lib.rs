@@ -3,7 +3,9 @@
 
 use pyrev_ast::*;
 use std::{
-    any::TypeId, collections::{HashMap, HashSet}, marker::PhantomData
+    any::TypeId,
+    collections::{HashMap, HashSet},
+    marker::PhantomData,
 };
 
 /// QueryId is a marker for a query. It can be an integer or a string.
@@ -21,7 +23,7 @@ pub struct QueryId {
 
 impl QueryId {
     /// Create a new QueryId instance.
-    /// 
+    ///
     /// # Safety
     #[inline]
     pub(crate) fn new(id: usize, type_id: TypeId) -> Self {
@@ -189,6 +191,25 @@ impl Map {
     }
 
     /// Get the iterator of the data.
+    ///
+    /// # Example
+    /// ```rust
+    /// use pyrev_query::*;
+    /// use pyrev_ast::*;
+    ///
+    /// let mut map = Map::new();
+    /// let bin_op = BinaryOperation::default();
+    /// let bin_op2 = BinaryOperation {
+    ///     operator: "+".to_string(),
+    ///     ..Default::default()
+    /// };
+    /// map.add::<BinaryOperation>(bin_op.clone().into()).expect("Failed to add");
+    /// map.add::<BinaryOperation>(bin_op2.clone().into()).expect("Failed to add");
+    ///
+    /// let q = map.query::<BinaryOperation>().collect::<Vec<_>>();
+    ///
+    /// assert_eq!(q.len(), 2);
+    /// ```
     #[inline]
     pub fn query<T: Expression + 'static>(
         &self,
@@ -208,6 +229,25 @@ impl Map {
     }
 
     /// Get the mutable iterator of the data.
+    ///
+    /// # Example
+    /// ```rust
+    /// use pyrev_query::*;
+    /// use pyrev_ast::*;
+    ///
+    /// let mut map = Map::new();
+    /// let mut func = Function::default();
+    /// let mut func2 = Function {
+    ///     name: "func2".to_string(),
+    ///     ..Default::default()
+    /// };
+    /// map.add::<Function>(func.clone().into()).expect("Failed to add");
+    /// map.add::<Function>(func2.clone().into()).expect("Failed to add");
+    ///
+    /// let q = map.query_mut::<Function>().collect::<Vec<_>>();
+    ///
+    /// assert_eq!(q.len(), 2);
+    /// ```
     #[inline]
     pub fn query_mut<T: Expression + 'static>(
         &mut self,
@@ -218,12 +258,52 @@ impl Map {
     }
 
     /// Get the data associated with the query id.
+    ///
+    /// # Example
+    /// ```rust
+    /// use pyrev_query::*;
+    /// use pyrev_ast::*;
+    ///
+    /// let mut map = Map::new();
+    /// let func = Function::default();
+    /// let query_id = map.add::<Function>(func.clone().into()).expect("Failed to add");
+    /// let q_func = map.get_single(query_id).expect("Failed to get");
+    ///
+    /// assert_eq!(q_func.as_ref_function(), Some(&func));
+    /// ```
     #[inline]
     pub fn get_single(&self, query_id: QueryId) -> Option<&ExpressionEnum> {
         self.query_map(query_id.type_id())?.get(query_id)
     }
 
     /// Get the mutable reference to the data associated with the query id.
+    ///
+    /// # Example
+    /// ```rust
+    /// use pyrev_query::*;
+    /// use pyrev_ast::*;
+    ///
+    /// let mut map = Map::new();
+    /// let mut func = Function::default();
+    /// let query_id = map.add::<Function>(func.clone().into()).expect("Failed to add");
+    ///
+    /// let q_mut_func = map.get_single_mut(query_id).expect("Failed to get");
+    ///
+    /// assert_eq!(q_mut_func.as_ref_function(), Some(&func));
+    ///
+    /// // And then you can modify the data.
+    /// if let ExpressionEnum::Function(func) = q_mut_func {
+    ///     func.name = "new_name".to_string();
+    /// }
+    ///
+    /// // query the data again. The data should be modified.
+    /// let q_func = map.get_single(query_id).expect("Failed to get");
+    ///
+    /// // change original data to compare.
+    /// func.name = "new_name".to_string();
+    ///
+    /// assert_eq!(q_func.as_ref_function(), Some(&func));
+    /// ```
     #[inline]
     pub fn get_single_mut(&mut self, query_id: QueryId) -> Option<&mut ExpressionEnum> {
         self.query_map_mut(query_id.type_id())?.get_mut(query_id)
@@ -232,6 +312,19 @@ impl Map {
     /// Add a new data to the resources.
     ///
     /// And return a new query id associated with the data.
+    ///
+    /// # Example
+    /// ```rust
+    /// use pyrev_query::*;
+    /// use pyrev_ast::*;
+    ///
+    /// let mut map = Map::new();
+    /// let class = Class::default();
+    /// let query_id = map.add::<Class>(class.into()).expect("Failed to add");
+    ///
+    /// assert_eq!(query_id.type_id(), std::any::TypeId::of::<Class>());
+    /// ```
+    #[inline]
     pub fn add<T: Expression + 'static>(&mut self, data: ExpressionEnum) -> Option<QueryId> {
         self.id_generator = self.id_generator.wrapping_add(1);
         let id = self.id_generator;
@@ -245,6 +338,20 @@ impl Map {
     /// Remove the data associated with the query id.
     ///
     /// Returns the old data.
+    ///
+    /// # Example
+    /// ```rust
+    /// use pyrev_query::*;
+    /// use pyrev_ast::*;
+    ///
+    /// let mut map = Map::new();
+    ///
+    /// let base = BaseValue::default();
+    /// let query_id = map.add::<BaseValue>(base.clone().into()).expect("Failed to add");
+    /// let data = map.remove(query_id).expect("Failed to remove");
+    ///
+    /// assert_eq!(data.as_ref_base_value(), Some(&base));
+    /// ```
     #[inline]
     pub fn remove(&mut self, query_id: QueryId) -> Option<ExpressionEnum> {
         self.query_map_mut(query_id.type_id())?.remove(query_id)
@@ -253,23 +360,24 @@ impl Map {
     /// Set the data associated with the query id.
     ///
     /// Returns new query id which is marked with the type of U and the old data.
-    /// 
+    ///
     /// # Example
     /// ```rust
     /// use pyrev_query::*;
     /// use pyrev_ast::*;
-    /// 
+    ///
     /// let mut map = Map::new();
     /// let func = Function::default();
     /// let query_id = map.add::<Function>(func.clone().into()).expect("Failed to add");
     /// let base = BaseValue::default();
     /// let old_data = map.replace::<BaseValue>(query_id, base.into()).expect("Failed to replace");
-    /// assert_eq!(old_data.unwrap_function(), func);
+    /// assert_eq!(old_data.as_ref_function(), Some(&func));
     /// let data = map.query::<Function>().collect::<Vec<_>>();
     /// assert_eq!(data.len(), 0);
     /// let data = map.query::<BaseValue>().collect::<Vec<_>>();
     /// assert_eq!(data.len(), 1);
     /// ```
+    #[inline]
     pub fn replace<U: Expression + 'static>(
         &mut self,
         query_id: QueryId,
@@ -277,7 +385,8 @@ impl Map {
     ) -> Option<ExpressionEnum> {
         let old_data = self.remove(query_id);
         query_id.set_type_id(TypeId::of::<U>());
-        self.query_map_mut(query_id.type_id())?.set_by_id(query_id, data);
+        self.query_map_mut(query_id.type_id())?
+            .set_by_id(query_id, data);
         old_data
     }
 }
@@ -307,5 +416,29 @@ mod test {
 
         let data = map.query::<BaseValue>().collect::<Vec<_>>();
         dbg!(data);
+    }
+
+    #[test]
+    fn test_mut_query() {
+        let mut map = Map::new();
+        let mut func = Function::default();
+        let query_id = map
+            .add::<Function>(func.clone().into())
+            .expect("Failed to add");
+
+        let q_mut_func = map.get_single_mut(query_id).expect("Failed to get");
+
+        assert_eq!(q_mut_func.as_ref_function(), Some(&func));
+
+        // And then you can modify the data.
+        if let ExpressionEnum::Function(func) = q_mut_func {
+            func.name = "new_name".to_string();
+        }
+        dbg!(&q_mut_func);
+        // query the data again. The data should be modified.
+        let q_func = map.get_single(query_id).expect("Failed to get");
+        dbg!(&q_func);
+        func.name = "new_name".to_string();
+        assert_eq!(q_func.as_ref_function(), Some(&func));
     }
 }

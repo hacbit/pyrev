@@ -274,7 +274,7 @@ impl ExprParser for Expr {
                     {
                         if let ExpressionEnum::Attribute(Attribute { parent, attr, .. }) = *left {
                             // expect an attribute expression
-                            let target = target.unwrap_attribute();
+                            let target = target.as_ref_attribute().unwrap();
                             if parent == target.parent
                                 && attr == target.attr
                                 && operator.ends_with('=')
@@ -606,7 +606,8 @@ impl ExprParser for Expr {
                                             name: exprs
                                                 .first()
                                                 .unwrap()
-                                                .unwrap_base_value()
+                                                .as_ref_base_value()
+                                                .unwrap()
                                                 .value
                                                 .trim_start_matches('\'')
                                                 .trim_end_matches('\'')
@@ -616,8 +617,10 @@ impl ExprParser for Expr {
                                                     .get(1)
                                                     .as_ref()
                                                     .unwrap()
-                                                    .unwrap_base_value()
-                                                    .value,
+                                                    .as_ref_base_value()
+                                                    .unwrap()
+                                                    .value
+                                                    .clone(),
                                             ),
                                             ..Default::default()
                                         };

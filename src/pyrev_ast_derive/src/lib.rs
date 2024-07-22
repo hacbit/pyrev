@@ -131,9 +131,9 @@ pub fn derive_unwrap(input: TokenStream) -> TokenStream {
                 variant_name.span(),
             );
             quote! {
-                pub fn #unwrap_function_name(&self) -> #variant_name {
+                pub fn #unwrap_function_name(self) -> #variant_name {
                     match self {
-                        #name::#variant_name(inner) => inner.clone(),
+                        #name::#variant_name(inner) => inner,
                         _ => panic!("unwrap_{} failed", stringify!(#variant_name)),
                     }
                 }
@@ -218,5 +218,40 @@ pub fn derive_from_expression(input: TokenStream) -> TokenStream {
         gen.into()
     } else {
         panic!("only support enum")
+    }
+}
+
+/// Implement as ref function for each variant
+#[proc_macro_derive(AsRef)]
+pub fn derive_as_ref(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    let name = &input.ident;
+    if let Data::Enum(data_enum) = input.data {
+        let as_ref_variants = data_enum.variants.iter().map(|variant| {
+            let variant_name = &variant.ident;
+
+            let as_ref_function_name = &Ident::new(
+                &format!("as_ref_{}", camel_to_snake(variant_name.to_string())),
+                variant_name.span(),
+            );
+
+            quote! {
+                pub fn #as_ref_function_name(&self) -> Option<&#variant_name> {
+                    match *self {
+                        #name::#variant_name(ref inner) => Some(inner),
+                        _ => None,
+                    }
+                }
+            }
+        });
+
+        let gen = quote! {
+            impl #name {
+                #(#as_ref_variants)*
+            }
+        };
+        gen.into()
+    } else {
+        panic!("only support enum");
     }
 }
