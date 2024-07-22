@@ -2,12 +2,12 @@
 //! And provides the safety query for the expressions.
 
 use pyrev_ast::*;
-use pyrev_query_inner::*;
+// QueryId is re-exported from pyrev_ast.
+// use pyrev_query_inner::*;
 use std::{
     any::TypeId,
     collections::{HashMap, HashSet},
 };
-
 
 /// Holds all the datas and their associated query ids.
 #[derive(Debug)]

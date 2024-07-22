@@ -1,0 +1,9 @@
+[package]
+name = "pyrev_ast_build"
+version = "1.1.0"
+edition = "2021"
+
+[dependencies]
+pyrev_ast = { path = "../pyrev_ast" }
+pyrev_query = { path = "../pyrev_query" }
+regex = "1.10.2"

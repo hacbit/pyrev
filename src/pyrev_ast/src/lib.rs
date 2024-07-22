@@ -1,11 +1,13 @@
 #![feature(concat_idents)]
 
-mod query;
-mod querymutable;
+// mod query;
+// mod querymutable;
 
 pub use pyrev_ast_derive::*;
-pub use query::*;
-pub use querymutable::*;
+pub use pyrev_query_inner::QueryId;
+// deprecated old query system
+// pub use query::*;
+// pub use querymutable::*;
 use regex::Regex;
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -13,7 +15,7 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 pub trait Expression {}
 
 /// 导入
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
 pub struct Import {
     pub module: String,
     pub bk_module: Option<String>,
@@ -25,18 +27,18 @@ pub struct Import {
 }
 
 /// 类
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
 pub struct Class {
     pub mark: String,
     pub name: String,
-    pub members: Vec<ExpressionEnum>,
+    pub members: Vec<QueryId>,
     pub start_line: usize,
     pub start_offset: usize,
     pub end_offset: usize,
 }
 
 /// 局部变量
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
 pub struct FastVariable {
     pub index: usize,
     pub name: String,
@@ -47,12 +49,12 @@ pub struct FastVariable {
 }
 
 /// 函数
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
 pub struct Function {
     pub mark: String,
     pub name: String,
     pub args: Vec<FastVariable>,
-    pub bodys: Vec<ExpressionEnum>,
+    pub bodys: Vec<QueryId>,
     pub defaults: Vec<String>,
     pub is_async: bool,
     pub start_line: usize,
@@ -62,27 +64,27 @@ pub struct Function {
 }
 
 /// 返回
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
 pub struct Return {
-    pub value: Box<ExpressionEnum>,
+    pub value: Option<QueryId>,
     pub start_line: usize,
     pub start_offset: usize,
     pub end_offset: usize,
 }
 
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
 pub struct Yield {
-    pub value: Box<ExpressionEnum>,
+    pub value: Option<QueryId>,
     pub start_line: usize,
     pub start_offset: usize,
     pub end_offset: usize,
 }
 
 /// 赋值
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
 pub struct Assign {
-    pub target: Box<ExpressionEnum>,
-    pub values: Box<ExpressionEnum>,
+    pub target: Option<QueryId>,
+    pub value: Option<QueryId>,
     pub operator: String,
     pub start_line: usize,
     pub start_offset: usize,
@@ -90,77 +92,77 @@ pub struct Assign {
 }
 
 /// Alias, like Assign but only for `as`
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
 pub struct Alias {
-    pub target: Box<ExpressionEnum>,
-    pub alias: Box<ExpressionEnum>,
+    pub target: Option<QueryId>,
+    pub alias: Option<QueryId>,
     pub start_line: usize,
     pub start_offset: usize,
     pub end_offset: usize,
 }
 
 /// Try
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
 pub struct Try {
-    pub body: Vec<ExpressionEnum>,
+    pub body: Vec<QueryId>,
     /// this is the exception which will be caught
-    pub except: Vec<ExpressionEnum>,
-    pub finally: Box<ExpressionEnum>,
+    pub except: Vec<QueryId>,
+    pub finally: Option<QueryId>,
     pub start_line: usize,
     pub start_offset: usize,
     pub end_offset: usize,
 }
 
 /// Except
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
 pub struct Except {
-    pub exception: Box<ExpressionEnum>,
-    pub body: Vec<ExpressionEnum>,
+    pub exception: Option<QueryId>,
+    pub body: Vec<QueryId>,
     pub start_line: usize,
     pub start_offset: usize,
     pub end_offset: usize,
 }
 
 /// finally
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
 pub struct Finally {
-    pub body: Vec<ExpressionEnum>,
+    pub body: Vec<QueryId>,
     pub start_line: usize,
     pub start_offset: usize,
     pub end_offset: usize,
 }
 
 /// 断言
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
 pub struct Assert {
-    pub test: Box<ExpressionEnum>,
-    pub msg: Option<Box<ExpressionEnum>>,
+    pub test: Option<QueryId>,
+    pub msg: Option<QueryId>,
     pub start_line: usize,
     pub start_offset: usize,
     pub end_offset: usize,
 }
 
 /// 抛出异常
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
 pub struct Raise {
-    pub exception: Box<ExpressionEnum>,
+    pub exception: Option<QueryId>,
     pub start_line: usize,
     pub start_offset: usize,
     pub end_offset: usize,
 }
 
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
 pub struct FormatValue {
-    pub value: Box<ExpressionEnum>,
+    pub value: Option<QueryId>,
     pub start_line: usize,
     pub start_offset: usize,
     pub end_offset: usize,
 }
 
 /// 格式化字符串
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
 pub struct Format {
-    pub format_values: Vec<ExpressionEnum>,
+    pub format_values: Vec<QueryId>,
     pub start_line: usize,
     pub start_offset: usize,
     pub end_offset: usize,
@@ -168,10 +170,10 @@ pub struct Format {
 
 /// 二元操作
 /// 包括 +, -, *, /, <<, %, ==, >, is, in等
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
 pub struct BinaryOperation {
-    pub left: Box<ExpressionEnum>,
-    pub right: Box<ExpressionEnum>,
+    pub left: Option<QueryId>,
+    pub right: Option<QueryId>,
     pub operator: String,
     pub start_line: usize,
     pub start_offset: usize,
@@ -179,38 +181,38 @@ pub struct BinaryOperation {
 }
 
 /// 下标
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
 pub struct Subscr {
-    pub index: Box<ExpressionEnum>,
-    pub target: Box<ExpressionEnum>,
+    pub index: Option<QueryId>,
+    pub target: Option<QueryId>,
     pub start_line: usize,
     pub start_offset: usize,
     pub end_offset: usize,
 }
 
 /// 一元操作
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
 pub struct UnaryOperation {
-    pub target: Box<ExpressionEnum>,
+    pub target: Option<QueryId>,
     pub unary_type: UnaryType,
     pub start_line: usize,
     pub start_offset: usize,
     pub end_offset: usize,
 }
 /// 函数调用
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
 pub struct Call {
-    pub func: Box<ExpressionEnum>,
-    pub args: Vec<ExpressionEnum>,
+    pub func: Option<QueryId>,
+    pub args: Vec<QueryId>,
     pub start_line: usize,
     pub start_offset: usize,
     pub end_offset: usize,
 }
 
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
 pub struct With {
-    pub item: Box<ExpressionEnum>,
-    pub body: Vec<ExpressionEnum>,
+    pub item: Option<QueryId>,
+    pub body: Vec<QueryId>,
     pub is_async: bool,
     pub start_line: usize,
     pub start_offset: usize,
@@ -218,11 +220,11 @@ pub struct With {
 }
 
 /// For循环
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
 pub struct For {
-    pub iterator: Box<ExpressionEnum>,
-    pub items: Box<ExpressionEnum>,
-    pub body: Vec<ExpressionEnum>,
+    pub iterator: Option<QueryId>,
+    pub items: Option<QueryId>,
+    pub body: Vec<QueryId>,
     pub from: usize,
     pub to: usize,
     pub is_async: bool,
@@ -232,18 +234,18 @@ pub struct For {
 }
 
 /// If expression
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
 pub struct If {
-    pub test: Option<Box<ExpressionEnum>>,
-    pub body: Vec<ExpressionEnum>,
-    pub or_else: Option<Box<ExpressionEnum>>,
+    pub test: Option<QueryId>,
+    pub body: Vec<QueryId>,
+    pub or_else: Option<QueryId>,
     pub start_line: usize,
     pub start_offset: usize,
     pub end_offset: usize,
 }
 
 /// Jump
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
 pub struct Jump {
     pub target: usize,
     pub is_backward: bool,
@@ -253,18 +255,18 @@ pub struct Jump {
 }
 
 /// Await
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
 pub struct Await {
-    pub awaitable_expr: Box<ExpressionEnum>,
+    pub awaitable_expr: Option<QueryId>,
     pub start_line: usize,
     pub start_offset: usize,
     pub end_offset: usize,
 }
 
 /// 容器(包括list, tuple, set, dict等)
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
 pub struct Container {
-    pub values: Vec<ExpressionEnum>,
+    pub values: Vec<QueryId>,
     pub container_type: ContainerType,
     pub start_line: usize,
     pub start_offset: usize,
@@ -273,27 +275,27 @@ pub struct Container {
 
 /// 属性
 /// 例如: a.b
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
 pub struct Attribute {
-    pub parent: Box<ExpressionEnum>,
-    pub attr: Box<ExpressionEnum>,
+    pub parent: Option<QueryId>,
+    pub attr: Option<QueryId>,
     pub start_line: usize,
     pub start_offset: usize,
     pub end_offset: usize,
 }
 
 /// 切片
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
 pub struct Slice {
-    pub origin: Box<ExpressionEnum>,
-    pub slice: Vec<ExpressionEnum>,
+    pub origin: Option<QueryId>,
+    pub slice: Vec<QueryId>,
     pub start_line: usize,
     pub start_offset: usize,
     pub end_offset: usize,
 }
 
 /// String的Expression封装
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
 pub struct BaseValue {
     pub value: String,
     pub start_line: usize,
@@ -303,7 +305,7 @@ pub struct BaseValue {
 
 /// Deprecated
 /* /// None
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Query, Default)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
 pub struct NoneValue {
     pub start_line: usize,
     pub start_offset: usize,
@@ -312,9 +314,7 @@ pub struct NoneValue {
 
 /// 为上面的表达式提供一个封装
 /// 用来实现不同Expression的嵌套
-#[derive(
-    Expression, Clone, Debug, PartialEq, Eq, Query, Is, Unwrap, Offset, FromExpression, AsRef,
-)]
+#[derive(Expression, Clone, Debug, PartialEq, Eq, Is, Unwrap, Offset, FromExpression, AsRef)]
 pub enum ExpressionEnum {
     // NoneValue is deprecated
     // NoneValue(NoneValue),
@@ -364,12 +364,6 @@ pub enum UnaryType {
     Positive,
 }
 
-impl Query for UnaryType {
-    fn query<T: 'static>(&self) -> Vec<&T> {
-        vec![]
-    }
-}
-
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub enum ContainerType {
     List,
@@ -379,16 +373,10 @@ pub enum ContainerType {
     Dict,
 }
 
-impl Query for ContainerType {
-    fn query<T: 'static>(&self) -> Vec<&T> {
-        vec![]
-    }
-}
-
-/// `Vec<ExpressionEnum>`的封装
-#[derive(Clone, Debug, PartialEq, Eq, Query, Expression)]
+/// `Vec<QueryId>`的封装
+#[derive(Clone, Debug, PartialEq, Eq, Expression)]
 pub struct Expr {
-    pub bodys: Vec<ExpressionEnum>,
+    pub bodys: Vec<QueryId>,
 }
 
 impl Class {
@@ -452,35 +440,29 @@ impl Function {
     }
 }
 
-impl Default for Expr {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+// impl Expr {
+//     pub fn new() -> Self {
+//         Self { bodys: Vec::new() }
+//     }
 
-impl Expr {
-    pub fn new() -> Self {
-        Self { bodys: Vec::new() }
-    }
+//     pub fn from(bodys: Vec<QueryId>) -> Self {
+//         Self { bodys }
+//     }
 
-    pub fn from(bodys: Vec<ExpressionEnum>) -> Self {
-        Self { bodys }
-    }
+//     pub fn add_expression(&mut self, expr: ExpressionEnum) {
+//         self.bodys.push(expr);
+//     }
 
-    pub fn add_expression(&mut self, expr: ExpressionEnum) {
-        self.bodys.push(expr);
-    }
+//     pub fn extend(&mut self, expr: Expr) {
+//         self.bodys.extend(expr.bodys);
+//     }
 
-    pub fn extend(&mut self, expr: Expr) {
-        self.bodys.extend(expr.bodys);
-    }
+//     pub fn iter(&self) -> impl Iterator<Item = ExpressionEnum> {
+//         self.bodys.clone().into_iter()
+//     }
+// }
 
-    pub fn iter(&self) -> impl Iterator<Item = ExpressionEnum> {
-        self.bodys.clone().into_iter()
-    }
-}
-
-/// 递归遍历表达式树, 生成代码
+/*
 impl ExpressionEnum {
     pub fn build(&self) -> Result<Vec<String>> {
         match self {
@@ -1009,3 +991,4 @@ impl ExpressionEnum {
         }
     }
 }
+*/
