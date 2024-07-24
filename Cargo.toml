@@ -1,18 +1,20 @@
-workspace = { members = [ 
-    "src/pyrev_ast", 
-    "src/pyrev_ast_derive", 
-    "src/pyrev_core", 
-    "src/pyrev_app", 
-    "src/pyrev_marshal",
-    "src/pyrev_object",
-    "src/pyrev_pyc",
-    "src/pyrev_pyc_macro",
-    "src/pyrev_pyinstaller", 
-    "src/pyrev_query", 
-    "src/pyrev_query_inner", 
-    "src/pyrev_ast_build", 
-    "src/pyrev_parser", "src/pyrev_decompiler",
-] }
+[workspace]
+members = [ 
+    "crates/pyrev_ast", 
+    "crates/pyrev_ast_derive", 
+    "crates/pyrev_core", 
+    "crates/pyrev_app",
+    "crates/pyrev_query", 
+    "crates/pyrev_query_inner", 
+    "crates/pyrev_ast_build", 
+    "crates/pyrev_parser", 
+    "crates/pyrev_decompiler",
+    "crates/pyrev_marshal",
+    "crates/pyrev_object",
+    "plugins/pyrev_pyc",
+    "plugins/pyrev_pyc_macro",
+    "plugins/pyrev_pyinstaller",
+]
 
 [package]
 name = "pyrev"
@@ -24,9 +26,9 @@ build = "build.rs"
 license = "MIT"
 
 [dependencies]
-pyrev_app = { path = "src/pyrev_app" }
-pyrev_pyc = { path = "src/pyrev_pyc" }
-pyrev_pyinstaller = { path = "src/pyrev_pyinstaller" }
+pyrev_app = { path = "crates/pyrev_app" }
+pyrev_pyc = { path = "plugins/pyrev_pyc" }
+pyrev_pyinstaller = { path = "plugins/pyrev_pyinstaller" }
 
 [profile.dev]
 # Uncomment the following lines to allow clippy to break your build.
