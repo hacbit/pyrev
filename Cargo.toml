@@ -11,7 +11,7 @@ workspace = { members = [
     "src/pyrev_query", 
     "src/pyrev_query_inner", 
     "src/pyrev_ast_build", 
-    "src/pyrev_parser",
+    "src/pyrev_parser", "src/pyrev_decompiler",
 ] }
 
 [package]

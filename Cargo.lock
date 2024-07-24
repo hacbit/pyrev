@@ -297,6 +297,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "pyrev_decompiler"
+version = "1.2.0-alpha"
+
+[[package]]
 name = "pyrev_marshal"
 version = "1.2.0-alpha"
 dependencies = [
