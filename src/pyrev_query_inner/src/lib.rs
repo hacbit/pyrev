@@ -39,4 +39,23 @@ impl QueryId {
             *self.type_id = type_id;
         }
     }
+
+    /// Check if the query id is the type of T.
+    ///
+    /// # Example
+    /// ```ignore
+    /// use pyrev_query::*;
+    /// use pyrev_ast::*;
+    ///
+    /// let mut map = Map::new();
+    /// let func = Function::default();
+    /// let query_id = map.add::<Function>(func.clone().into()).expect("Failed to add");
+    ///
+    /// assert!(map.is::<Function>(query_id));
+    /// assert_ne!(map.is::<BaseValue>(query_id), true);
+    /// ```
+    #[inline]
+    pub fn is<T: 'static>(&self) -> bool {
+        self.type_id() == TypeId::of::<T>()
+    }
 }

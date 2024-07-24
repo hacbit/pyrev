@@ -8,10 +8,7 @@ use regex::Regex;
 
 /// A helper function to get the expression from the map by query id.
 #[inline]
-pub fn get_helper<'a>(
-    map: &'a Map,
-    expr_id: Option<&QueryId>,
-) -> Option<&'a ExpressionEnum> {
+pub fn get_helper<'a>(map: &'a Map, expr_id: Option<&QueryId>) -> Option<&'a ExpressionEnum> {
     expr_id.and_then(|id| map.get_single(*id))
 }
 
@@ -25,7 +22,7 @@ pub fn get_mut_helper<'a>(
 }
 
 /// A packer for the `get_helper` function.
-/// 
+///
 /// # Example
 /// ```ignore
 /// if let Some(assign) = helper!(map, id, as_ref_assign) {
@@ -43,7 +40,7 @@ macro_rules! helper {
 }
 
 /// A packer for the `get_mut_helper` function.
-/// 
+///
 /// # Example
 /// ```ignore
 /// if let Some(assign) = helper_mut!(map, id, as_ref_assign) {
@@ -92,8 +89,7 @@ pub fn build(map: &Map, expression: &ExpressionEnum) -> Option<Vec<String>> {
                     // get_helper(map, next_expr).and_then(|expr| expr.as_ref_assign())
                     helper!(map, next_expr, as_ref_assign)
                 {
-                    if let Some(name) = helper!(map, assign.target.as_ref(), as_ref_base_value)
-                    {
+                    if let Some(name) = helper!(map, assign.target.as_ref(), as_ref_base_value) {
                         if filter_members.contains(&name.value.as_str()) {
                             next_expr = class_members.next();
                             continue;
@@ -114,7 +110,9 @@ pub fn build(map: &Map, expression: &ExpressionEnum) -> Option<Vec<String>> {
                 if let Some(name) = helper!(map, assign.target.as_ref(), as_ref_base_value) {
                     if name.value == "__doc__" {
                         has_doc = true;
-                        let docstring = build_helper_some(map, assign.value)?.join("").replace("\\n", "\n");
+                        let docstring = build_helper_some(map, assign.value)?
+                            .join("")
+                            .replace("\\n", "\n");
                         let docstring = docstring.trim_matches('\'');
                         codes.push("    \"\"\"".to_string());
                         for line in docstring.lines().filter(|l| !l.trim().is_empty()) {
@@ -176,7 +174,19 @@ pub fn build(map: &Map, expression: &ExpressionEnum) -> Option<Vec<String>> {
             let mut ret_code = String::new();
             let mut defaults_iter = function.defaults.iter();
             let mut default_offset = function.args.len() - function.defaults.len();
-            for (arg, anno) in function.args_iter() {
+
+            let mut arg_iter = function
+                .args
+                .iter()
+                .map(|id| {
+                    helper!(map, Some(id), as_ref_fast_variable).and_then(|fv| {
+                        Some((fv.index, fv.name.as_ref(), fv.annotation.as_ref()))
+                    })
+                })
+                .collect::<Option<Vec<_>>>()?;
+            arg_iter.sort_by(|a, b| a.0.cmp(&b.0));
+
+            for (arg, anno) in arg_iter.into_iter().map(|(_, arg, anno)| (arg, anno)) {
                 if arg == "return" {
                     ret_code.push_str(&format!(
                         " -> {}",
@@ -192,10 +202,7 @@ pub fn build(map: &Map, expression: &ExpressionEnum) -> Option<Vec<String>> {
                 }
 
                 if default_offset == 0 {
-                    args_code.push_str(&format!(
-                        " = {}",
-                        defaults_iter.next()?
-                    ));
+                    args_code.push_str(&format!(" = {}", defaults_iter.next()?));
                 } else {
                     // There are no parameters with default values yet.
                     default_offset -= 1;
@@ -211,27 +218,17 @@ pub fn build(map: &Map, expression: &ExpressionEnum) -> Option<Vec<String>> {
                     let lambda_body = lambda_body.trim_start_matches("return ");
 
                     if lambda_body.starts_with("yield") {
-                        codes.push(format!(
-                            "lambda {}: ({})",
-                            lambda_args,
-                            lambda_body
-                        ));
+                        codes.push(format!("lambda {}: ({})", lambda_args, lambda_body));
                     } else {
-                        codes.push(format!(
-                            "lambda {}: {}",
-                            lambda_args,
-                            lambda_body
-                        ));
+                        codes.push(format!("lambda {}: {}", lambda_args, lambda_body));
                     }
                 }
-                "<listcomp>" => {
-                    codes.push(format!(
-                        "[{} for {} in {}]",
-                        build_helper(map, function.bodys.first()?)?.join(""),
-                        args_code.trim_end_matches(", "),
-                        build_helper(map, function.bodys.get(1)?)?.join("")
-                    ))
-                }
+                "<listcomp>" => codes.push(format!(
+                    "[{} for {} in {}]",
+                    build_helper(map, function.bodys.first()?)?.join(""),
+                    args_code.trim_end_matches(", "),
+                    build_helper(map, function.bodys.get(1)?)?.join("")
+                )),
                 _ => {
                     let first_line = if function.is_async {
                         format!(
@@ -323,7 +320,7 @@ pub fn build(map: &Map, expression: &ExpressionEnum) -> Option<Vec<String>> {
         }
         ExpressionEnum::Except(except) => {
             let exception_code = build_helper_some(map, except.exception)?.join("");
-            
+
             if exception_code.is_empty() {
                 codes.push("except:".to_string())
             } else {
@@ -383,9 +380,17 @@ pub fn build(map: &Map, expression: &ExpressionEnum) -> Option<Vec<String>> {
             }
 
             if func_code.starts_with("lambda ") {
-                codes.push(format!("({})({})", func_code, args_code.join(", ").trim_end_matches(", ")))
+                codes.push(format!(
+                    "({})({})",
+                    func_code,
+                    args_code.join(", ").trim_end_matches(", ")
+                ))
             } else {
-                codes.push(format!("{}({})", func_code, args_code.join(", ").trim_end_matches(", ")))
+                codes.push(format!(
+                    "{}({})",
+                    func_code,
+                    args_code.join(", ").trim_end_matches(", ")
+                ))
             }
         }
         ExpressionEnum::FormatValue(format_value) => {
@@ -398,7 +403,7 @@ pub fn build(map: &Map, expression: &ExpressionEnum) -> Option<Vec<String>> {
 
             for val in format.format_values.iter() {
                 let val_code = build_helper(map, val)?.join("");
-                
+
                 if val.type_id() == TypeId::of::<FormatValue>() {
                     format_string.push_str(&format!("{{{}}}", val_code))
                 } else {
@@ -406,10 +411,7 @@ pub fn build(map: &Map, expression: &ExpressionEnum) -> Option<Vec<String>> {
                 }
             }
 
-            codes.push(format!(
-                "f\"{}\"",
-                format_string.replace('"', "\\\"")
-            ))
+            codes.push(format!("f\"{}\"", format_string.replace('"', "\\\"")))
         }
         ExpressionEnum::BinaryOperation(bin_op) => {
             let left_code = build_helper_some(map, bin_op.left)?.join("");
@@ -466,25 +468,15 @@ pub fn build(map: &Map, expression: &ExpressionEnum) -> Option<Vec<String>> {
             });
 
             match container.container_type {
-                ContainerType::List => {
-                    codes.push(format!("[{}]", value_codes.join(", ")))
-                }
-                ContainerType::Tuple => {
-                    codes.push(format!("({})", value_codes.join(", ")))
-                }
-                ContainerType::Set => {
-                    codes.push(format!("{{{}}}", value_codes.join(", ")))
-                }
+                ContainerType::List => codes.push(format!("[{}]", value_codes.join(", "))),
+                ContainerType::Tuple => codes.push(format!("({})", value_codes.join(", "))),
+                ContainerType::Set => codes.push(format!("{{{}}}", value_codes.join(", "))),
                 ContainerType::Dict => {
                     let mut kv_codes = vec![];
 
                     for (k, v) in value_codes.iter().enumerate() {
                         if k % 2 == 0 {
-                            kv_codes.push(format!(
-                                "{}: {}",
-                                v,
-                                value_codes.get(k + 1)?
-                            ))
+                            kv_codes.push(format!("{}: {}", v, value_codes.get(k + 1)?))
                         }
                     }
 
@@ -507,11 +499,7 @@ pub fn build(map: &Map, expression: &ExpressionEnum) -> Option<Vec<String>> {
                 .collect::<Option<Vec<_>>>()?
                 .join(":");
 
-            codes.push(format!(
-                "{}[{}]",
-                origin_code,
-                slice_code
-            ))
+            codes.push(format!("{}[{}]", origin_code, slice_code))
         }
         ExpressionEnum::Attribute(attr) => {
             let parent_code = build_helper_some(map, attr.parent)?.join("");
@@ -563,7 +551,7 @@ pub fn build(map: &Map, expression: &ExpressionEnum) -> Option<Vec<String>> {
 
             if let Some(or_else) = if_else.or_else.as_ref() {
                 let or_else_code = build_helper(map, or_else)?;
-                
+
                 if or_else_code.first()?.starts_with("if ") {
                     // elif
                     codes.push(format!("el{}", or_else_code.first()?));

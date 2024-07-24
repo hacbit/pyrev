@@ -53,7 +53,7 @@ pub struct FastVariable {
 pub struct Function {
     pub mark: String,
     pub name: String,
-    pub args: Vec<FastVariable>,
+    pub args: Vec<QueryId>,
     pub bodys: Vec<QueryId>,
     pub defaults: Vec<String>,
     pub is_async: bool,
@@ -419,24 +419,6 @@ impl Function {
             bodys: Vec::new(),
             ..Default::default()
         })
-    }
-
-    pub fn from(expr: ExpressionEnum) -> Result<Self> {
-        if let ExpressionEnum::BaseValue(value) = expr {
-            Self::new(value.value)
-        } else {
-            Err(format!("Expect BaseValue, got {:?}", expr).into())
-        }
-    }
-
-    pub fn args_iter(&self) -> impl Iterator<Item = (&String, &Option<String>)> {
-        let mut iter = self
-            .args
-            .iter()
-            .map(|arg| (&arg.index, &arg.name, &arg.annotation))
-            .collect::<Vec<_>>();
-        iter.sort_by(|i, j| i.0.cmp(j.0));
-        iter.into_iter().map(|(_, name, anno)| (name, anno))
     }
 }
 
