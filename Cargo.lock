@@ -240,7 +240,7 @@ dependencies = [
 
 [[package]]
 name = "pyrev"
-version = "1.1.0"
+version = "1.2.0-alpha"
 dependencies = [
  "pyrev_app",
  "pyrev_pyc",
@@ -249,7 +249,7 @@ dependencies = [
 
 [[package]]
 name = "pyrev_app"
-version = "1.1.0"
+version = "1.2.0-alpha"
 dependencies = [
  "atty",
  "clap",
@@ -259,7 +259,7 @@ dependencies = [
 
 [[package]]
 name = "pyrev_ast"
-version = "1.1.0"
+version = "1.2.0-alpha"
 dependencies = [
  "pyrev_ast_derive",
  "pyrev_query_inner",
@@ -268,7 +268,7 @@ dependencies = [
 
 [[package]]
 name = "pyrev_ast_build"
-version = "1.1.0"
+version = "1.2.0-alpha"
 dependencies = [
  "pyrev_ast",
  "pyrev_query",
@@ -277,7 +277,7 @@ dependencies = [
 
 [[package]]
 name = "pyrev_ast_derive"
-version = "1.1.0"
+version = "1.2.0-alpha"
 dependencies = [
  "quote",
  "regex",
@@ -286,7 +286,7 @@ dependencies = [
 
 [[package]]
 name = "pyrev_core"
-version = "1.1.0"
+version = "1.2.0-alpha"
 dependencies = [
  "atty",
  "colored",
@@ -298,18 +298,18 @@ dependencies = [
 
 [[package]]
 name = "pyrev_marshal"
-version = "1.1.0"
+version = "1.2.0-alpha"
 dependencies = [
  "pyrev_object",
 ]
 
 [[package]]
 name = "pyrev_object"
-version = "1.1.0"
+version = "1.2.0-alpha"
 
 [[package]]
 name = "pyrev_parser"
-version = "1.1.0"
+version = "1.2.0-alpha"
 dependencies = [
  "pyrev_ast",
  "pyrev_core",
@@ -319,7 +319,7 @@ dependencies = [
 
 [[package]]
 name = "pyrev_pyc"
-version = "1.1.0"
+version = "1.2.0-alpha"
 dependencies = [
  "pyrev_app",
  "pyrev_core",
@@ -330,7 +330,7 @@ dependencies = [
 
 [[package]]
 name = "pyrev_pyc_macro"
-version = "1.1.0"
+version = "1.2.0-alpha"
 dependencies = [
  "quote",
  "syn",
@@ -338,7 +338,7 @@ dependencies = [
 
 [[package]]
 name = "pyrev_pyinstaller"
-version = "1.1.0"
+version = "1.2.0-alpha"
 dependencies = [
  "byteorder",
  "flate2",
@@ -351,7 +351,7 @@ dependencies = [
 
 [[package]]
 name = "pyrev_query"
-version = "1.1.0"
+version = "1.2.0-alpha"
 dependencies = [
  "pyrev_ast",
  "pyrev_query_inner",
@@ -359,7 +359,7 @@ dependencies = [
 
 [[package]]
 name = "pyrev_query_inner"
-version = "1.1.0"
+version = "1.2.0-alpha"
 
 [[package]]
 name = "quote"

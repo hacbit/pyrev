@@ -7,13 +7,17 @@ workspace = { members = [
     "src/pyrev_object",
     "src/pyrev_pyc",
     "src/pyrev_pyc_macro",
-    "src/pyrev_pyinstaller", "src/pyrev_query", "src/pyrev_query_inner", "src/pyrev_ast_build", "src/pyrev_parser",
+    "src/pyrev_pyinstaller", 
+    "src/pyrev_query", 
+    "src/pyrev_query_inner", 
+    "src/pyrev_ast_build", 
+    "src/pyrev_parser",
 ] }
 
 [package]
 name = "pyrev"
 authors = ["hacbit <hacbit@foxmail.com>"]
-version = "1.1.0"
+version = "1.2.0-alpha"
 edition = "2021"
 description = "A Python bytecode reverse engineering tool."
 build = "build.rs"
