@@ -9,7 +9,6 @@ pub mod prelude {
     pub use crate::plugin::{Plugin, *};
     pub use clap::{arg, command, value_parser, Arg, ArgAction, ArgMatches, Command};
     pub use pyrev_core::prelude::*;
-    use std::io::Read;
     use std::path::PathBuf;
 
     #[derive(Debug)]
@@ -70,7 +69,7 @@ pub mod prelude {
                 arg!(
                     -f --file <FILE> "specify bytecode files"
                 )
-                .action(ArgAction::Append)
+                .action(ArgAction::Set)
                 // If you don't specify the input file, it will read from stdin
                 .required(false)
                 .value_parser(value_parser!(PathBuf)),
@@ -79,7 +78,7 @@ pub mod prelude {
                 arg!(
                     -o --output <FILE> "set name of output file which contains the decompiled result"
                 )
-                .action(ArgAction::Append)
+                .action(ArgAction::Set)
                 .required(false)
                 .value_parser(value_parser!(PathBuf)),
             )
@@ -104,48 +103,18 @@ pub mod prelude {
         }
 
         fn run(&self, args: &ArgMatches) -> Result<()> {
-            let ifiles = args
-                .get_many::<PathBuf>("file")
-                .unwrap_or_default()
-                .cloned()
-                .collect::<Vec<_>>();
-            let ofiles = args
-                .get_many::<PathBuf>("output")
-                .unwrap_or_default()
-                .cloned()
-                .collect::<Vec<_>>();
+            let mut app = App::new();
 
-            if ifiles.is_empty() {
-                if atty::is(atty::Stream::Stdin) {
-                    warn!("No input files specified");
-                    return Ok(());
-                } else {
-                    // read from stdin
-                    let mut buf = String::new();
-                    std::io::stdin().read_to_string(&mut buf)?;
-                    App::new().run_once(buf).with_files(ofiles).output();
-                }
-            } else {
-                //dbg!(&ifiles);
-                //dbg!(&ofiles);
-                App::new()
-                    .insert_resources(ifiles)
-                    .with_files(ofiles)
-                    .run()
-                    .output();
+            if let Some(file) = args.get_one::<PathBuf>("file") {
+                app.with_file(file);
             }
+            if let Some(file) = args.get_one::<PathBuf>("output") {
+                app.with_output(file);
+            }
+
+            app.run();
+
             Ok(())
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::prelude::*;
-
-    #[test]
-    fn test() {
-        let path = "test/yield.txt";
-        App::new().insert_resource(path).run().output();
     }
 }

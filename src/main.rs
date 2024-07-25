@@ -1,4 +1,5 @@
-// python bytecode reverse engineering by @hacbit
+//! python bytecode reverse engineering by @hacbit
+
 use pyrev_app::prelude::*;
 use pyrev_pyc::prelude::*;
 use pyrev_pyinstaller::prelude::*;
