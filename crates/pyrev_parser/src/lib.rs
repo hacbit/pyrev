@@ -24,7 +24,9 @@ pub enum ParseError {
     IsNone(String),
     IsNot(String),
     IdsStackEmpty,
-    InvalidArg { target: String },
+    InvalidArg {
+        target: String,
+    },
     QueryFailed,
     QueryMutFailed,
     AddMapFailed,
@@ -65,7 +67,10 @@ macro_rules! add_helper {
 /// Parse the opcode instructions to AST
 ///
 /// Each expression will be added to the map
-pub fn parse(map: &mut Map, opcode_instructions: &[OpcodeInstruction]) -> ParseResult<Vec<QueryId>> {
+pub fn parse(
+    map: &mut Map,
+    opcode_instructions: &[OpcodeInstruction],
+) -> ParseResult<Vec<QueryId>> {
     let mut expr_ids = Vec::<QueryId>::new();
     let mut index = 0;
     loop {
@@ -415,8 +420,7 @@ pub fn parse(map: &mut Map, opcode_instructions: &[OpcodeInstruction]) -> ParseR
                 loop {
                     index += 1;
                     if let Some(next_instruction) = opcode_instructions.get(index) {
-                        if next_instruction.starts_line != instruction.starts_line
-                        {
+                        if next_instruction.starts_line != instruction.starts_line {
                             break;
                         }
                     }
@@ -768,7 +772,8 @@ pub fn parse(map: &mut Map, opcode_instructions: &[OpcodeInstruction]) -> ParseR
                         start_offset: instruction.offset,
                         end_offset: instruction.offset + 1,
                     }
-                }.ok_or(ParseError::AddMapFailed)?;
+                }
+                .ok_or(ParseError::AddMapFailed)?;
 
                 expr_ids.push(query_id);
             } // end BinaryOp | CompareOp
@@ -778,9 +783,13 @@ pub fn parse(map: &mut Map, opcode_instructions: &[OpcodeInstruction]) -> ParseR
                 let operator = match instruction.arg.as_ref() {
                     Some(0) => "is",
                     Some(1) => "is not",
-                    _ => return Err(ParseError::InvalidArg { target: "IsOp operator".into() }),
+                    _ => {
+                        return Err(ParseError::InvalidArg {
+                            target: "IsOp operator".into(),
+                        })
+                    }
                 };
-                
+
                 let query_id = add_helper! {
                     map, BinaryOperation {
                         left: Some(left),
@@ -789,7 +798,8 @@ pub fn parse(map: &mut Map, opcode_instructions: &[OpcodeInstruction]) -> ParseR
                         start_offset: instruction.offset,
                         end_offset: instruction.offset + 1,
                     }
-                }.ok_or(ParseError::AddMapFailed)?;
+                }
+                .ok_or(ParseError::AddMapFailed)?;
 
                 expr_ids.push(query_id);
             } // end IsOp
@@ -799,9 +809,13 @@ pub fn parse(map: &mut Map, opcode_instructions: &[OpcodeInstruction]) -> ParseR
                 let operator = match instruction.arg.as_ref() {
                     Some(0) => "in",
                     Some(1) => "not in",
-                    _ => return Err(ParseError::InvalidArg { target: "ContainsOp operator".into() }),
+                    _ => {
+                        return Err(ParseError::InvalidArg {
+                            target: "ContainsOp operator".into(),
+                        })
+                    }
                 };
-                
+
                 let query_id = add_helper! {
                     map, BinaryOperation {
                         left: Some(left),
@@ -810,7 +824,8 @@ pub fn parse(map: &mut Map, opcode_instructions: &[OpcodeInstruction]) -> ParseR
                         start_offset: instruction.offset,
                         end_offset: instruction.offset + 1,
                     }
-                }.ok_or(ParseError::AddMapFailed)?;
+                }
+                .ok_or(ParseError::AddMapFailed)?;
 
                 expr_ids.push(query_id);
             } // end ContainsOp
@@ -825,7 +840,8 @@ pub fn parse(map: &mut Map, opcode_instructions: &[OpcodeInstruction]) -> ParseR
                         start_offset: instruction.offset,
                         end_offset: instruction.offset + 1,
                     }
-                }.ok_or(ParseError::AddMapFailed)?;
+                }
+                .ok_or(ParseError::AddMapFailed)?;
 
                 expr_ids.push(query_id);
             } // end BinarySubscr
@@ -839,7 +855,8 @@ pub fn parse(map: &mut Map, opcode_instructions: &[OpcodeInstruction]) -> ParseR
                         start_offset: instruction.offset,
                         end_offset: instruction.offset + 1,
                     }
-                }.ok_or(ParseError::AddMapFailed)?;
+                }
+                .ok_or(ParseError::AddMapFailed)?;
 
                 expr_ids.push(query_id);
             } // end UnaryInvert
@@ -853,7 +870,8 @@ pub fn parse(map: &mut Map, opcode_instructions: &[OpcodeInstruction]) -> ParseR
                         start_offset: instruction.offset,
                         end_offset: instruction.offset + 1,
                     }
-                }.ok_or(ParseError::AddMapFailed)?;
+                }
+                .ok_or(ParseError::AddMapFailed)?;
 
                 expr_ids.push(query_id);
             } // end UnaryNegative
@@ -867,16 +885,21 @@ pub fn parse(map: &mut Map, opcode_instructions: &[OpcodeInstruction]) -> ParseR
                         start_offset: instruction.offset,
                         end_offset: instruction.offset + 1,
                     }
-                }.ok_or(ParseError::AddMapFailed)?;
+                }
+                .ok_or(ParseError::AddMapFailed)?;
 
                 expr_ids.push(query_id);
             } // end UnaryNot
             Opcode::Call => {
-                let count = instruction.arg.ok_or(ParseError::IsNone("Call count".into()))?;
+                let count = instruction
+                    .arg
+                    .ok_or(ParseError::IsNone("Call count".into()))?;
 
                 if count == 0 {
                     let last_id = expr_ids.pop().ok_or(ParseError::IdsStackEmpty)?;
-                    if let ExpressionEnum::BaseValue(base) = map.get_single(last_id).ok_or(ParseError::QueryFailed)? {
+                    if let ExpressionEnum::BaseValue(base) =
+                        map.get_single(last_id).ok_or(ParseError::QueryFailed)?
+                    {
                         if base.value.contains(' ') {
                             // not a function call
                             expr_ids.push(last_id);
@@ -888,7 +911,8 @@ pub fn parse(map: &mut Map, opcode_instructions: &[OpcodeInstruction]) -> ParseR
                                     start_offset: instruction.offset,
                                     end_offset: instruction.offset + 1,
                                 }
-                            }.ok_or(ParseError::AddMapFailed)?;
+                            }
+                            .ok_or(ParseError::AddMapFailed)?;
 
                             expr_ids.push(query_id);
                         }
@@ -900,7 +924,8 @@ pub fn parse(map: &mut Map, opcode_instructions: &[OpcodeInstruction]) -> ParseR
                                 start_offset: instruction.offset,
                                 end_offset: instruction.offset + 1,
                             }
-                        }.ok_or(ParseError::AddMapFailed)?;
+                        }
+                        .ok_or(ParseError::AddMapFailed)?;
 
                         expr_ids.push(query_id);
                     }
@@ -934,7 +959,8 @@ pub fn parse(map: &mut Map, opcode_instructions: &[OpcodeInstruction]) -> ParseR
                                 start_offset: instruction.offset,
                                 end_offset: instruction.offset + 1,
                             }
-                        }.ok_or(ParseError::AddMapFailed)?;
+                        }
+                        .ok_or(ParseError::AddMapFailed)?;
 
                         expr_ids.push(query_id);
                     } // end BaseValue
@@ -946,7 +972,8 @@ pub fn parse(map: &mut Map, opcode_instructions: &[OpcodeInstruction]) -> ParseR
                                 start_offset: instruction.offset,
                                 end_offset: instruction.offset + 1,
                             }
-                        }.ok_or(ParseError::AddMapFailed)?;
+                        }
+                        .ok_or(ParseError::AddMapFailed)?;
 
                         expr_ids.push(query_id);
                     }
@@ -962,7 +989,8 @@ pub fn parse(map: &mut Map, opcode_instructions: &[OpcodeInstruction]) -> ParseR
                         start_offset: instruction.offset,
                         end_offset: instruction.offset + 1,
                     }
-                }.ok_or(ParseError::AddMapFailed)?;
+                }
+                .ok_or(ParseError::AddMapFailed)?;
 
                 expr_ids.push(query_id);
             } // end ReturnValue
@@ -976,14 +1004,18 @@ pub fn parse(map: &mut Map, opcode_instructions: &[OpcodeInstruction]) -> ParseR
                         start_offset: instruction.offset,
                         end_offset: instruction.offset + 1,
                     }
-                }.ok_or(ParseError::AddMapFailed)?;
+                }
+                .ok_or(ParseError::AddMapFailed)?;
 
                 expr_ids.push(query_id);
             } // end YieldValue
             Opcode::ImportFrom => {
                 let value_id = expr_ids.last().ok_or(ParseError::IdsStackEmpty)?;
 
-                if let ExpressionEnum::Import(import) = map.get_single_mut(*value_id).ok_or(ParseError::QueryFailed)? {
+                if let ExpressionEnum::Import(import) = map
+                    .get_single_mut(*value_id)
+                    .ok_or(ParseError::QueryFailed)?
+                {
                     if import.bk_module.is_none() {
                         // hasn't `from`
                         import.fragment = None;
@@ -1013,54 +1045,22 @@ pub fn parse(map: &mut Map, opcode_instructions: &[OpcodeInstruction]) -> ParseR
 
                 todo!()
             } // end ImportName
-            Opcode::PopJumpIfTrue => {
-
-            } // end PopJumpIfTrue
-            Opcode::PopJumpIfFalse => {
-
-            } // end PopJumpIfFalse
-            Opcode::JumpForward => {
-
-            } // end JumpForward
-            Opcode::JumpBackward => {
-
-            } // end JumpBackward
-            Opcode::LoadAssertionError => {
-
-            } // end LoadAssertionError
-            Opcode::RaiseVarargs => {
-
-            } // end RaiseVarargs
-            Opcode::CheckExcMatch => {
-
-            } // end CheckExcMatch
-            Opcode::BeforeWith => {
-
-            } // end BeforeWith
-            Opcode::BeforeAsyncWith => {
-
-            } // end BeforeAsyncWith
-            Opcode::ForIter => {
-
-            } // end ForIter
-            Opcode::GetAiter => {
-
-            } // end GetAiter
-            Opcode::EndAsyncFor => {
-
-            } // end EndAsyncFor
-            Opcode::GetAwaitable => {
-
-            } // end GetAwaitable
-            Opcode::UnpackSequence => {
-
-            } // end UnpackSequence
-            Opcode::Copy => {
-
-            } // end Copy
-            Opcode::Swap => {
-
-            } // end Swap
+            Opcode::PopJumpIfTrue => {}      // end PopJumpIfTrue
+            Opcode::PopJumpIfFalse => {}     // end PopJumpIfFalse
+            Opcode::JumpForward => {}        // end JumpForward
+            Opcode::JumpBackward => {}       // end JumpBackward
+            Opcode::LoadAssertionError => {} // end LoadAssertionError
+            Opcode::RaiseVarargs => {}       // end RaiseVarargs
+            Opcode::CheckExcMatch => {}      // end CheckExcMatch
+            Opcode::BeforeWith => {}         // end BeforeWith
+            Opcode::BeforeAsyncWith => {}    // end BeforeAsyncWith
+            Opcode::ForIter => {}            // end ForIter
+            Opcode::GetAiter => {}           // end GetAiter
+            Opcode::EndAsyncFor => {}        // end EndAsyncFor
+            Opcode::GetAwaitable => {}       // end GetAwaitable
+            Opcode::UnpackSequence => {}     // end UnpackSequence
+            Opcode::Copy => {}               // end Copy
+            Opcode::Swap => {}               // end Swap
             _ => {}
         } // end match
 

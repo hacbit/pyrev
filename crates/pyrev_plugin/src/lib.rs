@@ -1,18 +1,20 @@
 #![allow(non_upper_case_globals)]
 
-use clap::{ArgMatches, Command};
-
-use crate::prelude::Cli;
-use pyrev_app_macro::impl_plugin_all_tuples;
-
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+use clap::Command;
+use pyrev_plugin_macro::impl_plugin_all_tuples;
 
 pub trait Plugin {
     fn build(&self, cmd: &mut Command);
 }
 
+pub trait PluginHolder {
+    fn add_plugin(&mut self, plugin: impl Plugin + 'static);
+}
+
 pub trait Plugins<Marker> {
-    fn add_to_cli(self, cli: &mut Cli);
+    type Cli;
+
+    fn add_to_cli(self, cli: &mut Self::Cli);
 }
 
 impl std::fmt::Debug for Box<dyn Plugin> {
@@ -31,10 +33,12 @@ where
     }
 }
 
-pub struct PluginsTupleMarker;
+pub struct PluginsTupleMarker<C: PluginHolder>(std::marker::PhantomData<C>);
 
-impl<P: 'static + Plugin> Plugins<PluginsTupleMarker> for P {
-    fn add_to_cli(self, cli: &mut Cli) {
+impl<P: 'static + Plugin, C: PluginHolder> Plugins<PluginsTupleMarker<C>> for P {
+    type Cli = C;
+
+    fn add_to_cli(self, cli: &mut Self::Cli) {
         cli.add_plugin(self);
     }
 }
@@ -42,8 +46,10 @@ impl<P: 'static + Plugin> Plugins<PluginsTupleMarker> for P {
 macro_rules! impl_plugins_tuples {
     (($($name:ident),*$(,)?)) => {
         #[allow(non_snake_case)]
-        impl<$($name: 'static + Plugin),*> Plugins<PluginsTupleMarker> for ($($name,)*) {
-            fn add_to_cli(self, _cli: &mut Cli) {
+        impl<C: PluginHolder, $($name: 'static + Plugin),*> Plugins<PluginsTupleMarker<C>> for ($($name,)*) {
+            type Cli = C;
+
+            fn add_to_cli(self, _cli: &mut Self::Cli) {
                 let ($($name,)*) = self;
                 $(
                     _cli.add_plugin($name);
@@ -52,6 +58,5 @@ macro_rules! impl_plugins_tuples {
         }
     };
 }
-
 
 impl_plugin_all_tuples!(impl_plugins_tuples, 0, 7);

@@ -2,18 +2,21 @@
 members = [ 
     "crates/pyrev_ast", 
     "crates/pyrev_ast_derive", 
+    "crates/pyrev_ast_build", 
+    "crates/pyrev_ast_visit", 
     "crates/pyrev_core", 
-    "crates/pyrev_app",
     "crates/pyrev_query", 
     "crates/pyrev_query_inner", 
-    "crates/pyrev_ast_build", 
     "crates/pyrev_parser", 
     "crates/pyrev_decompiler",
     "crates/pyrev_marshal",
     "crates/pyrev_object",
+    "crates/pyrev_app",
+    "crates/pyrev_plugin",
+    "crates/pyrev_plugin_macro", 
     "plugins/pyrev_pyc",
     "plugins/pyrev_pyc_macro",
-    "plugins/pyrev_pyinstaller", "crates/pyrev_ast_visit", "crates/pyrev_app_macro",
+    "plugins/pyrev_pyinstaller",
 ]
 
 [package]

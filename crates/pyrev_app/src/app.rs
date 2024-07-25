@@ -1,6 +1,10 @@
 use pyrev_core::prelude::*;
 use pyrev_query::Map;
-use std::{fs, path::{Path, PathBuf}, process::exit};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+    process::exit,
+};
 
 /// The main struct of the application.
 pub struct App {
@@ -58,7 +62,5 @@ impl App {
         }
     }
 
-    pub fn run(&mut self) {
-
-    }
+    pub fn run(&mut self) {}
 }

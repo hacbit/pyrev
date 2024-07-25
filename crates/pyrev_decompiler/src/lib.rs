@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
-use pyrev_parser::*;
 use pyrev_ast::*;
 use pyrev_ast_visit::*;
 use pyrev_core::prelude::*;
+use pyrev_parser::*;
 use pyrev_query::*;
 
 #[cfg(target_os = "windows")]

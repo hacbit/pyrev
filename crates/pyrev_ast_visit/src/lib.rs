@@ -29,7 +29,6 @@ macro_rules! helper {
     };
 }
 
-
 pub trait PyNodeVisitor {
     type Node;
     type Constant;
@@ -60,7 +59,7 @@ pub trait PyNodeVisitor {
     fn visit_set(&mut self, node: &Self::Container, query: &Self::Query);
 
     fn visit_set_comp(&mut self, node: &Self::Function, query: &Self::Query);
-    
+
     fn visit_dict(&mut self, node: &Self::Container, query: &Self::Query);
 
     fn visit_dict_comp(&mut self, node: &Self::Function, query: &Self::Query);
@@ -92,7 +91,10 @@ pub struct Unparser {
 impl Unparser {
     #[inline]
     pub fn new() -> Self {
-        Self { indent: 4, output: vec![] }
+        Self {
+            indent: 4,
+            output: vec![],
+        }
     }
 
     #[inline]
@@ -102,7 +104,7 @@ impl Unparser {
 
     /// Write a text to the last line of the output.
     /// Don't add a new line.
-    /// 
+    ///
     /// If the output is empty, a new line is added.
     #[inline]
     pub fn write_back(&mut self, text: &str) {
@@ -148,7 +150,7 @@ impl Unparser {
     }
 
     /// Add a text back with padding
-    /// 
+    ///
     /// You can specified added some text in the left and right
     #[inline]
     pub fn add_with_padding(&mut self, text: &str, left: &str, right: &str) {
@@ -161,7 +163,6 @@ impl Unparser {
         }
     }
 }
-
 
 impl PyNodeVisitor for Unparser {
     type Node = ExpressionEnum;
@@ -182,28 +183,24 @@ impl PyNodeVisitor for Unparser {
             ExpressionEnum::BaseValue(base) => {
                 self.visit_constant(base, query);
             }
-            ExpressionEnum::Container(container) => {
-                match container.container_type {
-                    ContainerType::List => self.visit_list(container, query),
-                    ContainerType::Tuple => self.visit_tuple(container, query),
-                    ContainerType::Set => self.visit_set(container, query),
-                    ContainerType::Dict => self.visit_dict(container, query),
-                }
-            }
-            ExpressionEnum::Function(function) => {
-                match function.name.as_str() {
-                    "<listcomp>" => self.visit_list_comp(function, query),
-                    "<setcomp>" => self.visit_set_comp(function, query),
-                    "<dictcomp>" => self.visit_dict_comp(function, query),
-                    name => {
-                        if name.contains(&['<', '>']) {
-                            self.visit_generator(function, query)
-                        } else {
-                            self.visit_function(function, query)
-                        }
+            ExpressionEnum::Container(container) => match container.container_type {
+                ContainerType::List => self.visit_list(container, query),
+                ContainerType::Tuple => self.visit_tuple(container, query),
+                ContainerType::Set => self.visit_set(container, query),
+                ContainerType::Dict => self.visit_dict(container, query),
+            },
+            ExpressionEnum::Function(function) => match function.name.as_str() {
+                "<listcomp>" => self.visit_list_comp(function, query),
+                "<setcomp>" => self.visit_set_comp(function, query),
+                "<dictcomp>" => self.visit_dict_comp(function, query),
+                name => {
+                    if name.contains(&['<', '>']) {
+                        self.visit_generator(function, query)
+                    } else {
+                        self.visit_function(function, query)
                     }
                 }
-            }
+            },
             _ => {}
         }
 
@@ -272,25 +269,19 @@ impl PyNodeVisitor for Unparser {
     fn visit_list_comp(&mut self, node: &Self::Function, _query: &Self::Query) {
         debug_assert!(node.name == "<listcomp>");
 
-        self.delimit("[", "]", |_unparser| {
-            todo!()
-        })
+        self.delimit("[", "]", |_unparser| todo!())
     }
 
     fn visit_set_comp(&mut self, node: &Self::Function, _query: &Self::Query) {
         debug_assert!(node.name == "<setcomp>");
 
-        self.delimit("{", "}", |_unparser| {
-            todo!()
-        })
+        self.delimit("{", "}", |_unparser| todo!())
     }
 
     fn visit_dict_comp(&mut self, node: &Self::Function, _query: &Self::Query) {
         debug_assert!(node.name == "<dictcomp>");
 
-        self.delimit("{", "}", |_unparser| {
-            todo!()
-        })
+        self.delimit("{", "}", |_unparser| todo!())
     }
 
     fn visit_generator(&mut self, _node: &Self::Function, _query: &Self::Query) {
@@ -335,16 +326,13 @@ impl PyNodeVisitor for Unparser {
                 }
             }
         });
-
     }
 
     fn visit_function_type(&mut self, node: &Self::Function, query: &Self::Query) {
         if let Some(mut args) = node
             .args
             .iter()
-            .map(|id| {
-                helper!(query, Some(id), as_ref_fast_variable)
-            })
+            .map(|id| helper!(query, Some(id), as_ref_fast_variable))
             .collect::<Option<Vec<_>>>()
         {
             args.sort_by(|a, b| a.index.cmp(&b.index));
@@ -361,7 +349,7 @@ impl PyNodeVisitor for Unparser {
             }
         }
     }
-    
+
     fn visit_function_arg(&mut self, node: &Self::FunctionArg, _query: &Self::Query) {
         if node.name != "return" {
             self.write_back(&node.name)
@@ -371,9 +359,7 @@ impl PyNodeVisitor for Unparser {
         }
     }
 
-    fn visit_function_return(&mut self, node: &Self::FunctionArg, query: &Self::Query) {
-        
-    }
+    fn visit_function_return(&mut self, node: &Self::FunctionArg, query: &Self::Query) {}
 
     fn visit_call(&mut self, node: &Self::Callable, query: &Self::Query) {
         node.func.and_then(|func| {
@@ -424,6 +410,4 @@ impl PyNodeVisitor for Unparser {
             })
         });
     }
-
-
 }

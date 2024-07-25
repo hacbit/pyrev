@@ -253,17 +253,9 @@ version = "1.2.0-alpha"
 dependencies = [
  "atty",
  "clap",
- "pyrev_app_macro",
  "pyrev_core",
+ "pyrev_plugin",
  "pyrev_query",
-]
-
-[[package]]
-name = "pyrev_app_macro"
-version = "1.2.0-alpha"
-dependencies = [
- "quote",
- "syn",
 ]
 
 [[package]]
@@ -343,6 +335,22 @@ dependencies = [
  "pyrev_core",
  "pyrev_query",
  "regex",
+]
+
+[[package]]
+name = "pyrev_plugin"
+version = "1.2.0-alpha"
+dependencies = [
+ "clap",
+ "pyrev_plugin_macro",
+]
+
+[[package]]
+name = "pyrev_plugin_macro"
+version = "1.2.0-alpha"
+dependencies = [
+ "quote",
+ "syn",
 ]
 
 [[package]]

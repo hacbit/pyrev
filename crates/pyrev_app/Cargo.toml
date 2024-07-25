@@ -5,7 +5,8 @@ edition = "2021"
 
 [dependencies]
 atty = "0.2.14"
-pyrev_app_macro = { path = "../pyrev_app_macro" }
+pyrev_plugin = { path = "../pyrev_plugin" }
+
 
 [dependencies.clap]
 version = "4.5.1"

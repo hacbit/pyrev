@@ -3,8 +3,10 @@
 extern crate proc_macro;
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
-use syn::{parse::{Parse, ParseStream}, parse_macro_input, Ident, LitInt, Token};
-
+use syn::{
+    parse::{Parse, ParseStream},
+    parse_macro_input, Ident, LitInt, Token,
+};
 
 struct Info {
     pub macro_ident: Ident,
@@ -23,7 +25,7 @@ impl Parse for Info {
         Ok(Self {
             macro_ident,
             start,
-            end
+            end,
         })
     }
 }
@@ -32,7 +34,7 @@ impl Parse for Info {
 pub fn impl_plugin_all_tuples(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as Info);
     let macro_ident = &input.macro_ident;
-    
+
     let mut ident_tuples = Vec::with_capacity(input.end - input.start);
 
     for i in input.start..=input.end {
@@ -49,5 +51,6 @@ pub fn impl_plugin_all_tuples(input: TokenStream) -> TokenStream {
 
     quote! {
         #( #impls )*
-    }.into()
+    }
+    .into()
 }

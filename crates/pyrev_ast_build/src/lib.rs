@@ -179,9 +179,8 @@ pub fn build(map: &Map, expression: &ExpressionEnum) -> Option<Vec<String>> {
                 .args
                 .iter()
                 .map(|id| {
-                    helper!(map, Some(id), as_ref_fast_variable).and_then(|fv| {
-                        Some((fv.index, fv.name.as_ref(), fv.annotation.as_ref()))
-                    })
+                    helper!(map, Some(id), as_ref_fast_variable)
+                        .and_then(|fv| Some((fv.index, fv.name.as_ref(), fv.annotation.as_ref())))
                 })
                 .collect::<Option<Vec<_>>>()?;
             arg_iter.sort_by(|a, b| a.0.cmp(&b.0));
