@@ -1,0 +1,11 @@
+[package]
+name = "pyrev_app_macro"
+version = "1.2.0-alpha"
+edition = "2021"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+quote = "1.0.35"
+syn = "2.0.50"

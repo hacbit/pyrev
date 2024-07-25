@@ -3,12 +3,12 @@
 use clap::{ArgMatches, Command};
 
 use crate::prelude::Cli;
+use pyrev_app_macro::impl_plugin_all_tuples;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 pub trait Plugin {
-    fn subcommand(&self, cmd: Command) -> (Command, &str);
-    fn run(&self, args: &ArgMatches) -> Result<()>;
+    fn build(&self, cmd: &mut Command);
 }
 
 pub trait Plugins<Marker> {
@@ -53,48 +53,5 @@ macro_rules! impl_plugins_tuples {
     };
 }
 
-impl_plugins_tuples!(());
-impl_plugins_tuples!((P0));
-impl_plugins_tuples!((P0, P1));
-impl_plugins_tuples!((P0, P1, P2));
 
-#[cfg(test)]
-mod test {
-    use super::*;
-    use clap::*;
-
-    struct TestPlugin;
-
-    impl Plugin for TestPlugin {
-        fn subcommand(&self, cmd: Command) -> (Command, &str) {
-            (
-                cmd.subcommand(
-                    Command::new("test").about("this is test subcommand").arg(
-                        arg!(
-                            -a --arg <A> "this is an argument"
-                        )
-                        .action(ArgAction::Set)
-                        .value_parser(value_parser!(String)),
-                    ),
-                ),
-                "test",
-            )
-        }
-
-        fn run(&self, args: &ArgMatches) -> Result<()> {
-            let a = args
-                .try_get_one::<String>("arg")?
-                .ok_or("Error: argument `a` not found")?;
-            println!("a: {}", a);
-            Ok(())
-        }
-    }
-
-    #[test]
-    fn test_params() {
-        let mut params = Cli::new(command!());
-        params.add_plugins((TestPlugin,));
-
-        dbg!(params);
-    }
-}
+impl_plugin_all_tuples!(impl_plugins_tuples, 0, 7);

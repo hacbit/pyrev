@@ -253,8 +253,17 @@ version = "1.2.0-alpha"
 dependencies = [
  "atty",
  "clap",
+ "pyrev_app_macro",
  "pyrev_core",
  "pyrev_query",
+]
+
+[[package]]
+name = "pyrev_app_macro"
+version = "1.2.0-alpha"
+dependencies = [
+ "quote",
+ "syn",
 ]
 
 [[package]]
