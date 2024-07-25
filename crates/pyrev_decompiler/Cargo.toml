@@ -4,3 +4,8 @@ version = "1.2.0-alpha"
 edition = "2021"
 
 [dependencies]
+pyrev_parser = { path = "../pyrev_parser" }
+pyrev_ast = { path = "../pyrev_ast" }
+pyrev_ast_visit = { path = "../pyrev_ast_visit" }
+pyrev_core = { path = "../pyrev_core" }
+pyrev_query = { path = "../pyrev_query" }

@@ -61,12 +61,12 @@ where
                     Some(ra.to_string())
                 },
                 off.parse::<usize>()?,
-                line.parse::<LineNumber>().ok(),
+                line.parse::<LineNumber>().unwrap_or(0),
             );
             if let Ok(line) = line.parse::<LineNumber>() {
                 last_line = line;
             } else {
-                instruction.starts_line = Some(last_line);
+                instruction.starts_line = last_line;
             }
             code_object.push(instruction);
         }

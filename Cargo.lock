@@ -285,6 +285,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "pyrev_ast_visit"
+version = "0.1.0"
+dependencies = [
+ "pyrev_ast",
+ "pyrev_query",
+]
+
+[[package]]
 name = "pyrev_core"
 version = "1.2.0-alpha"
 dependencies = [
@@ -299,6 +307,13 @@ dependencies = [
 [[package]]
 name = "pyrev_decompiler"
 version = "1.2.0-alpha"
+dependencies = [
+ "pyrev_ast",
+ "pyrev_ast_visit",
+ "pyrev_core",
+ "pyrev_parser",
+ "pyrev_query",
+]
 
 [[package]]
 name = "pyrev_marshal"
