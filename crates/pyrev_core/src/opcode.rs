@@ -7,7 +7,7 @@ pub struct OpcodeInstruction {
     pub arg: Option<usize>,
     pub argval: Option<String>,
     pub offset: usize,
-    pub starts_line: Option<usize>,
+    pub starts_line: usize,
     // If jump here, is_jump_target is true
     pub is_jump_target: bool,
     // Version >= 3.11, save the begin and end of the source code
@@ -20,7 +20,7 @@ impl OpcodeInstruction {
         arg: Option<usize>,
         argval: Option<String>,
         offset: usize,
-        starts_line: Option<usize>,
+        starts_line: usize,
     ) -> Self {
         let opcode = match opname {
             "NOP" => Opcode::Nop,
