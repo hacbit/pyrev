@@ -7,7 +7,7 @@ use pyrev_core::opcode::{Opcode, OpcodeInstruction};
 use pyrev_query::Map;
 use regex::Regex;
 
-type Result<T> = std::result::Result<T, ParseError>;
+pub type ParseResult<T> = std::result::Result<T, ParseError>;
 
 /// Parse error
 ///
@@ -65,7 +65,7 @@ macro_rules! add_helper {
 /// Parse the opcode instructions to AST
 ///
 /// Each expression will be added to the map
-pub fn parse(map: &mut Map, opcode_instructions: &[OpcodeInstruction]) -> Result<Vec<QueryId>> {
+pub fn parse(map: &mut Map, opcode_instructions: &[OpcodeInstruction]) -> ParseResult<Vec<QueryId>> {
     let mut expr_ids = Vec::<QueryId>::new();
     let mut index = 0;
     loop {
@@ -313,7 +313,7 @@ pub fn parse(map: &mut Map, opcode_instructions: &[OpcodeInstruction]) -> Result
                                 },
                                 value: Some(value_id),
                                 operator: "=".to_string(),
-                                start_line: instruction.starts_line.unwrap_or_default(),
+                                start_line: instruction.starts_line,
                                 start_offset: instruction.offset,
                                 end_offset: instruction.offset + 1,
                             }
@@ -385,7 +385,7 @@ pub fn parse(map: &mut Map, opcode_instructions: &[OpcodeInstruction]) -> Result
                         target: Some(target_id),
                         value: Some(value_id),
                         operator: '='.to_string(),
-                        start_line: instruction.starts_line.unwrap_or_default(),
+                        start_line: instruction.starts_line,
                         start_offset: instruction.offset,
                         end_offset: instruction.offset + 1,
                     }
@@ -415,7 +415,7 @@ pub fn parse(map: &mut Map, opcode_instructions: &[OpcodeInstruction]) -> Result
                 loop {
                     index += 1;
                     if let Some(next_instruction) = opcode_instructions.get(index) {
-                        if next_instruction.starts_line.unwrap() != instruction.starts_line.unwrap()
+                        if next_instruction.starts_line != instruction.starts_line
                         {
                             break;
                         }
@@ -930,7 +930,7 @@ pub fn parse(map: &mut Map, opcode_instructions: &[OpcodeInstruction]) -> Result
                                     }
                                 },
                                 args: args,
-                                start_line: instruction.starts_line.unwrap_or_default(),
+                                start_line: instruction.starts_line,
                                 start_offset: instruction.offset,
                                 end_offset: instruction.offset + 1,
                             }
@@ -958,7 +958,7 @@ pub fn parse(map: &mut Map, opcode_instructions: &[OpcodeInstruction]) -> Result
                 let query_id = add_helper! {
                     map, Return {
                         value: Some(value_id),
-                        start_line: instruction.starts_line.unwrap_or_default(),
+                        start_line: instruction.starts_line,
                         start_offset: instruction.offset,
                         end_offset: instruction.offset + 1,
                     }
@@ -972,7 +972,7 @@ pub fn parse(map: &mut Map, opcode_instructions: &[OpcodeInstruction]) -> Result
                 let query_id = add_helper! {
                     map, Yield {
                         value: Some(value),
-                        start_line: instruction.starts_line.unwrap_or_default(),
+                        start_line: instruction.starts_line,
                         start_offset: instruction.offset,
                         end_offset: instruction.offset + 1,
                     }
