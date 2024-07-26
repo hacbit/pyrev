@@ -6,7 +6,6 @@ use pyrev_ast::*;
 use pyrev_query::*;
 use regex::Regex;
 
-
 /// A helper function to build the Python code from the expression by optional query id.
 #[inline]
 pub fn build_helper_some(map: &Map, id: Option<QueryId>) -> Option<Vec<String>> {

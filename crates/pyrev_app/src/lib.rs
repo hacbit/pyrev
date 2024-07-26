@@ -9,6 +9,7 @@ pub mod prelude {
     #[derive(Debug)]
     pub struct Cli {
         plugins: Vec<Box<dyn Plugin>>,
+        names: Vec<String>,
         cmd: Command,
     }
 
@@ -22,6 +23,7 @@ pub mod prelude {
         pub fn new(cmd: Command) -> Self {
             Self {
                 plugins: vec![Box::new(DefaultPlugin)],
+                names: vec![],
                 cmd,
             }
         }
@@ -48,6 +50,7 @@ pub mod prelude {
             let mut cmd = self.cmd.clone();
             for plugin in self.plugins.iter() {
                 cmd = if let Some(sub) = plugin.subcommand() {
+                    self.names.push(sub.get_name().to_string());
                     cmd.subcommand(sub)
                 } else {
                     cmd
@@ -60,8 +63,21 @@ pub mod prelude {
 
         pub fn run(&mut self) {
             let args = self.cmd.clone().get_matches();
-            for plugin in self.plugins.iter() {
-                plugin.run(&args);
+            let mut found = false;
+
+            // Check if any subcommand is found
+            // skip the default plugin
+            for (plugin, name) in self.plugins.iter().zip(self.names.iter()).skip(1) {
+                if args.subcommand_matches(name).is_some() {
+                    plugin.run(&args);
+                    found = true;
+                    break;
+                }
+            }
+
+            // If no subcommand is found, run the default plugin
+            if !found {
+                self.plugins[0].run(&args);
             }
         }
     }

@@ -357,7 +357,6 @@ impl Map {
     }
 }
 
-
 /// A helper function to get the expression from the map by query id.
 #[inline]
 pub fn get_helper<'a>(map: &'a Map, expr_id: Option<&QueryId>) -> Option<&'a ExpressionEnum> {
@@ -408,7 +407,6 @@ macro_rules! helper_mut {
         get_mut_helper($map, $expr_id).and_then(|expr| expr.$method())
     };
 }
-
 
 #[cfg(test)]
 mod test {
