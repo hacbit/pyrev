@@ -3,6 +3,7 @@ pub mod app;
 pub mod prelude {
     pub use crate::app::App;
     pub use clap::{arg, command, value_parser, Arg, ArgAction, ArgMatches, Command};
+    use pyrev_log::*;
     use pyrev_plugin::*;
     use std::path::PathBuf;
 
@@ -53,6 +54,7 @@ pub mod prelude {
                     self.names.push(sub.get_name().to_string());
                     cmd.subcommand(sub)
                 } else {
+                    self.names.push("".to_string());
                     cmd
                 }
                 .args(plugin.args());
@@ -62,14 +64,21 @@ pub mod prelude {
         }
 
         pub fn run(&mut self) {
-            let args = self.cmd.clone().get_matches();
+            let args = match self.cmd.clone().try_get_matches() {
+                Ok(args) => args,
+                Err(e) => {
+                    error!("Failed to parse arguments: {}", e);
+                    return;
+                }
+            };
             let mut found = false;
 
+            debug_assert_eq!(self.plugins.len(), self.names.len());
             // Check if any subcommand is found
             // skip the default plugin
             for (plugin, name) in self.plugins.iter().zip(self.names.iter()).skip(1) {
-                if args.subcommand_matches(name).is_some() {
-                    plugin.run(&args);
+                if let Some(arg) = args.subcommand_matches(name) {
+                    plugin.run(arg);
                     found = true;
                     break;
                 }

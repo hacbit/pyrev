@@ -54,6 +54,7 @@
 /// you can use enum variant in PyObject no long need to use PyObject::xxx
 pub mod prelude {
     use pyrev_internal::prelude::*;
+    use std::fs;
     use std::path::PathBuf;
     use std::process::exit;
 
@@ -63,28 +64,32 @@ pub mod prelude {
         fn subcommand(&self) -> Option<Command> {
             Some(
                 Command::new("pyc").about("decompile pyc files").arg(
-                    Arg::new("file")
-                        .short('f')
-                        .help("specify a pyc file")
-                        .action(ArgAction::Set)
-                        .required(false)
-                        .value_parser(value_parser!(PathBuf)),
+                    arg!(
+                        -f --file [FILE] "The pyc file to decompile"
+                    )
+                    .value_parser(value_parser!(PathBuf)),
                 ),
             )
         }
 
         fn run(&self, args: &ArgMatches) {
-            let pyc_path = args.get_one::<PathBuf>("file").unwrap_or_else(|| {
-                error!("Please specify a pyc file");
-                exit(-1);
-            });
+            let pyc_path = match args.get_one::<PathBuf>("file") {
+                Some(pyc_path) => pyc_path,
+                None => {
+                    error!("No file specified");
+                    return;
+                }
+            };
 
-            let data = pyc_path.read().unwrap_or_else(|e| {
-                error!("Read `{}` error: {}", pyc_path.display(), e);
-                exit(-1);
-            });
+            let data = match fs::read(&pyc_path) {
+                Ok(data) => data,
+                Err(e) => {
+                    error!("Failed to read file: {}", e);
+                    return;
+                }
+            };
 
-            let code = loads(&data.as_bytes()[16..]);
+            let code = loads(&data[16..]);
 
             info!("{:?}", code);
         }
