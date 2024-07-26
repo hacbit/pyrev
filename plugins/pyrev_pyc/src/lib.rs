@@ -56,7 +56,6 @@ pub mod prelude {
     use pyrev_internal::prelude::*;
     use std::fs;
     use std::path::PathBuf;
-    use std::process::exit;
 
     pub struct PycPlugin;
 
@@ -76,7 +75,7 @@ pub mod prelude {
             let pyc_path = match args.get_one::<PathBuf>("file") {
                 Some(pyc_path) => pyc_path,
                 None => {
-                    error!("No file specified");
+                    error!("No .pyc file specified");
                     return;
                 }
             };
