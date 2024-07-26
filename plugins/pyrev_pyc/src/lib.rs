@@ -75,7 +75,7 @@ pub mod prelude {
             let pyc_path = match args.get_one::<PathBuf>("file") {
                 Some(pyc_path) => pyc_path,
                 None => {
-                    error!("No .pyc file specified");
+                    error!("Please specify a Pyc file");
                     return;
                 }
             };

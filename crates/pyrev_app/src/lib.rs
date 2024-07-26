@@ -3,7 +3,6 @@ pub mod app;
 pub mod prelude {
     pub use crate::app::App;
     pub use clap::{arg, command, value_parser, Arg, ArgAction, ArgMatches, Command};
-    use pyrev_log::*;
     use pyrev_plugin::*;
     use std::path::PathBuf;
 
@@ -64,13 +63,7 @@ pub mod prelude {
         }
 
         pub fn run(&mut self) {
-            let args = match self.cmd.clone().try_get_matches() {
-                Ok(args) => args,
-                Err(e) => {
-                    error!("Failed to parse arguments: {}", e);
-                    return;
-                }
-            };
+            let args = self.cmd.clone().get_matches();
             let mut found = false;
 
             debug_assert_eq!(self.plugins.len(), self.names.len());
