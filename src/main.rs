@@ -9,3 +9,11 @@ fn main() -> Result<()> {
         .add_plugins((PycPlugin, PyInstallerPlugin))
         .run()
 }
+
+/*
+()
+(P0)
+(P0, P1)
+...
+
+*/

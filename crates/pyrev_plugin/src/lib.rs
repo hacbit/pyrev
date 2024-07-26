@@ -1,10 +1,38 @@
+//! # pyrev_plugin
+//!
+//! This crate provides a way to define plugins for a CLI application.
+//!
+//! ## Example
+//!
+//! ```ignore
+//! use clap::Command;
+//! use pyrev_plugin::*;
+//!
+//! struct MyPlugin;
+//!
+//! impl Plugin for MyPlugin {
+//!     fn build(&self, cmd: &mut Command) {
+//!         cmd.arg(arg!([name] "Optional name"));
+//!     }
+//! }
+//!
+//! fn main() {
+//!     let mut cli = Cli::new(Command::new("myapp"));
+//!     cli.add_plugins(MyPlugin).run().unwrap();
+//! }
+//! ```
+
 #![allow(non_upper_case_globals)]
 
-use clap::Command;
+use clap::{ArgMatches, Command};
 use pyrev_plugin_macro::impl_plugin_all_tuples;
 
 pub trait Plugin {
-    fn build(&self, cmd: &mut Command);
+    fn build(&self, cmd: Command) -> Command;
+
+    fn run(&self, _matches: &ArgMatches) -> Result<(), Box<dyn std::error::Error>> {
+        Ok(())
+    }
 }
 
 pub trait PluginHolder {

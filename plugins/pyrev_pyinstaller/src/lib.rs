@@ -13,21 +13,18 @@ pub mod prelude {
     pub struct PyInstallerPlugin;
 
     impl Plugin for PyInstallerPlugin {
-        fn subcommand(&self, cmd: Command) -> (Command, &str) {
-            (
-                cmd.subcommand(
-                    Command::new("pyinstaller")
-                        .about("extract and analyze PyInstaller archives")
-                        .arg(
-                            arg!(
-                                -e --extract <FILE> "specify a PyInstaller archive file to extract"
-                            )
-                            .action(ArgAction::Set)
-                            .required(false)
-                            .value_parser(value_parser!(PathBuf)),
-                        ),
-                ),
-                "pyinstaller",
+        fn build(&self, cmd: Command) -> Command {
+            cmd.subcommand(
+                Command::new("pyinstaller")
+                    .about("extract and analyze PyInstaller archives")
+                    .arg(
+                        arg!(
+                            -e --extract <FILE> "specify a PyInstaller archive file to extract"
+                        )
+                        .action(ArgAction::Set)
+                        .required(false)
+                        .value_parser(value_parser!(PathBuf)),
+                    ),
             )
         }
 
