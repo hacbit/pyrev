@@ -1033,7 +1033,7 @@ pub fn parse(
                 }
             } // end ImportFrom
             Opcode::ImportName => {
-                let module_id = expr_ids.pop().ok_or(ParseError::IdsStackEmpty)?;
+                let _module_id = expr_ids.pop().ok_or(ParseError::IdsStackEmpty)?;
                 let last_id = expr_ids.last().ok_or(ParseError::IdsStackEmpty)?;
 
                 // remove the '0'

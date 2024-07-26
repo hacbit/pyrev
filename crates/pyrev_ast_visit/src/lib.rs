@@ -335,7 +335,9 @@ impl PyNodeVisitor for Unparser {
         }
     }
 
-    fn visit_function_return(&mut self, node: &Self::FunctionArg, query: &Self::Query) {}
+    fn visit_function_return(&mut self, _node: &Self::FunctionArg, _query: &Self::Query) {
+        todo!()
+    }
 
     fn visit_call(&mut self, node: &Self::Callable, query: &Self::Query) {
         node.func.and_then(|func| {

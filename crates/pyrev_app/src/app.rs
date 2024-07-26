@@ -12,9 +12,9 @@ pub struct App {
     /// the out file name
     out_path: Option<PathBuf>,
     /// the output of the decompiled code
-    output: Option<String>,
+    _output: Option<String>,
     /// the expression map
-    map: Map,
+    _map: Map,
 }
 
 impl App {

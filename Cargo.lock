@@ -287,7 +287,7 @@ dependencies = [
 
 [[package]]
 name = "pyrev_ast_visit"
-version = "0.1.0"
+version = "1.2.0-alpha"
 dependencies = [
  "pyrev_ast",
  "pyrev_query",
