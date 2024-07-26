@@ -1,15 +1,6 @@
-# Pyrev v1.1.0-alpha
+# Pyrev v1.2.0-alpha
 
 A Python bytecode reversing tool built in pure Rust
-
-
-
-## Update
-
-**2024/6/2: Added PyInstallerPlugin which can extract pyinstaller archive**
-
-
-
 
 
 **!!! Rust nightly is recommended**
