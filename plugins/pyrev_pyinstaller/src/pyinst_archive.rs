@@ -1,8 +1,6 @@
 use byteorder::{BigEndian, ReadBytesExt};
 use flate2::read::ZlibDecoder;
-use pyrev_core::prelude::*;
-use pyrev_marshal::loads;
-use pyrev_object::PyObject;
+use pyrev_internal::prelude::*;
 use std::{
     fs::File,
     io::{Read, Seek, SeekFrom, Write},

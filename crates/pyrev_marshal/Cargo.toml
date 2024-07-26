@@ -5,3 +5,4 @@ edition = "2021"
 
 [dependencies]
 pyrev_object = { path = "../pyrev_object" }
+pyrev_log = { path = "../pyrev_log" }

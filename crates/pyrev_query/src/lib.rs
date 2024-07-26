@@ -81,6 +81,12 @@ pub struct Map {
     ids: HashSet<usize>,
 }
 
+impl Default for Map {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Add the expressions type to the map.
 macro_rules! add_expressions_type {
     (
@@ -350,6 +356,59 @@ impl Map {
         old_data
     }
 }
+
+
+/// A helper function to get the expression from the map by query id.
+#[inline]
+pub fn get_helper<'a>(map: &'a Map, expr_id: Option<&QueryId>) -> Option<&'a ExpressionEnum> {
+    expr_id.and_then(|id| map.get_single(*id))
+}
+
+/// A helper function to get the mutable expression from the map by optional query id.
+#[inline]
+pub fn get_mut_helper<'a>(
+    map: &'a mut Map,
+    expr_id: Option<&QueryId>,
+) -> Option<&'a mut ExpressionEnum> {
+    expr_id.and_then(move |id| map.get_single_mut(*id))
+}
+
+/// A packer for the `get_helper` function.
+///
+/// # Example
+/// ```ignore
+/// if let Some(assign) = helper!(map, id, as_ref_assign) {
+///     // do something
+/// }
+/// if let Some(value) = helper!(map, id2, as_ref_base_value) {
+///    // do something
+/// }
+/// ```
+#[macro_export]
+macro_rules! helper {
+    ($map:ident, $expr_id:expr, $method:ident) => {
+        get_helper($map, $expr_id).and_then(|expr| expr.$method())
+    };
+}
+
+/// A packer for the `get_mut_helper` function.
+///
+/// # Example
+/// ```ignore
+/// if let Some(assign) = helper_mut!(map, id, as_ref_assign) {
+///    // do something
+/// }
+/// if let Some(mut func) = helper_mut!(map, id2, as_ref_function) {
+///     // do something
+/// }
+/// ```
+#[macro_export]
+macro_rules! helper_mut {
+    ($map:ident, $expr_id:expr, $method:ident) => {
+        get_mut_helper($map, $expr_id).and_then(|expr| expr.$method())
+    };
+}
+
 
 #[cfg(test)]
 mod test {

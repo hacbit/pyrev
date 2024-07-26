@@ -4,8 +4,5 @@ version = "1.2.0-alpha"
 edition = "2021"
 
 [dependencies]
-pyrev_core = { path = "../../crates/pyrev_core" }
-pyrev_app = { path = "../../crates/pyrev_app" }
 pyrev_pyc_macro = { path = "../pyrev_pyc_macro" }
-pyrev_object = { path = "../../crates/pyrev_object" }
-pyrev_marshal = { path = "../../crates/pyrev_marshal" }
+pyrev_internal = { path = "../../crates/pyrev_internal" }

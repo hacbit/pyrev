@@ -5,30 +5,6 @@
 use pyrev_ast::*;
 use pyrev_query::*;
 
-/// A helper function to get the expression from the map by query id.
-#[inline]
-pub fn get_helper<'a>(map: &'a Map, expr_id: Option<&QueryId>) -> Option<&'a ExpressionEnum> {
-    expr_id.and_then(|id| map.get_single(*id))
-}
-
-/// A packer for the `get_helper` function.
-///
-/// # Example
-/// ```ignore
-/// if let Some(assign) = helper!(map, id, as_ref_assign) {
-///     // do something
-/// }
-/// if let Some(value) = helper!(map, id2, as_ref_base_value) {
-///    // do something
-/// }
-/// ```
-#[macro_export]
-macro_rules! helper {
-    ($map:ident, $expr_id:expr, $method:ident) => {
-        get_helper($map, $expr_id).and_then(|expr| expr.$method())
-    };
-}
-
 pub trait PyNodeVisitor {
     type Node;
     type Constant;

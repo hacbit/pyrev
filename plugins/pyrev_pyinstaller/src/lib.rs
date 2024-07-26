@@ -6,15 +6,16 @@ mod pyinst_archive;
 
 pub mod prelude {
     use std::path::PathBuf;
+    use std::process::exit;
 
     use crate::pyinst_archive::extract_pyinstaller_archive;
-    use pyrev_app::prelude::*;
+    use pyrev_internal::prelude::*;
 
     pub struct PyInstallerPlugin;
 
     impl Plugin for PyInstallerPlugin {
-        fn build(&self, cmd: Command) -> Command {
-            cmd.subcommand(
+        fn subcommand(&self) -> Option<Command> {
+            Some(
                 Command::new("pyinstaller")
                     .about("extract and analyze PyInstaller archives")
                     .arg(
@@ -28,14 +29,15 @@ pub mod prelude {
             )
         }
 
-        fn run(&self, args: &ArgMatches) -> Result<()> {
-            let archive_path = args
-                .try_get_one::<PathBuf>("extract")?
-                .ok_or("File not found")?;
+        fn run(&self, args: &ArgMatches) {
+            let archive_path = args.get_one::<PathBuf>("extract").unwrap_or_else(|| {
+                error!("Please specify a PyInstaller archive file to extract");
+                exit(-1);
+            });
 
-            extract_pyinstaller_archive(archive_path)?;
-
-            Ok(())
+            if let Err(err) = extract_pyinstaller_archive(archive_path) {
+                error!("{}", err);
+            }
         }
     }
 }

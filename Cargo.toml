@@ -16,7 +16,7 @@ members = [
     "crates/pyrev_plugin_macro", 
     "plugins/pyrev_pyc",
     "plugins/pyrev_pyc_macro",
-    "plugins/pyrev_pyinstaller",
+    "plugins/pyrev_pyinstaller", "crates/pyrev_log", "crates/pyrev_internal",
 ]
 
 [package]

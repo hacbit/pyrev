@@ -6,8 +6,5 @@ edition = "2021"
 [dependencies]
 byteorder = "1.5.0"
 flate2 = "1.0.30"
-pyrev_core = { path = "../../crates/pyrev_core" }
-pyrev_app = { path = "../../crates/pyrev_app" }
-pyrev_object = { path = "../../crates/pyrev_object" }
-pyrev_marshal = { path = "../../crates/pyrev_marshal" }
 uuid = { version = "1.8.0", features = ["v4"] }
+pyrev_internal = { path = "../../crates/pyrev_internal" }

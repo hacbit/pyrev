@@ -53,15 +53,15 @@
 /// export some Python Object definition in object.rs
 /// you can use enum variant in PyObject no long need to use PyObject::xxx
 pub mod prelude {
-    pub use pyrev_app::prelude::*;
-    use pyrev_marshal::loads;
+    use pyrev_internal::prelude::*;
     use std::path::PathBuf;
+    use std::process::exit;
 
     pub struct PycPlugin;
 
     impl Plugin for PycPlugin {
-        fn build(&self, cmd: Command) -> Command {
-            cmd.subcommand(
+        fn subcommand(&self) -> Option<Command> {
+            Some(
                 Command::new("pyc").about("decompile pyc files").arg(
                     Arg::new("file")
                         .short('f')
@@ -73,19 +73,20 @@ pub mod prelude {
             )
         }
 
-        fn run(&self, args: &ArgMatches) -> Result<()> {
-            let pyc_path = args
-                .try_get_one::<PathBuf>("file")?
-                .ok_or("File not found")?;
+        fn run(&self, args: &ArgMatches) {
+            let pyc_path = args.get_one::<PathBuf>("file").unwrap_or_else(|| {
+                error!("Please specify a pyc file");
+                exit(-1);
+            });
 
-            info!("Decompiling {:?}", pyc_path);
+            let data = pyc_path.read().unwrap_or_else(|e| {
+                error!("Read `{}` error: {}", pyc_path.display(), e);
+                exit(-1);
+            });
 
-            let data = std::fs::read(pyc_path)?;
-            let code = loads(&data[16..]);
+            let code = loads(&data.as_bytes()[16..]);
 
-            println!("{:?}", code);
-
-            Ok(())
+            info!("{:?}", code);
         }
     }
 }

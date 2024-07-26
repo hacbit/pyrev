@@ -253,7 +253,7 @@ version = "1.2.0-alpha"
 dependencies = [
  "atty",
  "clap",
- "pyrev_core",
+ "pyrev_log",
  "pyrev_plugin",
  "pyrev_query",
 ]
@@ -297,11 +297,9 @@ dependencies = [
 name = "pyrev_core"
 version = "1.2.0-alpha"
 dependencies = [
- "atty",
- "colored",
  "lazy_format",
  "lazy_static",
- "pyrev_ast",
+ "pyrev_log",
  "regex",
 ]
 
@@ -317,9 +315,38 @@ dependencies = [
 ]
 
 [[package]]
+name = "pyrev_internal"
+version = "1.2.0-alpha"
+dependencies = [
+ "pyrev_app",
+ "pyrev_ast",
+ "pyrev_ast_build",
+ "pyrev_ast_visit",
+ "pyrev_core",
+ "pyrev_decompiler",
+ "pyrev_log",
+ "pyrev_marshal",
+ "pyrev_object",
+ "pyrev_parser",
+ "pyrev_plugin",
+ "pyrev_query",
+]
+
+[[package]]
+name = "pyrev_log"
+version = "1.2.0-alpha"
+dependencies = [
+ "atty",
+ "colored",
+ "lazy_format",
+ "lazy_static",
+]
+
+[[package]]
 name = "pyrev_marshal"
 version = "1.2.0-alpha"
 dependencies = [
+ "pyrev_log",
  "pyrev_object",
 ]
 
@@ -357,10 +384,7 @@ dependencies = [
 name = "pyrev_pyc"
 version = "1.2.0-alpha"
 dependencies = [
- "pyrev_app",
- "pyrev_core",
- "pyrev_marshal",
- "pyrev_object",
+ "pyrev_internal",
  "pyrev_pyc_macro",
 ]
 
@@ -378,10 +402,7 @@ version = "1.2.0-alpha"
 dependencies = [
  "byteorder",
  "flate2",
- "pyrev_app",
- "pyrev_core",
- "pyrev_marshal",
- "pyrev_object",
+ "pyrev_internal",
  "uuid",
 ]
 

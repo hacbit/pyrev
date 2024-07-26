@@ -4,16 +4,9 @@ use pyrev_app::prelude::*;
 use pyrev_pyc::prelude::*;
 use pyrev_pyinstaller::prelude::*;
 
-fn main() -> Result<()> {
+fn main() {
     Cli::new(command!())
         .add_plugins((PycPlugin, PyInstallerPlugin))
+        .build()
         .run()
 }
-
-/*
-()
-(P0)
-(P0, P1)
-...
-
-*/

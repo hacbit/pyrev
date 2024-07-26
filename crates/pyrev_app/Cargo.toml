@@ -6,14 +6,10 @@ edition = "2021"
 [dependencies]
 atty = "0.2.14"
 pyrev_plugin = { path = "../pyrev_plugin" }
+pyrev_query = { path = "../pyrev_query" }
+pyrev_log = { path = "../pyrev_log" }
 
 
 [dependencies.clap]
 version = "4.5.1"
 features = ["derive", "cargo"]
-
-[dependencies.pyrev_core]
-path = "../pyrev_core"
-
-[dependencies.pyrev_query]
-path = "../pyrev_query"

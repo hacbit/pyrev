@@ -24,15 +24,19 @@
 
 #![allow(non_upper_case_globals)]
 
-use clap::{ArgMatches, Command};
+use clap::{Arg, ArgMatches, Command};
 use pyrev_plugin_macro::impl_plugin_all_tuples;
 
 pub trait Plugin {
-    fn build(&self, cmd: Command) -> Command;
-
-    fn run(&self, _matches: &ArgMatches) -> Result<(), Box<dyn std::error::Error>> {
-        Ok(())
+    fn subcommand(&self) -> Option<Command> {
+        None
     }
+
+    fn args(&self) -> Vec<Arg> {
+        vec![]
+    }
+
+    fn run(&self, _matches: &ArgMatches);
 }
 
 pub trait PluginHolder {

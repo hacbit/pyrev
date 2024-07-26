@@ -3,8 +3,7 @@ pub mod app;
 pub mod prelude {
     pub use crate::app::App;
     pub use clap::{arg, command, value_parser, Arg, ArgAction, ArgMatches, Command};
-    pub use pyrev_core::prelude::*;
-    pub use pyrev_plugin::*;
+    use pyrev_plugin::*;
     use std::path::PathBuf;
 
     #[derive(Debug)]
@@ -48,26 +47,30 @@ pub mod prelude {
         pub fn build(&mut self) -> &mut Self {
             let mut cmd = self.cmd.clone();
             for plugin in self.plugins.iter() {
-                cmd = plugin.build(cmd);
+                cmd = if let Some(sub) = plugin.subcommand() {
+                    cmd.subcommand(sub)
+                } else {
+                    cmd
+                }
+                .args(plugin.args());
             }
             self.cmd = cmd;
             self
         }
 
-        pub fn run(&mut self) -> Result<()> {
+        pub fn run(&mut self) {
             let args = self.cmd.clone().get_matches();
             for plugin in self.plugins.iter() {
-                plugin.run(&args)?;
+                plugin.run(&args);
             }
-            Ok(())
         }
     }
 
     struct DefaultPlugin;
 
     impl Plugin for DefaultPlugin {
-        fn build(&self, cmd: Command) -> Command {
-            cmd.args([
+        fn args(&self) -> Vec<Arg> {
+            vec![
                 arg!([name] "Optional name"),
                 arg!(
                     -f --file <FILE> "specify bytecode files"
@@ -82,10 +85,10 @@ pub mod prelude {
                 .action(ArgAction::Set)
                 .required(false)
                 .value_parser(value_parser!(PathBuf)),
-            ])
+            ]
         }
 
-        fn run(&self, args: &ArgMatches) -> Result<()> {
+        fn run(&self, args: &ArgMatches) {
             let mut app = App::new();
 
             if let Some(file) = args.get_one::<PathBuf>("file") {
@@ -96,8 +99,6 @@ pub mod prelude {
             }
 
             app.run();
-
-            Ok(())
         }
     }
 }

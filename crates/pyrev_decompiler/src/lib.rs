@@ -1,10 +1,11 @@
 use std::collections::HashMap;
 
-use pyrev_ast::*;
 use pyrev_ast_visit::*;
 use pyrev_core::prelude::*;
 use pyrev_parser::*;
 use pyrev_query::*;
+
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 #[cfg(target_os = "windows")]
 const NEWLINE: &str = "\r\n";

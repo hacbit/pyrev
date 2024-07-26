@@ -1,12 +1,9 @@
-use pyrev_core::prelude::*;
+use pyrev_log::*;
 use pyrev_query::Map;
-use std::{
-    fs,
-    path::{Path, PathBuf},
-    process::exit,
-};
+use std::{fs, path::PathBuf, process::exit};
 
 /// The main struct of the application.
+#[derive(Default)]
 pub struct App {
     /// input file path
     file_path: Option<PathBuf>,
@@ -20,13 +17,6 @@ pub struct App {
     map: Map,
 }
 
-impl Default for App {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-#[allow(unused)]
 impl App {
     pub fn new() -> Self {
         Self::default()
@@ -62,7 +52,5 @@ impl App {
         }
     }
 
-    pub fn run(&mut self) {
-        
-    }
+    pub fn run(&mut self) {}
 }

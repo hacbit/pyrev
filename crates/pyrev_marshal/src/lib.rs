@@ -1,3 +1,4 @@
+use pyrev_log::*;
 use pyrev_object::{Code, PyLong, PyObject};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -205,7 +206,7 @@ impl<'a> Reader<'a> {
             }
             Err(e) => {
                 self.level = old_level;
-                eprintln!("Error: {}", e);
+                error!("{}", e);
                 PyObject::None
             }
         }

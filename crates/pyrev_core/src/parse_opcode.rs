@@ -7,6 +7,8 @@ pub type LineNumber = usize;
 pub type CodeObject = Vec<OpcodeInstruction>;
 pub type CodeObjectMap = OrderMap<ObjectMark, CodeObject>;
 
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+
 pub trait OpcodeParser {
     fn parse_opcode(&self) -> Result<CodeObjectMap>;
 }

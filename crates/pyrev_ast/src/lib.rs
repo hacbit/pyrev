@@ -1,13 +1,5 @@
-#![feature(concat_idents)]
-
-// mod query;
-// mod querymutable;
-
 pub use pyrev_ast_derive::*;
 pub use pyrev_query_inner::QueryId;
-// deprecated old query system
-// pub use query::*;
-// pub use querymutable::*;
 use regex::Regex;
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
