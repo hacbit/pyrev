@@ -1,5 +1,7 @@
 use pyrev_log::*;
+use pyrev_core::parse_opcode::parse_opcode;
 use pyrev_query::Map;
+use pyrev_decompiler::code_gen;
 use std::{fs, path::PathBuf, process::exit};
 
 /// The main struct of the application.
@@ -52,5 +54,23 @@ impl App {
         }
     }
 
-    pub fn run(&mut self) {}
+    pub fn run(&mut self) {
+        let parsed_result = match parse_opcode(&self.content) {
+            Ok(res) => res,
+            Err(err) => {
+                error!("{}", err);
+                return;
+            }
+        };
+
+        let res = match code_gen(parsed_result) {
+            Ok(res) => res,
+            Err(err) => {
+                error!("{:?}", err);
+                return;
+            }
+        };
+
+        info!("{}", res);
+    }
 }

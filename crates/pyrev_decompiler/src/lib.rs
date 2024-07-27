@@ -5,17 +5,11 @@ use pyrev_core::prelude::*;
 use pyrev_parser::*;
 use pyrev_query::*;
 
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
-
 #[cfg(target_os = "windows")]
 const NEWLINE: &str = "\r\n";
 
 #[cfg(not(target_os = "windows"))]
 const NEWLINE: &str = "\n";
-
-pub fn parse_opcode(s: impl AsRef<str> + 'static) -> Result<CodeObjectMap> {
-    s.parse_opcode()
-}
 
 pub fn code_gen(code_map: CodeObjectMap) -> ParseResult<String> {
     let mut map = Map::new();

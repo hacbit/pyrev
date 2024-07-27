@@ -253,6 +253,8 @@ version = "1.2.0-alpha"
 dependencies = [
  "atty",
  "clap",
+ "pyrev_core",
+ "pyrev_decompiler",
  "pyrev_log",
  "pyrev_plugin",
  "pyrev_query",

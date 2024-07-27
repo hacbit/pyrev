@@ -8,6 +8,8 @@ atty = "0.2.14"
 pyrev_plugin = { path = "../pyrev_plugin" }
 pyrev_query = { path = "../pyrev_query" }
 pyrev_log = { path = "../pyrev_log" }
+pyrev_core = { path = "../pyrev_core" }
+pyrev_decompiler = { path = "../pyrev_decompiler" }
 
 
 [dependencies.clap]
