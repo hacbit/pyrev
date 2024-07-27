@@ -12,6 +12,7 @@ pub type ParseResult<T> = std::result::Result<T, ParseError>;
 /// Parse error
 ///
 /// It contains some common errors that may occur during parsing
+#[derive(Debug)]
 pub enum ParseError {
     OffsetOutOfRange,
     NoInstruction,
