@@ -71,6 +71,6 @@ impl App {
             }
         };
 
-        info!("{}", res);
+        println!("{}", res);
     }
 }

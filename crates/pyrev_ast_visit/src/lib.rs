@@ -16,6 +16,8 @@ pub trait PyNodeVisitor {
     type BinaryOp;
     type Assign;
     type Alias;
+    type Class;
+    type Attribute;
     type Output;
     type Query;
 
@@ -57,6 +59,10 @@ pub trait PyNodeVisitor {
     fn visit_assign(&mut self, node: &Self::Assign, query: &Self::Query);
 
     fn visit_alias(&mut self, node: &Self::Alias, query: &Self::Query);
+
+    fn visit_class(&mut self, node: &Self::Class, query: &Self::Query);
+
+    fn visit_attribute(&mut self, node: &Self::Attribute, query: &Self::Query);
 }
 
 pub struct Unparser {
@@ -146,6 +152,8 @@ impl PyNodeVisitor for Unparser {
     type BinaryOp = BinaryOperation;
     type Assign = Assign;
     type Alias = Alias;
+    type Class = Class;
+    type Attribute = Attribute;
     type Output = Vec<String>;
     type Query = Map;
 
@@ -172,10 +180,13 @@ impl PyNodeVisitor for Unparser {
                     }
                 }
             },
+            ExpressionEnum::Call(call) => self.visit_call(call, query),
             ExpressionEnum::BinaryOperation(bin_op) => self.visit_binary_op(bin_op, query),
             ExpressionEnum::UnaryOperation(unary_op) => self.visit_unary_op(unary_op, query),
             ExpressionEnum::Assign(assign) => self.visit_assign(assign, query),
             ExpressionEnum::Alias(alias) => self.visit_alias(alias, query),
+            ExpressionEnum::Class(class) => self.visit_class(class, query),
+            ExpressionEnum::Attribute(attr) => self.visit_attribute(attr, query),
             _ => {}
         }
 
@@ -396,6 +407,48 @@ impl PyNodeVisitor for Unparser {
             })
         });
     }
+
+    fn visit_class(&mut self, node: &Self::Class, query: &Self::Query) {
+        self.write_back("class ");
+        self.write_back(&node.name);
+        self.write_back(":");
+        
+        for item_id in node.members.iter() {
+            if let Some(item) = query.get_single(*item_id) {
+                self.add_indent();
+                self.visit(item, query);
+            } else {
+                // get item failed
+                self.add_indent();
+                self.write_back("# failed to get item");
+            }
+
+            self.write_newline();
+            self.write_newline();
+        }
+
+        if node.members.is_empty() {
+            self.write_newline_indent_with("pass");
+        }
+
+        self.write_newline();
+    }
+
+    fn visit_attribute(&mut self, node: &Self::Attribute, query: &Self::Query) {
+        node.parent.and_then(|parent| {
+            query.get_single(parent).map(|res| {
+                self.visit(res, query);
+            })
+        });
+
+        self.write_back(".");
+
+        node.attr.and_then(|attr| {
+            query.get_single(attr).map(|res| {
+                self.visit(res, query);
+            })
+        });
+    }
 }
 
 
@@ -514,6 +567,27 @@ mod test {
         };
     }
 
+    macro_rules! attr_expr {
+        ($parent:ident . $attr:ident) => {
+            {
+                let map = get_map!(mut);
+                let parent = map.add::<BaseValue>(ExpressionEnum::BaseValue(BaseValue {
+                    value: stringify!($parent).to_string(),
+                    ..Default::default()
+                }));
+                let attr = map.add::<BaseValue>(ExpressionEnum::BaseValue(BaseValue {
+                    value: stringify!($attr).to_string(),
+                    ..Default::default()
+                }));
+                map.add::<Attribute>(ExpressionEnum::Attribute(Attribute {
+                    parent,
+                    attr,
+                    ..Default::default()
+                }))
+            }
+        };
+    }
+
     macro_rules! expr {
         (
             def $name:ident(
@@ -546,6 +620,7 @@ mod test {
         }
     }
 
+    #[allow(dead_code)]
     fn output_with_line(output: Vec<String>) {
         for (i, line) in output.iter().enumerate() {
             println!("{:03}| {}", i, line);
@@ -595,5 +670,18 @@ mod test {
             res,
             "def add(a, b, c: int) -> int:\n    pass\n".to_string()
         );
+    }
+
+    #[test]
+    fn test_attr() {
+        let attr = attr_expr!(BBB.a).unwrap();
+
+        let attr = get_map!().get_single(attr).unwrap();
+
+        let mut unparser = Unparser::new();
+
+        let res = unparser.visit(&attr, get_map!());
+
+        assert_eq!(res, vec!["BBB.a".to_string()]);
     }
 }
