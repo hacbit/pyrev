@@ -62,6 +62,8 @@ pub trait PyNodeVisitor {
 
     fn visit_class(&mut self, node: &Self::Class, query: &Self::Query);
 
+    fn visit_class_docstring(&mut self, node: &Self::Constant, query: &Self::Query);
+
     fn visit_attribute(&mut self, node: &Self::Attribute, query: &Self::Query);
 }
 
@@ -412,11 +414,33 @@ impl PyNodeVisitor for Unparser {
         self.write_back("class ");
         self.write_back(&node.name);
         self.write_back(":");
-        
+
         for item_id in node.members.iter() {
             if let Some(item) = query.get_single(*item_id) {
                 self.add_indent();
-                self.visit(item, query);
+                if let Some(member) = item.as_ref_assign() {
+                    if let Some(target) = helper!(query, member.target.as_ref(), as_ref_base_value)
+                    {
+                        match target.value.as_str() {
+                            "__doc__" => {
+                                member.value.and_then(|docstring| {
+                                    query.get_single(docstring).map(|res| {
+                                        res.as_ref_base_value().map(|bv| {
+                                            self.visit_class_docstring(bv, query);
+                                        })
+                                    })
+                                });
+                            }
+                            // ignore __module__ and __qualname__
+                            "__module__" | "__qualname__" => {}
+                            _ => {
+                                self.visit(item, query);
+                            }
+                        }
+                    } else {
+                        self.visit(item, query);
+                    }
+                }
             } else {
                 // get item failed
                 self.add_indent();
@@ -432,6 +456,19 @@ impl PyNodeVisitor for Unparser {
         }
 
         self.write_newline();
+    }
+
+    fn visit_class_docstring(&mut self, node: &Self::Constant, _query: &Self::Query) {
+        let docstring = &node.value;
+        let docstring = docstring.trim_matches('\'');
+        
+        self.write_newline_indent_with("\"\"\"");
+
+        for line in docstring.lines().filter(|l| !l.trim().is_empty()) {
+            self.write_newline_indent_with(line);
+        }
+
+        self.write_newline_indent_with("\"\"\"");
     }
 
     fn visit_attribute(&mut self, node: &Self::Attribute, query: &Self::Query) {
@@ -450,7 +487,6 @@ impl PyNodeVisitor for Unparser {
         });
     }
 }
-
 
 #[cfg(test)]
 mod test {
@@ -474,7 +510,7 @@ mod test {
                 }
                 MAP.as_mut().unwrap()
             }
-        }
+        };
     }
 
     macro_rules! maybe_have {
@@ -486,7 +522,7 @@ mod test {
         };
         () => {
             None
-        }
+        };
     }
 
     macro_rules! function_expr {
@@ -523,69 +559,63 @@ mod test {
     }
 
     macro_rules! unary_expr {
-        ($op:tt $right:expr) => {
-            {
-                let map = get_map!(mut);
-                let right = map.add::<BaseValue>(ExpressionEnum::BaseValue(BaseValue {
-                    value: $right.to_string(),
-                    ..Default::default()
-                }));
-                map.add::<UnaryOperation>(ExpressionEnum::UnaryOperation(UnaryOperation {
-                    target: right,
-                    unary_type: match stringify!($op) {
-                        "not" => UnaryType::Not,
-                        "~" => UnaryType::Invert,
-                        "+" => UnaryType::Positive,
-                        "-" => UnaryType::Negative,
-                        _ => unreachable!(),
-                    },
-                    ..Default::default()
-                }))
-            }
-        };
+        ($op:tt $right:expr) => {{
+            let map = get_map!(mut);
+            let right = map.add::<BaseValue>(ExpressionEnum::BaseValue(BaseValue {
+                value: $right.to_string(),
+                ..Default::default()
+            }));
+            map.add::<UnaryOperation>(ExpressionEnum::UnaryOperation(UnaryOperation {
+                target: right,
+                unary_type: match stringify!($op) {
+                    "not" => UnaryType::Not,
+                    "~" => UnaryType::Invert,
+                    "+" => UnaryType::Positive,
+                    "-" => UnaryType::Negative,
+                    _ => unreachable!(),
+                },
+                ..Default::default()
+            }))
+        }};
     }
 
     macro_rules! binary_expr {
-        ($left:ident $op:tt $right:expr) => {
-            {
-                let map = get_map!(mut);
-                let left = map.add::<BaseValue>(ExpressionEnum::BaseValue(BaseValue {
-                    value: stringify!($left).to_string(),
-                    ..Default::default()
-                }));
-                let right = map.add::<BaseValue>(ExpressionEnum::BaseValue(BaseValue {
-                    value: stringify!($right).to_string(),
-                    ..Default::default()
-                }));
-                map.add::<BinaryOperation>(ExpressionEnum::BinaryOperation(BinaryOperation {
-                    left,
-                    operator: stringify!($op).to_string(),
-                    right,
-                    ..Default::default()
-                }))
-            }
-        };
+        ($left:ident $op:tt $right:expr) => {{
+            let map = get_map!(mut);
+            let left = map.add::<BaseValue>(ExpressionEnum::BaseValue(BaseValue {
+                value: stringify!($left).to_string(),
+                ..Default::default()
+            }));
+            let right = map.add::<BaseValue>(ExpressionEnum::BaseValue(BaseValue {
+                value: stringify!($right).to_string(),
+                ..Default::default()
+            }));
+            map.add::<BinaryOperation>(ExpressionEnum::BinaryOperation(BinaryOperation {
+                left,
+                operator: stringify!($op).to_string(),
+                right,
+                ..Default::default()
+            }))
+        }};
     }
 
     macro_rules! attr_expr {
-        ($parent:ident . $attr:ident) => {
-            {
-                let map = get_map!(mut);
-                let parent = map.add::<BaseValue>(ExpressionEnum::BaseValue(BaseValue {
-                    value: stringify!($parent).to_string(),
-                    ..Default::default()
-                }));
-                let attr = map.add::<BaseValue>(ExpressionEnum::BaseValue(BaseValue {
-                    value: stringify!($attr).to_string(),
-                    ..Default::default()
-                }));
-                map.add::<Attribute>(ExpressionEnum::Attribute(Attribute {
-                    parent,
-                    attr,
-                    ..Default::default()
-                }))
-            }
-        };
+        ($parent:ident . $attr:ident) => {{
+            let map = get_map!(mut);
+            let parent = map.add::<BaseValue>(ExpressionEnum::BaseValue(BaseValue {
+                value: stringify!($parent).to_string(),
+                ..Default::default()
+            }));
+            let attr = map.add::<BaseValue>(ExpressionEnum::BaseValue(BaseValue {
+                value: stringify!($attr).to_string(),
+                ..Default::default()
+            }));
+            map.add::<Attribute>(ExpressionEnum::Attribute(Attribute {
+                parent,
+                attr,
+                ..Default::default()
+            }))
+        }};
     }
 
     macro_rules! expr {
@@ -666,10 +696,7 @@ mod test {
 
         let res = res.join("\n");
 
-        assert_eq!(
-            res,
-            "def add(a, b, c: int) -> int:\n    pass\n".to_string()
-        );
+        assert_eq!(res, "def add(a, b, c: int) -> int:\n    pass\n".to_string());
     }
 
     #[test]
