@@ -1,7 +1,7 @@
-use pyrev_log::*;
 use pyrev_core::parse_opcode::parse_opcode;
-use pyrev_query::Map;
 use pyrev_decompiler::code_gen;
+use pyrev_log::*;
+use pyrev_query::Map;
 use std::{fs, path::PathBuf, process::exit};
 
 /// The main struct of the application.

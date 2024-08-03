@@ -46,6 +46,7 @@ pub struct Function {
     pub mark: String,
     pub name: String,
     pub args: Vec<QueryId>,
+    pub ret: Option<QueryId>,
     pub bodys: Vec<QueryId>,
     pub defaults: Vec<String>,
     pub is_async: bool,

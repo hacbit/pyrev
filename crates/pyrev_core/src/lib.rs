@@ -19,5 +19,5 @@ pub mod prelude {
     pub use super::common::{Local, OrderMap, TraceBack};
     // pub use super::decompile::{DecompiledCode, Decompiler};
     pub use super::opcode::{Opcode, OpcodeInstruction};
-    pub use super::parse_opcode::{CodeObject, CodeObjectMap, parse_opcode};
+    pub use super::parse_opcode::{parse_opcode, CodeObject, CodeObjectMap};
 }

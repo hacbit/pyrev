@@ -9,7 +9,6 @@ pub type CodeObjectMap = OrderMap<ObjectMark, CodeObject>;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-
 /// 解析一个字节码文件的内容, 返回一个字节码对象映射表(CodeObjectMap)
 /// ObjectMark 是一个对象的标记(String), 就是字节码里面看到<>包裹的
 /// LineNumber 是一个行号(usize), 就是字节码里每一段左上角的数字

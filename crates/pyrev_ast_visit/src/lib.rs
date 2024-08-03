@@ -73,9 +73,11 @@ impl Unparser {
         }
     }
 
+    /// Write a newline with a indent.
     #[inline]
-    pub fn indent(&self) -> String {
-        " ".repeat(self.indent)
+    pub fn add_indent(&mut self) {
+        self.write_newline();
+        self.write_back(&" ".repeat(self.indent));
     }
 
     /// Write a text to the last line of the output.
@@ -100,8 +102,7 @@ impl Unparser {
     /// Add a new line and indent with the a given text.
     #[inline]
     pub fn write_newline_indent_with(&mut self, text: &str) {
-        self.write_newline();
-        self.write_back(&self.indent());
+        self.add_indent();
         self.write_back(text);
     }
 
@@ -119,22 +120,16 @@ impl Unparser {
         self.write_back(", ");
     }
 
-    /// Write a pass back
-    #[inline]
-    pub fn add_pass(&mut self) {
-        self.write_back("pass");
-    }
-
     /// Add a text back with padding
     ///
     /// You can specified added some text in the left and right
     #[inline]
     pub fn add_with_padding(&mut self, text: &str, left: &str, right: &str) {
-        if left.is_empty() {
+        if !left.is_empty() {
             self.write_back(left)
         }
         self.write_back(text);
-        if right.is_empty() {
+        if !right.is_empty() {
             self.write_back(right)
         }
     }
@@ -177,6 +172,10 @@ impl PyNodeVisitor for Unparser {
                     }
                 }
             },
+            ExpressionEnum::BinaryOperation(bin_op) => self.visit_binary_op(bin_op, query),
+            ExpressionEnum::UnaryOperation(unary_op) => self.visit_unary_op(unary_op, query),
+            ExpressionEnum::Assign(assign) => self.visit_assign(assign, query),
+            ExpressionEnum::Alias(alias) => self.visit_alias(alias, query),
             _ => {}
         }
 
@@ -285,7 +284,7 @@ impl PyNodeVisitor for Unparser {
                 self.visit(res, query);
             })
         });
-        self.write_back(&node.operator);
+        self.add_with_padding(&node.operator, " ", " ");
         node.right.and_then(|right| {
             query.get_single(right).map(|res| {
                 self.visit(res, query);
@@ -294,49 +293,58 @@ impl PyNodeVisitor for Unparser {
     }
 
     fn visit_function(&mut self, node: &Self::Function, query: &Self::Query) {
+        self.write_back("def ");
         self.write_back(&node.name);
-        self.delimit("(", ")", |unparser| {
-            for arg in &node.args {
-                if let Some(res) = query.get_single(*arg) {
-                    unparser.visit(res, query);
-                }
+        self.visit_function_type(node, query);
+        self.write_back(":");
+
+        for item_id in node.bodys.iter() {
+            if let Some(item) = query.get_single(*item_id) {
+                self.add_indent();
+                self.visit(item, query);
+            } else {
+                // get item failed
+                self.write_newline();
             }
-        });
+        }
+
+        if node.bodys.is_empty() {
+            self.write_newline_indent_with("pass");
+        }
+
+        self.write_newline();
     }
 
     fn visit_function_type(&mut self, node: &Self::Function, query: &Self::Query) {
-        if let Some(mut args) = node
-            .args
-            .iter()
-            .map(|id| helper!(query, Some(id), as_ref_fast_variable))
-            .collect::<Option<Vec<_>>>()
-        {
-            args.sort_by(|a, b| a.index.cmp(&b.index));
-            if let Some(ret) = args.last()
-                && ret.name == "return"
-            {
-                for arg in args.iter().take(args.len() - 1) {
-                    self.write_back(&arg.name);
-                    if let Some(anno) = &arg.annotation {
-                        self.add_with_padding(anno, " -> ", "")
+        self.delimit("(", ")", |unparser| {
+            for (i, arg_id) in node.args.iter().enumerate() {
+                if let Some(arg) = helper!(query, Some(arg_id), as_ref_fast_variable) {
+                    unparser.visit_function_arg(arg, query);
+                    if i < node.args.len() - 1 {
+                        unparser.add_comma();
                     }
-                    self.add_comma();
                 }
             }
+        });
+
+        if let Some(ret) = helper!(query, node.ret.as_ref(), as_ref_fast_variable) {
+            self.visit_function_return(ret, query)
         }
     }
 
     fn visit_function_arg(&mut self, node: &Self::FunctionArg, _query: &Self::Query) {
-        if node.name != "return" {
-            self.write_back(&node.name)
-        }
+        self.write_back(&node.name);
         if let Some(anno) = &node.annotation {
-            self.add_with_padding(anno, " -> ", "")
+            self.add_with_padding(anno, ": ", "")
         }
     }
 
-    fn visit_function_return(&mut self, _node: &Self::FunctionArg, _query: &Self::Query) {
-        todo!()
+    fn visit_function_return(&mut self, node: &Self::FunctionArg, _query: &Self::Query) {
+        debug_assert_eq!(node.name, "return");
+
+        if let Some(anno) = &node.annotation {
+            self.add_with_padding(anno, " -> ", "")
+        }
     }
 
     fn visit_call(&mut self, node: &Self::Callable, query: &Self::Query) {
@@ -387,5 +395,205 @@ impl PyNodeVisitor for Unparser {
                 self.visit(res, query);
             })
         });
+    }
+}
+
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    static mut MAP: Option<Map> = None;
+
+    macro_rules! get_map {
+        () => {
+            unsafe {
+                if MAP.is_none() {
+                    MAP = Some(Map::new());
+                }
+                MAP.as_ref().unwrap()
+            }
+        };
+        (mut) => {
+            unsafe {
+                if MAP.is_none() {
+                    MAP = Some(Map::new());
+                }
+                MAP.as_mut().unwrap()
+            }
+        }
+    }
+
+    macro_rules! maybe_have {
+        ($id:ident) => {
+            Some(stringify!($id).to_string())
+        };
+        ($id:ident, $block:block) => {
+            Some($block)
+        };
+        () => {
+            None
+        }
+    }
+
+    macro_rules! function_expr {
+        (
+            def $name:ident(
+                $($arg:ident $(: $anno:ident)?),*
+            ) $( -> $ret:ident)?:
+                pass
+        ) => {
+            {
+                let map = get_map!(mut);
+                let args = vec![
+                    $(map.add::<FastVariable>(ExpressionEnum::FastVariable(FastVariable {
+                        name: stringify!($arg).to_string(),
+                        annotation: maybe_have!($($anno)?),
+                        ..Default::default()
+                    })).unwrap(),)*
+                ];
+                let ret = map.add::<FastVariable>(ExpressionEnum::FastVariable(FastVariable {
+                    name: "return".to_string(),
+                    annotation: maybe_have!($($ret)?),
+                    ..Default::default()
+                }));
+                let bodys = vec![];
+                map.add::<Function>(ExpressionEnum::Function(Function {
+                    name: stringify!($name).to_string(),
+                    args,
+                    ret,
+                    bodys,
+                    ..Default::default()
+                })).unwrap()
+            }
+        };
+    }
+
+    macro_rules! unary_expr {
+        ($op:tt $right:expr) => {
+            {
+                let map = get_map!(mut);
+                let right = map.add::<BaseValue>(ExpressionEnum::BaseValue(BaseValue {
+                    value: $right.to_string(),
+                    ..Default::default()
+                }));
+                map.add::<UnaryOperation>(ExpressionEnum::UnaryOperation(UnaryOperation {
+                    target: right,
+                    unary_type: match stringify!($op) {
+                        "not" => UnaryType::Not,
+                        "~" => UnaryType::Invert,
+                        "+" => UnaryType::Positive,
+                        "-" => UnaryType::Negative,
+                        _ => unreachable!(),
+                    },
+                    ..Default::default()
+                }))
+            }
+        };
+    }
+
+    macro_rules! binary_expr {
+        ($left:ident $op:tt $right:expr) => {
+            {
+                let map = get_map!(mut);
+                let left = map.add::<BaseValue>(ExpressionEnum::BaseValue(BaseValue {
+                    value: stringify!($left).to_string(),
+                    ..Default::default()
+                }));
+                let right = map.add::<BaseValue>(ExpressionEnum::BaseValue(BaseValue {
+                    value: stringify!($right).to_string(),
+                    ..Default::default()
+                }));
+                map.add::<BinaryOperation>(ExpressionEnum::BinaryOperation(BinaryOperation {
+                    left,
+                    operator: stringify!($op).to_string(),
+                    right,
+                    ..Default::default()
+                }))
+            }
+        };
+    }
+
+    macro_rules! expr {
+        (
+            def $name:ident(
+                $($arg:ident $(: $anno:ident)?),*
+            ) $( -> $ret:ident)?:
+                pass
+        ) => {
+            function_expr!(
+                def $name(
+                    $($arg $(: $anno)?),*
+                ) $( -> $ret)?:
+                    pass
+            )
+        };
+        ($op:tt $right:expr) => {
+            unary_expr!($op $right)
+        };
+        ($left:ident $op:tt $right:expr) => {
+            binary_expr!($left $op $right)
+        };
+        ($e:expr) => {
+            if let Some(map) = unsafe { MAP.as_mut() } {
+                map.add::<BaseValue>(ExpressionEnum::BaseValue(BaseValue {
+                    value: $e.to_string(),
+                    ..Default::default()
+                }))
+            } else {
+                None
+            }
+        }
+    }
+
+    fn output_with_line(output: Vec<String>) {
+        for (i, line) in output.iter().enumerate() {
+            println!("{:03}| {}", i, line);
+        }
+    }
+
+    #[test]
+    fn test_binary_op() {
+        let bv = expr!(A = 1).unwrap();
+        let bv = get_map!().get_single(bv).unwrap();
+
+        let mut unparser = Unparser::new();
+
+        let res = unparser.visit(&bv, get_map!());
+
+        assert_eq!(res, vec!["A = 1".to_string()]);
+    }
+
+    #[test]
+    fn test_unary_op() {
+        let bv = expr!(not 1).unwrap();
+        let bv = get_map!().get_single(bv).unwrap();
+
+        let mut unparser = Unparser::new();
+
+        let res = unparser.visit(&bv, get_map!());
+
+        assert_eq!(res, vec!["not A".to_string()]);
+    }
+
+    #[test]
+    fn test_function() {
+        let func = expr! {
+            def add(a, b, c: int) -> int:
+                pass
+        };
+
+        let func = get_map!().get_single(func).unwrap();
+
+        let mut unparser = Unparser::new();
+
+        let res = unparser.visit(&func, get_map!());
+
+        let res = res.join("\n");
+
+        assert_eq!(
+            res,
+            "def add(a, b, c: int) -> int:\n    pass\n".to_string()
+        );
     }
 }
