@@ -13,10 +13,12 @@ members = [
     "crates/pyrev_object",
     "crates/pyrev_app",
     "crates/pyrev_plugin",
-    "crates/pyrev_plugin_macro", 
+    "crates/pyrev_plugin_macro",
+    "crates/pyrev_log", 
+    "crates/pyrev_internal",
     "plugins/pyrev_pyc",
     "plugins/pyrev_pyc_macro",
-    "plugins/pyrev_pyinstaller", "crates/pyrev_log", "crates/pyrev_internal",
+    "plugins/pyrev_pyinstaller", 
 ]
 
 [package]
