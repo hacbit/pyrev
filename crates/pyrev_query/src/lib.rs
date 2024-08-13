@@ -1,6 +1,8 @@
 //! The expressions holder.
 //! And provides the safety query for the expressions.
 
+#![forbid(unsafe_code, missing_docs)]
+
 use pyrev_ast::*;
 // QueryId is re-exported from pyrev_ast.
 // use pyrev_query_inner::*;
@@ -87,60 +89,14 @@ impl Default for Map {
     }
 }
 
-/// Add the expressions type to the map.
-macro_rules! add_expressions_type {
-    (
-        #[add_to($map:expr)]
-        enum $enum_name:ident {
-            $(
-                $variant:ident($type:ty),
-            )*
-        }
-    ) => {
-        $(
-            $map.insert(TypeId::of::<$type>(), DataMap::new());
-        )*
-    };
-}
-
 impl Map {
     /// Create a new Map instance.
     pub fn new() -> Self {
         let mut maps = HashMap::new();
-        // The enum copy from pyrev_ast
-        add_expressions_type!(
-            #[add_to(&mut maps)]
-            enum ExpressionEnum {
-                Import(Import),
-                Class(Class),
-                FastVariable(FastVariable),
-                Function(Function),
-                Return(Return),
-                Yield(Yield),
-                Assign(Assign),
-                Alias(Alias),
-                Try(Try),
-                Except(Except),
-                Finally(Finally),
-                Assert(Assert),
-                Raise(Raise),
-                BaseValue(BaseValue),
-                FormatValue(FormatValue),
-                Format(Format),
-                BinaryOperation(BinaryOperation),
-                Subscr(Subscr),
-                UnaryOperation(UnaryOperation),
-                Call(Call),
-                With(With),
-                For(For),
-                If(If),
-                Await(Await),
-                Jump(Jump),
-                Container(Container),
-                Slice(Slice),
-                Attribute(Attribute),
-            }
-        );
+
+        for type_id in ExpressionEnum::type_iter() {
+            maps.insert(type_id, DataMap::new());
+        }
 
         Self {
             maps,
@@ -411,6 +367,13 @@ macro_rules! helper_mut {
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn test_add_map() {
+        let map = Map::new();
+
+        dbg!(map);
+    }
 
     #[test]
     fn test_data_map() {

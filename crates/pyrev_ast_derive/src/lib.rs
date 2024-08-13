@@ -255,3 +255,38 @@ pub fn derive_as_ref(input: TokenStream) -> TokenStream {
         panic!("only support enum");
     }
 }
+
+#[proc_macro_derive(TypeIter)]
+pub fn derive_type_iter(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+
+    let name = &input.ident;
+    if let Data::Enum(data_enum) = input.data {
+        let fields = data_enum.variants.iter().map(|variant| {
+            let variant_name = &variant.ident;
+            quote! {
+                #variant_name,
+            }
+        });
+
+        let iter_fields = fields.map(|field| {
+            let field_name = field;
+            quote! {
+                #field_name
+            }
+        });
+        quote! {
+            impl #name {
+                pub fn type_iter() -> Vec<std::any::TypeId> {
+                    let mut result = Vec::new();
+                    #(
+                        result.push(std::any::TypeId::of::<#iter_fields>());
+                    )*
+                    result
+                }
+            }
+        }.into()
+    } else {
+        panic!("only support enum");
+    }
+}
