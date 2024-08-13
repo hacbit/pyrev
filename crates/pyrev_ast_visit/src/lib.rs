@@ -32,7 +32,7 @@ pub trait PyNodeVisitor {
 
     fn visit_tuple(&mut self, node: &Self::Container, query: &Self::Query);
 
-    fn visit_generator(&mut self, node: &Self::Function, query: &Self::Query);
+    fn visit_lambda(&mut self, node: &Self::Function, query: &Self::Query);
 
     fn visit_set(&mut self, node: &Self::Container, query: &Self::Query);
 
@@ -174,13 +174,8 @@ impl PyNodeVisitor for Unparser {
                 "<listcomp>" => self.visit_list_comp(function, query),
                 "<setcomp>" => self.visit_set_comp(function, query),
                 "<dictcomp>" => self.visit_dict_comp(function, query),
-                name => {
-                    if name.contains(&['<', '>']) {
-                        self.visit_generator(function, query)
-                    } else {
-                        self.visit_function(function, query)
-                    }
-                }
+                "<lambda>" => self.visit_lambda(function, query),
+                _ => self.visit_function(function, query),
             },
             ExpressionEnum::Call(call) => self.visit_call(call, query),
             ExpressionEnum::BinaryOperation(bin_op) => self.visit_binary_op(bin_op, query),
@@ -203,9 +198,13 @@ impl PyNodeVisitor for Unparser {
         debug_assert!(node.container_type == ContainerType::List);
 
         self.delimit("[", "]", |unparser| {
-            for element in &node.values {
+            for (i, element) in node.values.iter().enumerate() {
                 if let Some(res) = query.get_single(*element) {
                     unparser.visit(res, query);
+                }
+
+                if i < node.values.len() - 1 {
+                    unparser.add_comma();
                 }
             }
         })
@@ -215,9 +214,13 @@ impl PyNodeVisitor for Unparser {
         debug_assert!(node.container_type == ContainerType::Tuple);
 
         self.delimit("(", ")", |unparser| {
-            for element in &node.values {
+            for (i, element) in node.values.iter().enumerate() {
                 if let Some(res) = query.get_single(*element) {
                     unparser.visit(res, query);
+                }
+
+                if i < node.values.len() - 1 {
+                    unparser.add_comma();
                 }
             }
         })
@@ -227,9 +230,13 @@ impl PyNodeVisitor for Unparser {
         debug_assert!(node.container_type == ContainerType::Set);
 
         self.delimit("{", "}", |unparser| {
-            for element in &node.values {
+            for (i, element) in node.values.iter().enumerate() {
                 if let Some(res) = query.get_single(*element) {
                     unparser.visit(res, query);
+                }
+
+                if i < node.values.len() - 1 {
+                    unparser.add_comma();
                 }
             }
         })
@@ -249,6 +256,10 @@ impl PyNodeVisitor for Unparser {
                     if let Some(res) = query.get_single(*v) {
                         unparser.visit(res, query);
                     }
+
+                    if i < node.values.len() - 1 {
+                        unparser.add_comma();
+                    }
                 }
             }
         })
@@ -256,6 +267,8 @@ impl PyNodeVisitor for Unparser {
 
     fn visit_list_comp(&mut self, node: &Self::Function, _query: &Self::Query) {
         debug_assert!(node.name == "<listcomp>");
+
+        dbg!(&node);
 
         self.delimit("[", "]", |_unparser| todo!())
     }
@@ -272,37 +285,30 @@ impl PyNodeVisitor for Unparser {
         self.delimit("{", "}", |_unparser| todo!())
     }
 
-    fn visit_generator(&mut self, _node: &Self::Function, _query: &Self::Query) {
-        todo!()
-    }
+    fn visit_lambda(&mut self, node: &Self::Function, query: &Self::Query) {
+        debug_assert!(node.name == "<lambda>");
 
-    fn visit_unary_op(&mut self, node: &Self::UnaryOp, query: &Self::Query) {
-        let op = match node.unary_type {
-            UnaryType::Not => "not ",
-            UnaryType::Invert => "~",
-            UnaryType::Positive => "+",
-            UnaryType::Negative => "-",
-        };
-        self.write_back(op);
-        node.target.and_then(|target| {
-            query.get_single(target).map(|res| {
-                self.visit(res, query);
-            })
+        self.delimit("lambda ", ":", |unparser| {
+            for (i, arg_id) in node.args.iter().enumerate() {
+                if let Some(arg) = helper!(query, Some(arg_id), as_ref_fast_variable) {
+                    unparser.visit_function_arg(arg, query);
+                    if i < node.args.len() - 1 {
+                        unparser.add_comma();
+                    }
+                }
+            }
         });
-    }
 
-    fn visit_binary_op(&mut self, node: &Self::BinaryOp, query: &Self::Query) {
-        node.left.and_then(|left| {
-            query.get_single(left).map(|res| {
-                self.visit(res, query);
-            })
-        });
-        self.add_with_padding(&node.operator, " ", " ");
-        node.right.and_then(|right| {
-            query.get_single(right).map(|res| {
-                self.visit(res, query);
-            })
-        });
+        if node.bodys.is_empty() {
+            self.write_back(" ()");
+        } else {
+            self.write_back(" ");
+            if let Some(body) = query.get_single(node.bodys[0]) {
+                self.visit(body, query);
+            } else {
+                self.write_back("()");
+            }
+        }
     }
 
     fn visit_function(&mut self, node: &Self::Function, query: &Self::Query) {
@@ -376,6 +382,35 @@ impl PyNodeVisitor for Unparser {
                 }
             }
         })
+    }
+
+    fn visit_unary_op(&mut self, node: &Self::UnaryOp, query: &Self::Query) {
+        let op = match node.unary_type {
+            UnaryType::Not => "not ",
+            UnaryType::Invert => "~",
+            UnaryType::Positive => "+",
+            UnaryType::Negative => "-",
+        };
+        self.write_back(op);
+        node.target.and_then(|target| {
+            query.get_single(target).map(|res| {
+                self.visit(res, query);
+            })
+        });
+    }
+
+    fn visit_binary_op(&mut self, node: &Self::BinaryOp, query: &Self::Query) {
+        node.left.and_then(|left| {
+            query.get_single(left).map(|res| {
+                self.visit(res, query);
+            })
+        });
+        self.add_with_padding(&node.operator, " ", " ");
+        node.right.and_then(|right| {
+            query.get_single(right).map(|res| {
+                self.visit(res, query);
+            })
+        });
     }
 
     fn visit_assign(&mut self, node: &Self::Assign, query: &Self::Query) {
@@ -461,7 +496,7 @@ impl PyNodeVisitor for Unparser {
     fn visit_class_docstring(&mut self, node: &Self::Constant, _query: &Self::Query) {
         let docstring = &node.value;
         let docstring = docstring.trim_matches('\'');
-        
+
         self.write_newline_indent_with("\"\"\"");
 
         for line in docstring.lines().filter(|l| !l.trim().is_empty()) {

@@ -1,3 +1,8 @@
+//! The internal AST for pyrev
+
+#![forbid(unsafe_code, missing_docs)]
+
+use bevy_reflect::Reflect;
 pub use pyrev_ast_derive::*;
 pub use pyrev_query_inner::QueryId;
 use regex::Regex;
@@ -6,340 +11,816 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 /// Expression trait is used to mark the struct as an expression
 pub trait Expression {}
 
-/// 导入
+/// ## Import module expression
+/// 
+/// In python, it is like this:
+/// ```python
+/// import os
+/// from os import path, system
+/// import os as o
+/// from os import path as p
+/// ```
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Reflect)]
 pub struct Import {
+    /// The imported module name
     pub module: String,
+    /// The module name which is imported from
     pub bk_module: Option<String>,
+    /// The fragment of the module
     pub fragment: Option<String>,
+    /// The alias of the module
     pub alias: Option<String>,
+    /// The start line of the import expression
     pub start_line: usize,
+    /// The start offset of the import expression
     pub start_offset: usize,
+    /// The end offset of the import expression
     pub end_offset: usize,
 }
 
-/// 类
+/// ## Python Class expression
+/// 
+/// In python, it is like this:
+/// ```python
+/// class A:
+///     def __init__(self):
+///         pass
+/// ```
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Reflect)]
 pub struct Class {
+    /// The marker of the class object
+    /// 
+    /// It is like `<code object A at 0x0000000000000000, file "path", line 1>`
     pub mark: String,
+    /// The name of the class
     pub name: String,
+    /// The members of the class
+    /// 
+    /// Each method or variable in the class is a member
     pub members: Vec<QueryId>,
+    /// The start line of the class expression
     pub start_line: usize,
+    /// The start offset of the class expression
     pub start_offset: usize,
+    /// The end offset of the class expression
     pub end_offset: usize,
 }
 
-/// 局部变量
+/// ## Local variable or function parameter
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Reflect)]
 pub struct FastVariable {
+    /// The variable index in the local scope
     pub index: usize,
+    /// The name of the variable
     pub name: String,
+    /// The annotation of the variable
+    /// 
+    /// It is the type hint of the variable
     pub annotation: Option<String>,
+    /// The start line of the variable expression
     pub start_line: usize,
+    /// The start offset of the variable expression
     pub start_offset: usize,
+    /// The end offset of the variable expression
     pub end_offset: usize,
 }
 
-/// 函数
+/// ## Python function expression
+/// 
+/// It also contains the `<lambda>`, `<listcomp>` and other special functions or generators
+/// 
+/// In python, it is like this:
+/// ```python
+/// def func(a: int = 1) -> int:
+///     return a
+/// b = lambda x: x + 1
+/// c = [i for i in range(10)]
+/// d = {i: i for i in range(10)}
+/// ```
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Reflect)]
 pub struct Function {
+    /// The marker of the function object
+    /// 
+    /// It is like `<code object A at 0x0000000000000000, file "path", line 1>`
     pub mark: String,
+    /// The name of the function
     pub name: String,
+    /// The arguments of the function
     pub args: Vec<QueryId>,
+    /// The default values of the arguments
     pub ret: Option<QueryId>,
+    /// The body of the function
     pub bodys: Vec<QueryId>,
+    /// The default values of the arguments
     pub defaults: Vec<String>,
+    /// Mark whether the function is async
     pub is_async: bool,
+    /// The start line of the function expression
     pub start_line: usize,
+    /// The end line of the function expression
     pub end_line: usize,
+    /// The start offset of the function expression
     pub start_offset: usize,
+    /// The end offset of the function expression
     pub end_offset: usize,
 }
 
-/// 返回
+/// ## Return expression
+/// 
+/// It is used in the function
+/// 
+/// In python, it is like this:
+/// ```python
+/// def func():
+///     return 1
+/// ```
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Reflect)]
 pub struct Return {
+    /// The value of the return expression
     pub value: Option<QueryId>,
+    /// The start line of the return expression
     pub start_line: usize,
+    /// The start offset of the return expression
     pub start_offset: usize,
+    /// The end offset of the return expression
     pub end_offset: usize,
 }
 
+/// ## Yield expression
+/// 
+/// It is used in the generator function
+/// 
+/// In python, it is like this:
+/// ```python
+/// def gen():
+///     yield 1
+/// ```
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Reflect)]
 pub struct Yield {
+    /// The value of the yield expression
     pub value: Option<QueryId>,
+    /// The start line of the yield expression
     pub start_line: usize,
+    /// The start offset of the yield expression
     pub start_offset: usize,
+    /// The end offset of the yield expression
     pub end_offset: usize,
 }
 
-/// 赋值
+/// ## Assign expression
+/// 
+/// It is used to assign the value to the variable.
+/// 
+/// And it also contains some self-assign operators.
+/// 
+/// In python, it is like this:
+/// ```python
+/// a = 1
+/// ```
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Reflect)]
 pub struct Assign {
+    /// The target variable name
     pub target: Option<QueryId>,
+    /// The value of the assignment
     pub value: Option<QueryId>,
+    /// The operator of the assignment
+    /// 
+    /// It is like `=`, `+=`, `-=`, `*=`, `/=`, `%=`, `<<=`, `>>=`, `&=`, `|=`, `^=` and so on.
     pub operator: String,
+    /// The start line of the assignment expression
     pub start_line: usize,
+    /// The start offset of the assignment expression
     pub start_offset: usize,
+    /// The end offset of the assignment expression
     pub end_offset: usize,
 }
 
-/// Alias, like Assign but only for `as`
+/// ## Alias expression
+/// 
+/// It very like the [`Assign`], but is only used `as` operator.
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Reflect)]
 pub struct Alias {
+    /// The variable which will be aliased
     pub target: Option<QueryId>,
+    /// The alias name
     pub alias: Option<QueryId>,
+    /// The start line of the alias expression
     pub start_line: usize,
+    /// The start offset of the alias expression
     pub start_offset: usize,
+    /// The end offset of the alias expression
     pub end_offset: usize,
 }
 
-/// Try
+/// ## Try expression
+/// 
+/// It is used to catch the exception in the block.
+/// 
+/// In python, it is like this:
+/// ```python
+/// try:
+///     pass
+/// except Exception as e:
+///     pass
+/// finally:
+///     pass
+/// ```
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Reflect)]
 pub struct Try {
+    /// The body of the try block
     pub body: Vec<QueryId>,
-    /// this is the exception which will be caught
+    /// The except block
     pub except: Vec<QueryId>,
+    /// The finally block
     pub finally: Option<QueryId>,
+    /// The start line of the try expression
     pub start_line: usize,
+    /// The start offset of the try expression
     pub start_offset: usize,
+    /// The end offset of the try expression
     pub end_offset: usize,
 }
 
-/// Except
+/// ## Except expression
+/// 
+/// It is used to catch the exception in the block.
+/// 
+/// Learn more from [`Try`]
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Reflect)]
 pub struct Except {
+    /// The exception type
     pub exception: Option<QueryId>,
+    /// The body of the except block
     pub body: Vec<QueryId>,
+    /// The start line of the except expression
     pub start_line: usize,
+    /// The start offset of the except expression
     pub start_offset: usize,
+    /// The end offset of the except expression
     pub end_offset: usize,
 }
 
-/// finally
+/// ## Finally expression
+/// 
+/// It is used to execute the block after the try block.
+/// 
+/// Learn more from [`Try`]
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Reflect)]
 pub struct Finally {
+    /// The body of the finally block
     pub body: Vec<QueryId>,
+    /// The start line of the finally expression
     pub start_line: usize,
+    /// The start offset of the finally expression
     pub start_offset: usize,
+    /// The end offset of the finally expression
     pub end_offset: usize,
 }
 
-/// 断言
+/// ## Assertion expression
+/// 
+/// It is used to assert the expression is true.
+/// 
+/// In python, it is like this:
+/// ```python
+/// assert a == 1, "a should be 1"
+/// assert a > 0
+/// ```
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Reflect)]
 pub struct Assert {
+    /// The test expression. It should be true.
     pub test: Option<QueryId>,
+    /// The message of the assertion
+    /// 
+    /// If the assertion is failed, the message will be printed.
+    /// 
+    /// Learn more from [`Raise`]
     pub msg: Option<QueryId>,
+    /// The start line of the assertion expression
     pub start_line: usize,
+    /// The start offset of the assertion expression
     pub start_offset: usize,
+    /// The end offset of the assertion expression
     pub end_offset: usize,
 }
 
-/// 抛出异常
+/// ## Raise expression
+/// 
+/// It will actively throw an exception.
+/// 
+/// In python, it is like this:
+/// ```python
+/// raise Exception("error")
+/// ```
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Reflect)]
 pub struct Raise {
+    /// The exception expression
     pub exception: Option<QueryId>,
+    /// The start line of the raise expression
     pub start_line: usize,
+    /// The start offset of the raise expression
     pub start_offset: usize,
+    /// The end offset of the raise expression
     pub end_offset: usize,
 }
 
+/// ## Format value expression
+/// 
+/// It is used to format the value.
+/// 
+/// In python, it is like this:
+/// ```python
+/// f"{a}"
+/// ```
+/// 
+/// It will format the value of `a` to the string.
+/// 
+/// Learn more from [`Format`]
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Reflect)]
 pub struct FormatValue {
+    /// The value of the format expression
     pub value: Option<QueryId>,
+    /// The start line of the format value expression
     pub start_line: usize,
+    /// The start offset of the format value expression
     pub start_offset: usize,
+    /// The end offset of the format value expression
     pub end_offset: usize,
 }
 
-/// 格式化字符串
+/// ## Format expression
+/// 
+/// It contains the format, and some format values.
+/// 
+/// The first format value is the format string.
+/// 
+/// And the other format values are the values which will be formatted.
+/// Learn more from [`FormatValue`]
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Reflect)]
 pub struct Format {
+    /// The format string and format values
     pub format_values: Vec<QueryId>,
+    /// The start line of the format expression
     pub start_line: usize,
+    /// The start offset of the format expression
     pub start_offset: usize,
+    /// The end offset of the format expression
     pub end_offset: usize,
 }
 
-/// 二元操作
-/// 包括 +, -, *, /, <<, %, ==, >, is, in等
+/// ## Binary operation expression
+/// 
+/// It is used to operate the two values.
+/// 
+/// It contains this operators:
+/// - `+`, `-`, `*`, `/`, `//`, `%`, `**`, `<<`, etc.
+/// 
+/// In python, it is like this:
+/// ```python
+/// a + b
+/// ```
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Reflect)]
 pub struct BinaryOperation {
+    /// The left value of the binary operation
     pub left: Option<QueryId>,
+    /// The right value of the binary operation
     pub right: Option<QueryId>,
+    /// The operator of the binary operation
     pub operator: String,
+    /// The start line of the binary operation expression
     pub start_line: usize,
+    /// The start offset of the binary operation expression
     pub start_offset: usize,
+    /// The end offset of the binary operation expression
     pub end_offset: usize,
 }
 
-/// 下标
+/// ## Subscript expression
+/// 
+/// It is used to get the value from the container.
+/// 
+/// In python, it is like this:
+/// ```python
+/// a[0]
+/// ```
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Reflect)]
 pub struct Subscr {
+    /// The index of the subscript
     pub index: Option<QueryId>,
+    /// The container
     pub target: Option<QueryId>,
+    /// The start line of the subscript expression
     pub start_line: usize,
+    /// The start offset of the subscript expression
     pub start_offset: usize,
+    /// The end offset of the subscript expression
     pub end_offset: usize,
 }
 
-/// 一元操作
+/// ## Unary operation expression
+/// 
+/// It is used to operate the single value.
+/// 
+/// It contains this operators:
+/// - `+`, `-`, `~`, `not`
+/// 
+/// In python, it is like this:
+/// ```python
+/// -a
+/// +a
+/// ~a
+/// not a
+/// ```
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Reflect)]
 pub struct UnaryOperation {
+    /// The target value of the unary operation
     pub target: Option<QueryId>,
+    /// The type of the unary operation
     pub unary_type: UnaryType,
+    /// The start line of the unary operation expression
     pub start_line: usize,
+    /// The start offset of the unary operation expression
     pub start_offset: usize,
+    /// The end offset of the unary operation expression
     pub end_offset: usize,
 }
-/// 函数调用
+
+/// ## Call expression
+/// 
+/// It is used to call the function.
+/// 
+/// In python, it is like this:
+/// ```python
+/// a()
+/// print("hello")
+/// ```
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Reflect)]
 pub struct Call {
+    /// The function name or expression
+    /// 
+    /// It can be a variable, a function or a lambda.
     pub func: Option<QueryId>,
+    /// The arguments of the call expression
     pub args: Vec<QueryId>,
+    /// The start line of the call expression
     pub start_line: usize,
+    /// The start offset of the call expression
     pub start_offset: usize,
+    /// The end offset of the call expression
     pub end_offset: usize,
 }
 
+/// ## With expression
+/// 
+/// It is used to open the context manager.
+/// 
+/// In python, it is like this:
+/// ```python
+/// with open("file.txt") as f:
+///     pass
+/// ```
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Reflect)]
 pub struct With {
+    /// The item of the with expression
+    /// 
+    /// It is the context manager.
     pub item: Option<QueryId>,
+    /// The body of the with expression
     pub body: Vec<QueryId>,
+    /// Mark whether the with expression is async
     pub is_async: bool,
+    /// The start line of the with expression
     pub start_line: usize,
+    /// The start offset of the with expression
     pub start_offset: usize,
+    /// The end offset of the with expression
     pub end_offset: usize,
 }
 
-/// For循环
+/// ## For expression
+/// 
+/// It is used to iterate the container.
+/// 
+/// In python, it is like this:
+/// ```python
+/// for i in range(10):
+///     pass
+/// ```
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Reflect)]
 pub struct For {
+    /// The iterator of the for expression
     pub iterator: Option<QueryId>,
+    /// The items of the for expression
     pub items: Option<QueryId>,
+    /// The body of the for expression
     pub body: Vec<QueryId>,
+    /// The start line of the for expression
     pub from: usize,
+    /// The end line of the for expression
     pub to: usize,
+    /// Mark whether the for expression is async
     pub is_async: bool,
+    /// The start line of the for expression
     pub start_line: usize,
+    /// The start offset of the for expression
     pub start_offset: usize,
+    /// The end offset of the for expression
     pub end_offset: usize,
 }
 
-/// If expression
+/// ## If expression
+/// 
+/// It is used to judge the condition.
+/// 
+/// In python, it is like this:
+/// ```python
+/// if a == 1:
+///     pass
+/// elif a == 2:
+///     pass
+/// else:
+///     pass
+/// ```
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Reflect)]
 pub struct If {
+    /// The test condition expression of the if expression
     pub test: Option<QueryId>,
+    /// The body of the if expression
     pub body: Vec<QueryId>,
+    /// The elif / else expression
+    /// 
+    /// It connects the next branch of the if expression.
     pub or_else: Option<QueryId>,
+    /// The start line of the if expression
     pub start_line: usize,
+    /// The start offset of the if expression
     pub start_offset: usize,
+    /// The end offset of the if expression
     pub end_offset: usize,
 }
 
-/// Jump
+/// ## Jump expression
+/// 
+/// It records the jump target of the jump expression.
+/// 
+/// And it contains some jump operations likes `break`, `continue`, etc.
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Reflect)]
 pub struct Jump {
+    /// The target of the jump expression
     pub target: usize,
+    /// Mark whether the jump expression is backward
     pub is_backward: bool,
+    /// The start line of the jump expression
     pub start_line: usize,
+    /// The start offset of the jump expression
     pub start_offset: usize,
+    /// The end offset of the jump expression
     pub end_offset: usize,
 }
 
-/// Await
+/// ## Await expression
+/// 
+/// It is used to wait the awaitable object.
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Reflect)]
 pub struct Await {
+    /// The awaitable expression
     pub awaitable_expr: Option<QueryId>,
+    /// The start line of the await expression
     pub start_line: usize,
+    /// The start offset of the await expression
     pub start_offset: usize,
+    /// The end offset of the await expression
     pub end_offset: usize,
 }
 
-/// 容器(包括list, tuple, set, dict等)
+/// ## Container expression
+/// 
+/// It is used to contain the values.
+/// 
+/// It contains the list, tuple, set, dict, etc.
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Reflect)]
 pub struct Container {
+    /// The values of the container
     pub values: Vec<QueryId>,
+    /// The type of the container
     pub container_type: ContainerType,
+    /// The start line of the container expression
     pub start_line: usize,
+    /// The start offset of the container expression
     pub start_offset: usize,
+    /// The end offset of the container expression
     pub end_offset: usize,
 }
 
-/// 属性
-/// 例如: a.b
+/// ## Attribute expression
+/// 
+/// It is used to get the attribute of the object.
+/// 
+/// In python, it is like this:
+/// ```python
+/// a.b
+/// ```
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Reflect)]
 pub struct Attribute {
+    /// The parent object
     pub parent: Option<QueryId>,
+    /// The attribute name
     pub attr: Option<QueryId>,
+    /// The start line of the attribute expression
     pub start_line: usize,
+    /// The start offset of the attribute expression
     pub start_offset: usize,
+    /// The end offset of the attribute expression
     pub end_offset: usize,
 }
 
-/// 切片
+/// ## Slice expression
+/// 
+/// It is used to get the slice of the object.
+/// 
+/// In python, it is like this:
+/// ```python
+/// a[1:2]
+/// arr[::-1]
+/// bbb[1:10:2]
+/// ```
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Reflect)]
 pub struct Slice {
+    /// The origin object
     pub origin: Option<QueryId>,
+    /// The start, stop, step of the slice expression
     pub slice: Vec<QueryId>,
+    /// The start line of the slice expression
     pub start_line: usize,
+    /// The start offset of the slice expression
     pub start_offset: usize,
+    /// The end offset of the slice expression
     pub end_offset: usize,
 }
 
-/// String的Expression封装
+/// ## Base value expression
+/// 
+/// It is the wrapper of the integer, float, string and other base type values.
+/// 
+/// It also contains the Identifier.
 #[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Reflect)]
 pub struct BaseValue {
+    /// The value of the base value expression
     pub value: String,
+    /// The start line of the base value expression
     pub start_line: usize,
+    /// The start offset of the base value expression
     pub start_offset: usize,
+    /// The end offset of the base value expression
     pub end_offset: usize,
 }
 
-/// Deprecated
-/* /// None
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Default)]
-pub struct NoneValue {
-    pub start_line: usize,
-    pub start_offset: usize,
-    pub end_offset: usize,
-} */
-
-/// 为上面的表达式提供一个封装
-/// 用来实现不同Expression的嵌套
-#[derive(Expression, Clone, Debug, PartialEq, Eq, Is, Unwrap, Offset, FromExpression, AsRef, TypeIter)]
+/// Wrapped the expressions as an enum
+/// 
+/// The default is [`ExpressionEnum::BaseValue`]
+#[derive(Expression, Clone, Debug, PartialEq, Eq)]
+#[derive(Is, Unwrap, Offset, FromExpression, AsRef, TypeIter)]
 pub enum ExpressionEnum {
-    // NoneValue is deprecated
-    // NoneValue(NoneValue),
+    /// Import expression
+    /// 
+    /// Learn more from [`Import`]
     Import(Import),
+    /// Class expression
+    /// 
+    /// Learn more from [`Class`]
     Class(Class),
+    /// Local variable or function parameter
+    /// 
+    /// Learn more from [`FastVariable`]
     FastVariable(FastVariable),
+    /// Function expression
+    /// 
+    /// Learn more from [`Function`]
     Function(Function),
+    /// Return expression
+    /// 
+    /// Learn more from [`Return`]
     Return(Return),
+    /// Yield expression
+    /// 
+    /// Learn more from [`Yield`]
     Yield(Yield),
+    /// Assign expression
+    /// 
+    /// Learn more from [`Assign`]
     Assign(Assign),
+    /// Alias expression
+    /// 
+    /// Learn more from [`Alias`]
     Alias(Alias),
+    /// Try expression
+    /// 
+    /// Learn more from [`Try`]
     Try(Try),
+    /// Except expression
+    /// 
+    /// Learn more from [`Except`]
     Except(Except),
+    /// Finally expression
+    /// 
+    /// Learn more from [`Finally`]
     Finally(Finally),
+    /// Assertion expression
+    /// 
+    /// Learn more from [`Assert`]
     Assert(Assert),
+    /// Raise expression
+    /// 
+    /// Learn more from [`Raise`]
     Raise(Raise),
+    /// Format value expression
+    /// 
+    /// Learn more from [`BaseValue`]
     BaseValue(BaseValue),
+    /// Format expression
+    /// 
+    /// Learn more from [`FormatValue`]
     FormatValue(FormatValue),
+    /// Binary operation expression
+    /// 
+    /// Learn more from [`Format`]
     Format(Format),
+    /// Binary operation expression
+    /// 
+    /// Learn more from [`BinaryOperation`]
     BinaryOperation(BinaryOperation),
+    /// Subscript expression
+    /// 
+    /// Learn more from [`Subscr`]
     Subscr(Subscr),
+    /// Unary operation expression
+    /// 
+    /// Learn more from [`UnaryOperation`]
     UnaryOperation(UnaryOperation),
+    /// Call expression
+    /// 
+    /// Learn more from [`Call`]
     Call(Call),
+    /// With expression
+    /// 
+    /// Learn more from [`With`]
     With(With),
+    /// For expression
+    /// 
+    /// Learn more from [`For`]
     For(For),
+    /// If expression
+    /// 
+    /// Learn more from [`If`]
     If(If),
+    /// Await expression
+    /// 
+    /// Learn more from [`Await`]
     Await(Await),
+    /// Jump expression
+    /// 
+    /// Learn more from [`Jump`]
     Jump(Jump),
+    /// Container expression
+    /// 
+    /// Learn more from [`Container`]
     Container(Container),
+    /// Attribute expression
+    /// 
+    /// Learn more from [`Slice`]
     Slice(Slice),
+    /// Slice expression
+    /// 
+    /// Learn more from [`Attribute`]
     Attribute(Attribute),
-    // ...
 }
 
 impl Default for ExpressionEnum {
@@ -348,31 +829,67 @@ impl Default for ExpressionEnum {
     }
 }
 
+/// Defined the unary operation type
+/// 
+/// The default is [`UnaryType::Positive`]
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Reflect)]
 pub enum UnaryType {
+    /// The negative operation
+    /// 
+    /// It is like `-a`
     Negative,
+    /// The invert operation
+    /// 
+    /// It is like `~a`
     Invert,
+    /// The not operation
+    /// 
+    /// It is like `not a`
     Not,
+    /// The positive operation
+    /// 
+    /// It is like `+a`, but we always ignore it.
     #[default]
     Positive,
 }
 
+/// Defined the container type
+/// which includes List, Tuple, Set, Dict
+/// 
+/// And the default is [`ContainerType::Tuple`]
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Reflect)]
 pub enum ContainerType {
+    /// The list container.
+    /// 
+    /// It is like `[1, 2, 3]`
     List,
+    /// The tuple container
+    /// 
+    /// It is like `(1, (), "a")`
     #[default]
     Tuple,
+    /// The set container, it is like HashSet in Rust.
+    /// But the value can be any different types
+    /// 
+    /// It is like `{1, 2, "a"}`
     Set,
+    /// The dictionary container, it is like HashMap in Rust.
+    /// But the key and value can be any different types
+    /// 
+    /// It is like `{1: 2, "a": "b", (): []}`
     Dict,
 }
 
-/// `Vec<QueryId>`的封装
-#[derive(Clone, Debug, PartialEq, Eq, Expression)]
-pub struct Expr {
-    pub bodys: Vec<QueryId>,
-}
+// /// `Vec<QueryId>`的封装
+// #[derive(Clone, Debug, PartialEq, Eq, Expression)]
+// pub struct Expr {
+//     pub bodys: Vec<QueryId>,
+// }
 
 impl Class {
+    /// Create a new class expression from the code object mark
     pub fn new<S: AsRef<str>>(object_mark: S) -> Result<Self> {
         let reg = Regex::new(
             r#"(?x)<code\ object\ (?P<name>\S+)\ at[\S\ ]+\ line\ (?P<start_line>\d+)>"#,
@@ -393,6 +910,7 @@ impl Class {
 }
 
 impl Function {
+    /// Create a new function expression from the code object mark
     pub fn new<S: AsRef<str>>(object_mark: S) -> Result<Self> {
         let reg = Regex::new(
             r#"(?x)<code\ object\ (?P<name>\S+)\ at[\S\ ]+\ line\ (?P<start_line>\d+)>"#,
@@ -412,6 +930,29 @@ impl Function {
             bodys: Vec::new(),
             ..Default::default()
         })
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use bevy_reflect::{GetPath, ReflectKind};
+
+    use super::*;
+
+    #[test]
+    fn test_reflect() {
+        let test = Import {
+            module: "os".to_string(),
+            bk_module: None,
+            fragment: None,
+            alias: None,
+            start_line: 1,
+            start_offset: 1,
+            end_offset: 10,
+        };
+        
+        assert_eq!(test.reflect_kind(), ReflectKind::Struct);
+        assert_eq!(test.path::<String>("module"), Ok(&"os".to_string()));
     }
 }
 

@@ -302,7 +302,7 @@ impl Map {
     #[inline]
     pub fn replace<U: Expression + 'static>(
         &mut self,
-        query_id: QueryId,
+        mut query_id: QueryId,
         data: ExpressionEnum,
     ) -> Option<ExpressionEnum> {
         let old_data = self.remove(query_id);

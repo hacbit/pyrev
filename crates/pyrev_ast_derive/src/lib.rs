@@ -100,6 +100,7 @@ pub fn derive_is(input: TokenStream) -> TokenStream {
                 variant_name.span(),
             );
             quote! {
+                /// Check if the enum is specific variant
                 pub fn #is_function_name(&self) -> bool {
                     matches!(self, #name::#variant_name(_))
                 }
@@ -131,6 +132,7 @@ pub fn derive_unwrap(input: TokenStream) -> TokenStream {
                 variant_name.span(),
             );
             quote! {
+                /// Unwrap the enum to specific variant
                 pub fn #unwrap_function_name(self) -> #variant_name {
                     match self {
                         #name::#variant_name(inner) => inner,
@@ -176,12 +178,14 @@ pub fn derive_get_offset(input: TokenStream) -> TokenStream {
         });
         let gen = quote! {
             impl #name {
+                /// Get the offset of the expression
                 pub fn get_offset(&self) -> (usize, usize) {
                     match self {
                         #( #get_variants )*
                     }
                 }
 
+                /// Set the offset of the expression
                 pub fn set_offset(&mut self, start_offset: usize, end_offset: usize) {
                     match self {
                         #( #set_variants )*
@@ -236,6 +240,7 @@ pub fn derive_as_ref(input: TokenStream) -> TokenStream {
             );
 
             quote! {
+                /// Get the reference of the variant
                 pub fn #as_ref_function_name(&self) -> Option<&#variant_name> {
                     match *self {
                         #name::#variant_name(ref inner) => Some(inner),
@@ -256,6 +261,7 @@ pub fn derive_as_ref(input: TokenStream) -> TokenStream {
     }
 }
 
+/// Implement type_iter function for enum to get the type id of each variant
 #[proc_macro_derive(TypeIter)]
 pub fn derive_type_iter(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
@@ -277,6 +283,7 @@ pub fn derive_type_iter(input: TokenStream) -> TokenStream {
         });
         quote! {
             impl #name {
+                /// Get the type id of each variant
                 pub fn type_iter() -> Vec<std::any::TypeId> {
                     let mut result = Vec::new();
                     #(

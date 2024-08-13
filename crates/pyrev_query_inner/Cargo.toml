@@ -4,3 +4,4 @@ version = "1.2.0-alpha"
 edition = "2021"
 
 [dependencies]
+bevy_reflect = "0.14.1"

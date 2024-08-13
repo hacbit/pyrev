@@ -9,3 +9,4 @@ edition = "2021"
 pyrev_ast_derive = { path = "../pyrev_ast_derive" }
 pyrev_query_inner = { path = "../pyrev_query_inner" }
 regex = "1.10.2"
+bevy_reflect = "0.14.1"
