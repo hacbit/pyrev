@@ -11,30 +11,9 @@ A Python bytecode reversing tool built in pure Rust
 /path/to/pyrev> cargo build --release [--target your_target_os]
 ```
 
-**You can use `build` script to build release to your target OS and copy it to default path (`.cargo/bin/`).**
-
-**For Windows:**
-
-```cmd
-PS D:\path\to\pyrev> .\build.bat
-```
-
-*If you use WSL, you can use the follow command in windows terminal (not in WSL) to build for linux:*
-
-```cmd
-PS D:\path\to\pyrev> .\build.bat --wsl
-```
-
-**For Linux:**
-
-```shell
-/path/to/pyrev> ./build.sh
-```
-
-
+**The `build.bat` and `build.sh` script is deprecated, set the environment variable self is recommended**
 
 **If you only want to build and test all tests and doc-test, you also type command `cargo make`**
-
 
 
 ## Usage
