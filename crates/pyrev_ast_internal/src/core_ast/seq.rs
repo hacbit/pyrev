@@ -1,10 +1,16 @@
 //! Python expression sequence.
 
 use super::{
-    expr::Expr, expr_types::{
+    expr::Expr,
+    expr_types::{
         Alias, Arg, Arguments, Comprehension, ExceptHandler, Keyword, MatchCase, TypeIgnore,
         WithItem,
-    }, module::Mod, pattern::Pattern, stmt::Stmt, type_param::TypeParam, Ident
+    },
+    module::Mod,
+    pattern::Pattern,
+    stmt::Stmt,
+    type_param::TypeParam,
+    Ident,
 };
 
 #[macro_export]
@@ -16,6 +22,16 @@ macro_rules! seq_head {
             }
         )*
     ) => {
+        pub struct Seq {
+            pub value: SeqType,
+        }
+
+        pub enum SeqType {
+            $(
+                $id($id),
+            )*
+        }
+
         $(
             $vis struct $id {
                 pub size: usize,

@@ -1,7 +1,9 @@
 //! Python mod
 
-use super::{expr::Expr, seq::{ExprSeq, StmtSeq, TypeIgnoreSeq}};
-
+use super::{
+    expr::Expr,
+    seq::{ExprSeq, StmtSeq, TypeIgnoreSeq},
+};
 
 pub struct Mod {
     pub value: ModType,

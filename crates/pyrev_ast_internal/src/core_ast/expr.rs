@@ -2,7 +2,7 @@
 
 use super::expr_types::{Arguments, BinOpType, BoolOpType, Const, ExprContextType, UnaryOpType};
 use super::seq::{ComprehensionSeq, ExprSeq, IntSeq, KeywordSeq};
-use super::Ident;
+use super::{AstNode, Ident};
 
 pub struct Expr {
     pub value: ExprType,
@@ -11,6 +11,8 @@ pub struct Expr {
     pub end_lineno: usize,
     pub end_col_offset: usize,
 }
+
+impl AstNode for Expr {}
 
 pub enum ExprType {
     BoolOp(BoolOp),

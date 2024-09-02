@@ -1,13 +1,13 @@
 //! Python statements.
 
 use super::{
-    expr,
+    expr::Expr,
     expr_types::{Arguments, BinOpType},
     seq::{
         AliasSeq, ExceptHandlerSeq, ExprSeq, IdentSeq, KeywordSeq, MatchCaseSeq, StmtSeq,
         TypeParamSeq, WithItemSeq,
     },
-    Ident,
+    AstNode, Ident,
 };
 
 pub struct Stmt {
@@ -17,6 +17,8 @@ pub struct Stmt {
     pub end_lineno: usize,
     pub end_col_offset: usize,
 }
+
+impl AstNode for Stmt {}
 
 pub enum StmtType {
     FunctionDef(FunctionDef),
@@ -198,9 +200,11 @@ pub struct Nonlocal {
     pub names: Vec<IdentSeq>,
 }
 
-pub struct Expr {
+// deprecated
+// use expr::Expr instead
+/* pub struct Expr {
     pub value: expr::Expr,
-}
+} */
 
 pub struct Pass {}
 
