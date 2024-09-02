@@ -292,7 +292,8 @@ pub fn derive_type_iter(input: TokenStream) -> TokenStream {
                     result
                 }
             }
-        }.into()
+        }
+        .into()
     } else {
         panic!("only support enum");
     }
